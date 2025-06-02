@@ -1,0 +1,1 @@
+(function(window,$){window.LaravelDataTables=window.LaravelDataTables||{};window.LaravelDataTables["%1$s"]=$("#%1$s").DataTable(%2$s); window.LaravelDataTables["%1$s"].on('page.dt', function() {$('html, body').animate({scrollTop: $(".dataTables_wrapper").offset().top}, 'slow');$('thead tr th:first-child').focus().blur();});})(window,jQuery);

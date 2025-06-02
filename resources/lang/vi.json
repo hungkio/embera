@@ -1,0 +1,16 @@
+{
+    "searchPlaceholder": "Nhập từ khóa...",
+    "sLengthMenu": "<span>Xem:<\/span> _MENU_",
+    "sZeroRecords": "Không tìm thấy dòng nào phù hợp",
+    "sInfo": "Đang xem _START_ đến _END_ trong tổng số _TOTAL_ mục",
+    "sInfoEmpty": "Đang xem 0 đến 0 trong tổng số 0 mục",
+    "sInfoFiltered": "(được lọc từ _MAX_ mục)",
+    "sInfoPostFix": "",
+    "sSearch": "<span>Tìm kiếm:<\/span> _INPUT_",
+    "sUrl": "",
+    "sFirst": "Đầu",
+    "sNext": "&rarr;",
+    "sPrevious": "&larr;",
+    "sLast": "Cuối",
+    "rowSelected": "%d được chọn"
+}
