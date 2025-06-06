@@ -77,6 +77,7 @@ class OrderController
 
         $byShop = $orders->groupBy('rental_shop')->map(function ($group) {
             $shop = $group->first()->rental_shop;
+            $address = $group->first()->rental_shop_address;
             $agent_share_ratio = $group->first()->agent_share_ratio;
             $revenue = $group->sum('order_amount');
 
@@ -89,6 +90,7 @@ class OrderController
             return [
                 'shop' => $shop,
                 'revenue' => $revenue,
+                'address' => $address,
                 'sharing_percent' => $sharing,
             ];
         })->values();

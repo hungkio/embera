@@ -45,7 +45,7 @@
             </div>
 
             <!-- Bảng theo ngày -->
-            <div class="col-lg-4 col-md-6 mb-3">
+            <div class="col-lg-2 col-md-6 mb-3">
                 <div class="card h-100">
                     <div class="card-header fw-bold">
                         📅 Doanh thu theo ngày
@@ -79,7 +79,7 @@
             </div>
 
             <!-- Bảng theo shop -->
-            <div class="col-lg-4 col-md-6 mb-3">
+            <div class="col-lg-8 col-md-6 mb-3">
                 <div class="card h-100">
                     <div class="card-header fw-bold">
                         🏪 Doanh thu theo cửa hàng
@@ -94,9 +94,10 @@
                                 <tr>
                                     <th>#</th>
                                     <th>Shop</th>
-                                    <th>Doanh thu</th>
-                                    <th>% Chia sẻ</th>
-                                    <th>Doanh thu chia sẻ</th>
+                                    <th>Địa chỉ</th>
+                                    <th>Doanh thu (VND)</th>
+                                    <th>Tỷ lệ chia sẻ (%)</th>
+                                    <th>Số tiền thanh toán (VND)</th>
                                 </tr>
                                 </thead>
                                 <tbody>
@@ -104,9 +105,10 @@
                                     <tr>
                                         <td>{{ $i + 1 }}</td>
                                         <td>{{ $shop['shop'] }}</td>
-                                        <td>{{ number_format($shop['revenue'], 0, ',', '.') }}</td>
+                                        <td>{{ $shop['address'] }}</td>
+                                        <td>{{ number_format($shop['revenue'], 0, '.', ',') }}</td>
                                         <td>{{ $shop['sharing_percent'] }}</td>
-                                        <td>{{ number_format($shop['revenue']*$shop['sharing_percent']/100, 0, ',', '.') }}</td>
+                                        <td>{{ number_format($shop['revenue']*$shop['sharing_percent']/100, 0, '.', ',') }}</td>
                                     </tr>
                                 @endforeach
                                 </tbody>
@@ -117,7 +119,7 @@
             </div>
 
             <!-- Bảng theo nhân viên -->
-            <div class="col-lg-4 col-md-6 mb-3">
+            <div class="col-lg-2 col-md-6 mb-3">
                 <div class="card h-100">
                     <div class="card-header fw-bold">
                         👤 Doanh thu theo nhân viên
