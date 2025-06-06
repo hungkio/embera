@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\DB;
 use Maatwebsite\Excel\Concerns\ToCollection;
 use Maatwebsite\Excel\Concerns\WithCalculatedFormulas;
 use Maatwebsite\Excel\Concerns\WithHeadingRow;
+use PhpOffice\PhpSpreadsheet\Shared\Date as ExcelDate;
 
 class OrderImport implements ToCollection, WithHeadingRow, WithCalculatedFormulas
 {
@@ -15,52 +16,60 @@ class OrderImport implements ToCollection, WithHeadingRow, WithCalculatedFormula
     {
         DB::transaction(function () use ($rows) {
             foreach ($rows as $row) {
-                // Làm sạch dữ liệu
-                $clean = fn($v) => trim(str_replace("\t", "", $v ?? ''));
+                // Làm sạch key + value
+                $normalized = [];
+                foreach ($row as $key => $value) {
+                    $cleanKey = strtolower(trim(preg_replace('/\s+/', ' ', $key)));
+                    $cleanValue = is_string($value) ? trim(preg_replace('/[\x00-\x1F\x7F]+/u', '', $value)) : $value;
+                    $normalized[$cleanKey] = $cleanValue;
+                }
 
-//                dd($row);
-                // Tách khu vực từ shop
-                $shopName = $clean($row['shop_name']); // 'Shop name'
-                preg_match('/\((.*?)\)/', $shopName, $matches);
-                list($region, $city, $area) = explode('-', $matches[1] ?? '--');
-                Order::updateOrCreate([
-                    'order_number' => $clean($row['order_number']), // 'Order Number'
-                ],[
-                    'order_number' => $clean($row['order_number']), // 'Order Number'
-                    'payment_order_id' => $clean($row['payment_order_id']), // 'Payment Order ID'
-                    'reason_for_payment_failure' => $row['reason_for_payment_failure'], // 'Reason for Payment Failure'
-                    'user_id' => $row['user_id'], // 'User ID'
-                    'rent_out_from' => $clean($row['rent_out_from']), // 'Rent out from'
-                    'return_to' => $clean($row['return_to']), // 'Return to'
-                    'when_to_rent' => $this->parseDate($clean($row['when_to_rent'] ?? null)),  // 'When to rent'
-                    'when_to_return' => $this->parseDate($clean($row['when_to_return'] ?? null)), // 'When to Return'
-                    'merchant_id_rent_out_from' => $clean($row['merchant_id_rent_out_from']), // 'Merchant ID rent out from'
-                    'merchant_rent_out_from' => $clean($row['merchant_rent_out_from']), // 'Merchant rent out from'
-                    'merchant_return_to' => $clean($row['merchant_return_to']), // 'Merchant return to'
-                    'renting_time' => $clean($row['renting_time']), // 'Renting time'
-                    'order_bills' => $row['order_bills'], // 'Order bills'
-                    'order_bills_vnd' => floatval($row['order_billsvnd']), // 'Order bills（VND）'
-                    'commission_fees' => $row['commission_fees'], // 'Commission fees'
-                    'commission_fees_vnd' => floatval(str_replace('VND', '', $row['commission_feesvnd'])), // 'Refund'
-                    'status_of_order' => $row['status_of_order'], // 'Status of Order'
-                    'order_belongs_to' => $clean($row['order_belongs_to']), // 'Order belongs to'
-                    'merchant_id' => $clean($row['merchant_id']), // 'merchant ID'
-                    'name_of_merchant' => $row['name_of_merchant'], // 'Name of Merchant'
-                    'staff_id' => $clean($row['staff_id']), // 'Staff ID'
-                    'staff_name' => $clean($row['staff_name']), // 'Staff name'
-                    'order_comes_from' => $row['order_comes_from'], // 'Order comes from'
-                    'when_to_pay' => $this->parseDate($clean($row['when_to_pay'] ?? null)), // 'When to pay'
-                    'payment_channel' => $row['payment_channel'], // 'Payment Channel'
-                    'status_of_refund' => $row['status_of_refund'], // 'Status of Refund'
-                    'refund' => floatval(str_replace('VND', '', $row['refund'])), // 'Refund'
-                    'commission_of_refunds' => floatval($row['commission_of_refunds']), // 'Commission of Refunds'
-                    'profit_sharing_to_dealer' => floatval($row['profit_sharing_to_dealer']), // 'Profit-sharing to dealer'
-                    'revenue_to_dealer' => floatval($row['accured_revenue_to_dealer']), // 'Accured revenue to Dealer'
-                    'revenue_to_merchant' => floatval($row['accured_revenue_to_merchant']), // 'Accured revenue to Merchant'
-                    'billing_strategy' => $row['billing_strategy'], // 'Billing Strategy'
-                    'shop_name' => $shopName,
-                    'shop_type' => $row['shop_type'], // 'Shop type'
-                    'location' => $row['location'], // 'Location'
+                // Helper hàm
+                $clean = fn($v) => is_string($v) ? trim(preg_replace('/[\x00-\x1F\x7F]+/u', '', $v)) : $v;
+                $money = fn($v) => is_numeric($v) ? $v : (float) preg_replace('/[^0-9.]/', '', $v);
+
+                $orderNumber = $clean($normalized['order_id'] ?? null);
+                if (!$orderNumber) continue;
+
+                $shop = $clean($normalized['rental_shop'] ?? '');
+                preg_match('/\((.*?)\)/', $shop, $matches);
+                list($region, $city, $area) = isset($matches[1]) ? explode('-', $matches[1]) + [null, null, null] : [null, null, null];
+
+                Order::updateOrCreate(['order_number' => $orderNumber], [
+                    'payment_id' => $clean($normalized['payment_id'] ?? null),
+                    'payment_failure_reason' => $clean($normalized['payment_failure_reason'] ?? null),
+                    'user_id' => $clean($normalized['user_id'] ?? null),
+                    'rental_equipment_id' => $clean($normalized['rental_equipment_id'] ?? null),
+                    'return_equipment_id' => $clean($normalized['return_equipment_id'] ?? null),
+                    'rental_time' => $this->parseDate($normalized['rental_time'] ?? null),
+                    'return_time' => $this->parseDate($normalized['return_time'] ?? null),
+                    'rental_shop_id' => $clean($normalized['rental_shop_id'] ?? null),
+                    'rental_shop' => $shop,
+                    'rental_shop_type' => $clean($normalized['rental_shop_type'] ?? null),
+                    'rental_shop_address' => $clean($normalized['rental_shop_address'] ?? null),
+                    'return_shop' => $clean($normalized['return_shop'] ?? null),
+                    'duration_of_use' => $clean($normalized['duration_of_use'] ?? null),
+                    'currency' => $clean($normalized['currency'] ?? null),
+                    'order_amount' => $money($normalized['order_amount'] ?? 0),
+                    'fees' => $money($normalized['fees'] ?? 0),
+                    'order_status' => $clean($normalized['order_status'] ?? null),
+                    'orders_belong_to_merchants' => $clean($normalized['orders_belong_to_merchants'] ?? null),
+                    'merchant_id' => $clean($normalized['merchant_id'] ?? null),
+                    'merchant_name' => $clean($normalized['merchant_name'] ?? null),
+                    'service_provider_id' => $clean($normalized['service_provider_id'] ?? null),
+                    'employee_id' => $clean($normalized['employee_id'] ?? null),
+                    'employee_name' => $clean($normalized['employee_name'] ?? null),
+                    'order_source' => $clean($normalized['order_source'] ?? null),
+                    'payment_time' => $this->parseDate($normalized['payment_time'] ?? null),
+                    'payment_channels' => $clean($normalized['payment_channels'] ?? null),
+                    'refund_status' => $clean($normalized['refund_status'] ?? null),
+                    'refund_amount' => $money($normalized['refund_amount'] ?? 0),
+                    'refund_fee' => $money($normalized['refund_fee'] ?? 0),
+                    'agent_share_ratio' => (float) $clean($normalized['agent_share_ratio'] ?? 0),
+                    'franchisee_share_ratio' => (float) $clean($normalized['franchisee_share_ratio'] ?? 0),
+                    'service_provider_share_ratio' => (float) $clean($normalized['service_provider_share_ratio'] ?? 0),
+                    'merchant_share_ratio' => (float) $clean($normalized['merchant_share_ratio'] ?? 0),
+                    'charging_strategy' => $clean($normalized['charging_strategy'] ?? null),
                     'region' => trim($region),
                     'city' => trim($city),
                     'area' => trim($area),
@@ -75,7 +84,7 @@ class OrderImport implements ToCollection, WithHeadingRow, WithCalculatedFormula
 
         try {
             if (is_numeric($value)) {
-                return \PhpOffice\PhpSpreadsheet\Shared\Date::excelToDateTimeObject($value);
+                return ExcelDate::excelToDateTimeObject($value);
             } else {
                 return \Carbon\Carbon::parse($value);
             }

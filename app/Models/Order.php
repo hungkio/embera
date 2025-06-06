@@ -9,65 +9,49 @@ use Spatie\MediaLibrary\InteractsWithMedia;
 class Order extends Model implements HasMedia
 {
     use InteractsWithMedia;
-    /**
-     * The attributes that are mass assignable.
-     *
-     * @var array<int, string>
-     */
+
     protected $fillable = [
-        'order_number',
-        'payment_order_id',
-        'reason_for_payment_failure',
-        'user_id',
-        'rent_out_from',
-        'return_to',
-        'when_to_rent',
-        'when_to_return',
-        'merchant_id_rent_out_from',
-        'merchant_rent_out_from',
-        'merchant_return_to',
-        'renting_time',
-        'order_bills',
-        'order_bills_vnd',
-        'commission_fees',
-        'commission_fees_vnd',
-        'status_of_order',
-        'order_belongs_to',
-        'merchant_id',
-        'name_of_merchant',
-        'staff_id',
-        'staff_name',
-        'order_comes_from',
-        'when_to_pay',
-        'payment_channel',
-        'status_of_refund',
-        'refund',
-        'commission_of_refunds',
-        'profit_sharing_to_dealer',
-        'revenue_to_dealer',
-        'revenue_to_merchant',
-        'billing_strategy',
-        'shop_name',
-        'shop_type',
-        'location',
-        'region',
-        'city',
-        'area',
+        'order_number', // Order ID
+        'payment_id', // Payment ID
+        'payment_failure_reason', // Payment failure reason
+        'user_id', // User ID
+        'rental_equipment_id', // Rental Equipment ID
+        'return_equipment_id', // Return Equipment ID
+        'rental_time', // Rental time
+        'return_time', // Return time
+        'rental_shop_id', // Rental Shop ID
+        'rental_shop', // Rental Shop
+        'rental_shop_type', // Rental Shop Type
+        'rental_shop_address', // Rental Shop Address
+        'return_shop', // Return Shop
+        'duration_of_use', // Duration of use
+        'currency', // Currency
+        'order_amount', // Order Amount
+        'fees', // Fees
+        'order_status', // Order Status
+        'orders_belong_to_merchants', // Orders belong to merchants
+        'merchant_id', // Merchant ID
+        'merchant_name', // Merchant Name
+        'service_provider_id', // Service Provider ID
+        'employee_id', // Employee ID
+        'employee_name', // Employee Name
+        'order_source', // Order source
+        'payment_time', // Payment Time
+        'payment_channels', // Payment channels
+        'refund_status', // Refund Status
+        'refund_amount', // Refund amount
+        'refund_fee', // Refund Fee
+        'agent_share_ratio', // Agent share ratio
+        'franchisee_share_ratio', // Franchisee share ratio
+        'service_provider_share_ratio', // Service Provider share ratio
+        'merchant_share_ratio', // Merchant share ratio
+        'charging_strategy', // Charging strategy,
+        'region', 'city', 'area'
     ];
 
-    /**
-     * The attributes that should be hidden for serialization.
-     *
-     * @var array<int, string>
-     */
     protected $hidden = [
     ];
 
-    /**
-     * The attributes that should be cast.
-     *
-     * @var array<string, string>
-     */
     protected $casts = [
     ];
 }

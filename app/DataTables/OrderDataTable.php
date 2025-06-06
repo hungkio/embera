@@ -11,12 +11,6 @@ use Yajra\DataTables\Html\Column;
 
 class OrderDataTable extends BaseDatable
 {
-    /**
-     * Build DataTable class.
-     *
-     * @param mixed $query Results from query() method.
-     * @return \Yajra\DataTables\DataTableAbstract
-     */
     public function dataTable($query)
     {
         return datatables()
@@ -24,40 +18,26 @@ class OrderDataTable extends BaseDatable
             ->addIndexColumn()
             ->addColumn('action', 'admin.orders._tableAction')
             ->editColumn('order_number', fn(Order $order) => $order->order_number)
-            ->editColumn('order_bills_vnd', fn(Order $order) => number_format($order->order_bills_vnd, 0, ',', '.') . ' VND')
-            ->editColumn('shop_name', fn(Order $order) => $order->shop_name)
-            ->editColumn('region', fn(Order $order) => $order->region)
-            ->editColumn('city', fn(Order $order) => $order->city)
-            ->editColumn('area', fn(Order $order) => $order->area)
-            ->editColumn('location', fn(Order $order) => $order->location)
-            ->editColumn('status_of_order', fn(Order $order) => $order->status_of_order)
-            ->filterColumn('order_number', function ($query, $keyword) {
-                $query->where('order_number', 'like', "%$keyword%");
+            ->editColumn('order_amount', fn(Order $order) => number_format($order->order_amount, 0, ',', '.') . ' VND')
+            ->editColumn('refund_amount', fn(Order $order) => number_format($order->refund_amount, 0, ',', '.') . ' VND')
+            ->editColumn('shop_name', fn(Order $order) => $order->rental_shop)
+            ->editColumn('merchant_name', fn(Order $order) => $order->merchant_name)
+            ->editColumn('employee_name', fn(Order $order) => $order->employee_name)
+            ->editColumn('payment_time', fn(Order $order) => formatDate($order->payment_time))
+            ->filterColumn('rental_shop', function ($query, $keyword) {
+                $query->where('rental_shop', 'like', "%$keyword%");
             })
-            ->filterColumn('shop_name', function ($query, $keyword) {
-                $query->where('shop_name', 'like', "%$keyword%");
+            ->filterColumn('merchant_name', function ($query, $keyword) {
+                $query->where('merchant_name', 'like', "%$keyword%");
             })
-            ->filterColumn('region', function ($query, $keyword) {
-                $query->where('region', 'like', "%$keyword%");
+            ->filterColumn('employee_name', function ($query, $keyword) {
+                $query->where('employee_name', 'like', "%$keyword%");
             })
-            ->filterColumn('city', function ($query, $keyword) {
-                $query->where('city', 'like', "%$keyword%");
+            ->filterColumn('order_status', function ($query, $keyword) {
+                $query->where('order_status', 'like', "%$keyword%");
             })
-            ->filterColumn('area', function ($query, $keyword) {
-                $query->where('area', 'like', "%$keyword%");
-            })
-            ->filterColumn('location', function ($query, $keyword) {
-                $query->where('location', 'like', "%$keyword%");
-            })
-            ->filterColumn('status_of_order', function ($query, $keyword) {
-                $query->where('status_of_order', 'like', "%$keyword%");
-            })
-            ->filterColumn('when_to_rent', function ($query, $keyword) {
-                $query->whereDate('when_to_rent', $keyword);
-            })
-            ->orderColumn('when_to_rent', 'when_to_rent $1')
-            ->rawColumns(['total_revenue', 'action']);
-
+            ->orderColumn('payment_time', 'payment_time $1')
+            ->rawColumns(['action']);
     }
 
     public function query(Order $model)
@@ -67,30 +47,26 @@ class OrderDataTable extends BaseDatable
         $filters = $this->request->all();
 
         if (!empty($filters['date_from']) && !empty($filters['date_to'])) {
-            $query->whereBetween('when_to_rent', [
+            $query->whereBetween('payment_time', [
                 Carbon::parse($filters['date_from'])->startOfDay(),
                 Carbon::parse($filters['date_to'])->endOfDay(),
             ]);
         }
 
-        if (!empty($filters['staff'])) {
-            $query->where('staff_name', $filters['staff']);
+        if (!empty($filters['employee_id'])) {
+            $query->where('employee_id', $filters['employee_id']);
         }
 
-        if (!empty($filters['shop_type'])) {
-            $query->where('shop_type', $filters['shop_type']);
+        if (!empty($filters['rental_shop_type'])) {
+            $query->where('rental_shop_type', $filters['rental_shop_type']);
         }
 
-        if (!empty($filters['region'])) {
-            $query->where('region', $filters['region']);
+        if (!empty($filters['rental_shop'])) {
+            $query->where('rental_shop', $filters['rental_shop']);
         }
 
-        if (!empty($filters['city'])) {
-            $query->where('city', $filters['city']);
-        }
-
-        if (!empty($filters['shop_name'])) {
-            $query->where('shop_name', $filters['shop_name']);
+        if (!empty($filters['merchant_name'])) {
+            $query->where('merchant_name', $filters['merchant_name']);
         }
 
         return $query;
@@ -100,19 +76,19 @@ class OrderDataTable extends BaseDatable
     {
         return [
             Column::checkbox(''),
-            Column::make('when_to_rent')->title('Thời gian thuê'),
-            Column::make('when_to_return')->title('Thời gian trả'),
-            Column::make('shop_name')->title('Tên shop'),
-            Column::make('region')->title('Khu vực'),
-            Column::make('city')->title('Thành phố'),
-            Column::make('area')->title('Địa điểm'),
-            Column::make('location')->title('Địa chỉ'),
-            Column::make('order_bills_vnd')->title('Doanh thu'),
-            Column::make('refund')->title('Hoàn lại'),
-            Column::make('payment_channel')->title('Kênh thanh toán'),
-            Column::make('status_of_order')->title('Trạng thái đơn'),
+            Column::make('payment_id')->title('Payment ID'),
+            Column::make('rental_time')->title('Rental Time'),
+            Column::make('return_time')->title('Return Time'),
+            Column::make('rental_shop')->title('Rental Shop'),
+            Column::make('return_shop')->title('Return Shop'),
+            Column::make('order_amount')->title('Order Amount'),
+            Column::make('order_status')->title('Order Status'),
+            Column::make('merchant_name')->title('Merchant Name'),
+            Column::make('employee_name')->title('Employee Name'),
+            Column::make('payment_time')->title('Payment Time'),
+            Column::make('payment_channels')->title('Payment Channel'),
             Column::computed('action')
-                ->title(__('Tác vụ'))
+                ->title(__('Actions'))
                 ->exportable(false)
                 ->printable(false)
                 ->width(60)
@@ -128,22 +104,17 @@ class OrderDataTable extends BaseDatable
         ];
     }
 
-    /**
-     * Get filename for export.
-     *
-     * @return string
-     */
     protected function filename(): string
     {
-        return 'Orders_'.date('YmdHis');
+        return 'Orders_' . date('YmdHis');
     }
 
     protected function getTableButton(): array
     {
         return [
-            Button::make('bulkDelete')->addClass('btn btn-danger')->text('<i class="fal fa-trash-alt mr-2"></i>'.__('Xóa')),
-            Button::make('export')->addClass('btn btn-primary')->text('<i class="fal fa-download mr-2"></i>'.__('Xuất')),
-            Button::make('reset')->addClass('btn bg-primary')->text('<i class="fal fa-undo mr-2"></i>'.__('Thiết lập lại')),
+            Button::make('bulkDelete')->addClass('btn btn-danger')->text('<i class="fal fa-trash-alt mr-2"></i>'.__('Delete')),
+            Button::make('export')->addClass('btn btn-primary')->text('<i class="fal fa-download mr-2"></i>'.__('Export')),
+            Button::make('reset')->addClass('btn bg-primary')->text('<i class="fal fa-undo mr-2"></i>'.__('Reset')),
         ];
     }
 

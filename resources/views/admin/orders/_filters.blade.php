@@ -1,4 +1,10 @@
 <form method="GET" action="{{ route('admin.orders.index') }}" class="row g-3 mb-4 align-items-end filters">
+    <div class="col-md-6">
+        <label for="date_range">Khoảng ngày thuê <span class="text-danger">*</span></label>
+        <input type="text" name="date_range" id="date_range" class="form-control"
+               value="{{ request('date_range') }}" required autocomplete="off" />
+    </div>
+
     <div class="col-md-3">
         <label for="staff">Nhân viên</label>
         <select name="staff" id="staff" class="form-select select2">
@@ -36,7 +42,7 @@
     </div>
 
     <div class="col-md-3">
-        <label for="region">Khu vực</label>
+        <label for="region">Miền</label>
         <select name="region" id="region" class="form-select select2">
             <option value="">-- Tất cả --</option>
             @foreach($regionList as $region)
@@ -59,10 +65,16 @@
         </select>
     </div>
 
-    <div class="col-md-6">
-        <label for="date_range">Khoảng ngày thuê <span class="text-danger">*</span></label>
-        <input type="text" name="date_range" id="date_range" class="form-control"
-               value="{{ request('date_range') }}" required autocomplete="off" />
+    <div class="col-md-3">
+        <label for="city">Khu vực</label>
+        <select name="area" id="area" class="form-select select2">
+            <option value="">-- Tất cả --</option>
+            @foreach($areaList as $area)
+                <option value="{{ $area }}" {{ (request('area') == $area) ? 'selected' : '' }}>
+                    {{ $area }}
+                </option>
+            @endforeach
+        </select>
     </div>
 
     <div class="col-md-12 text-end mt-3">

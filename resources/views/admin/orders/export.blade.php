@@ -19,7 +19,7 @@
         <th>Commission fees（VND）</th>
         <th>Status of Order</th>
         <th>Order belongs to</th>
-        <th>merchant ID</th>
+        <th>Merchant ID</th>
         <th>Name of Merchant</th>
         <th>Staff ID</th>
         <th>Staff name</th>
@@ -36,6 +36,9 @@
         <th>Shop name</th>
         <th>Shop type</th>
         <th>Location</th>
+        <th>Region</th>
+        <th>City</th>
+        <th>Area</th>
     </tr>
     </thead>
     <tbody>
@@ -47,16 +50,16 @@
             <td>{{ $row->user_id }}</td>
             <td>{{ $row->rent_out_from }}</td>
             <td>{{ $row->return_to }}</td>
-            <td>{{ $row->when_to_rent }}</td>
-            <td>{{ $row->when_to_return }}</td>
+            <td>{{ optional($row->when_to_rent)->format('Y-m-d H:i:s') }}</td>
+            <td>{{ optional($row->when_to_return)->format('Y-m-d H:i:s') }}</td>
             <td>{{ $row->merchant_id_rent_out_from }}</td>
             <td>{{ $row->merchant_rent_out_from }}</td>
             <td>{{ $row->merchant_return_to }}</td>
             <td>{{ $row->renting_time }}</td>
             <td>{{ $row->order_bills }}</td>
-            <td>{{ $row->order_bills_vnd }}</td>
+            <td>{{ number_format($row->order_bills_vnd, 0, ',', '.') }}</td>
             <td>{{ $row->commission_fees }}</td>
-            <td>{{ $row->commission_fees_vnd }}</td>
+            <td>{{ number_format($row->commission_fees_vnd, 0, ',', '.') }}</td>
             <td>{{ $row->status_of_order }}</td>
             <td>{{ $row->order_belongs_to }}</td>
             <td>{{ $row->merchant_id }}</td>
@@ -67,15 +70,18 @@
             <td>{{ optional($row->when_to_pay)->format('Y-m-d H:i:s') }}</td>
             <td>{{ $row->payment_channel }}</td>
             <td>{{ $row->status_of_refund }}</td>
-            <td>{{ $row->refund }}</td>
-            <td>{{ $row->commission_of_refunds }}</td>
+            <td>{{ number_format($row->refund, 0, ',', '.') }}</td>
+            <td>{{ number_format($row->commission_of_refunds, 0, ',', '.') }}</td>
             <td>{{ $row->profit_sharing_to_dealer }}</td>
-            <td>{{ $row->revenue_to_dealer }}</td>
-            <td>{{ $row->revenue_to_merchant }}</td>
+            <td>{{ number_format($row->revenue_to_dealer, 0, ',', '.') }}</td>
+            <td>{{ number_format($row->revenue_to_merchant, 0, ',', '.') }}</td>
             <td>{{ $row->billing_strategy }}</td>
             <td>{{ $row->shop_name }}</td>
             <td>{{ $row->shop_type }}</td>
             <td>{{ $row->location }}</td>
+            <td>{{ $row->region }}</td>
+            <td>{{ $row->city }}</td>
+            <td>{{ $row->area }}</td>
         </tr>
     @endforeach
     </tbody>

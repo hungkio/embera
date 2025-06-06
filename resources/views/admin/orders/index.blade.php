@@ -31,6 +31,7 @@
             'shopNameList' => $shopNameList,
             'regionList' => $regionList,
             'cityList' => $cityList,
+            'areaList' => $areaList,
             'filters' => $filters,
         ])
     @if(request()->filled('date_from') && request()->filled('date_to'))
@@ -102,7 +103,7 @@
                                 @foreach($byShop as $i => $shop)
                                     <tr>
                                         <td>{{ $i + 1 }}</td>
-                                        <td>{{ $shop['shop_name'] }}</td>
+                                        <td>{{ $shop['shop'] }}</td>
                                         <td>{{ number_format($shop['revenue'], 0, ',', '.') }}</td>
                                         <td>{{ $shop['sharing_percent'] }}</td>
                                         <td>{{ number_format($shop['revenue']*$shop['sharing_percent']/100, 0, ',', '.') }}</td>
@@ -138,7 +139,7 @@
                                 @foreach($byStaff as $i => $staff)
                                     <tr>
                                         <td>{{ $i + 1 }}</td>
-                                        <td>{{ $staff['staff_name'] }}</td>
+                                        <td>{{ $staff['employee'] }}</td>
                                         <td>{{ number_format($staff['revenue'], 0, ',', '.') }}</td>
                                     </tr>
                                 @endforeach
