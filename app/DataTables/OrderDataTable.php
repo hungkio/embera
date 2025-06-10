@@ -69,6 +69,20 @@ class OrderDataTable extends BaseDatable
             $query->where('merchant_name', $filters['merchant_name']);
         }
 
+        if (!empty($filters['payment_channel'])) {
+            $query->where('payment_channels', $filters['payment_channel']);
+        }
+
+        if (!empty($filters['order_amount'])) {
+            if ($filters['order_amount'] == 1) {
+                $query->where('order_amount', '>', 0);
+            }
+
+            if ($filters['order_amount'] == 2) {
+                $query->where('order_amount', '<', 0);
+            }
+        }
+
         return $query;
     }
 

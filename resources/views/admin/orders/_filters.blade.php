@@ -77,6 +77,31 @@
         </select>
     </div>
 
+    <div class="col-md-3">
+        <label for="payment_channel">Kênh thanh toán</label>
+        <select name="payment_channel" id="payment_channel" class="form-select select2">
+            <option value="">-- Tất cả --</option>
+            @foreach($paymentChannelList as $channel)
+                <option value="{{ $channel }}" {{ (request('payment_channel') == $channel) ? 'selected' : '' }}>
+                    {{ $channel }}
+                </option>
+            @endforeach
+        </select>
+    </div>
+    <div class="col-md-3">
+        <label for="order_amount">Doanh thu mỗi đơn hàng</label>
+        <select name="order_amount" id="order_amount" class="form-select select2">
+            <option value="">-- Tất cả --</option>
+                <option value="1" {{ (request('order_amount') == 1) ? 'selected' : '' }}>
+                    Lớn hơn 0
+                </option>
+            <option value="2" {{ (request('order_amount') == 2) ? 'selected' : '' }}>
+                Bằng 0
+            </option>
+        </select>
+    </div>
+
+
     <div class="col-md-12 text-end mt-3">
         <button type="submit" class="btn btn-primary">
             <i class="bi bi-funnel-fill"></i> Lọc dữ liệu

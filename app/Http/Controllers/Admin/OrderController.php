@@ -42,6 +42,7 @@ class OrderController
         $regionList = Order::distinct()->pluck('region')->filter()->sort()->toArray();
         $cityList = Order::distinct()->pluck('city')->filter()->sort()->toArray();
         $areaList = Order::distinct()->pluck('area')->filter()->sort()->toArray();
+        $paymentChannelList = Order::distinct()->pluck('payment_channels')->filter()->sort()->toArray();
 
         $query = Order::query()
             ->whereBetween('payment_time', [
@@ -69,6 +70,18 @@ class OrderController
         }
         if ($request->filled('area')) {
             $query->where('area', $request->area);
+        }
+        if ($request->filled('payment_channel')) {
+            $query->where('payment_channels', $request->payment_channel);
+        }
+        if ($request->order_amount) {
+            if ($request->order_amount == 1) {
+                $query->where('order_amount', '>', 0);
+            }
+
+            if ($request->order_amount == 2) {
+                $query->where('order_amount', '<', 0);
+            }
         }
 
         $orders = (clone $query)->orderByDesc('payment_time')->get();
@@ -125,7 +138,10 @@ class OrderController
             'byShop' => $byShop,
             'byStaff' => $byEmployee,
             'byDate' => $byDate,
-            'filters' => $request->only(['employee_name', 'rental_shop', 'merchant_name', 'date_from', 'date_to']),
+            'paymentChannelList' => $paymentChannelList,
+            'filters' => $request->only([
+                'staff', 'shop_type', 'shop_name', 'region', 'city', 'payment_channel', 'date_from', 'date_to'
+            ]),
         ]);
     }
 
