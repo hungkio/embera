@@ -53,20 +53,16 @@ class OrderDataTable extends BaseDatable
             ]);
         }
 
-        if (!empty($filters['employee_id'])) {
-            $query->where('employee_id', $filters['employee_id']);
+        if (!empty($filters['staff'])) {
+            $query->where('employee_name', $filters['staff']);
         }
 
-        if (!empty($filters['rental_shop_type'])) {
-            $query->where('rental_shop_type', $filters['rental_shop_type']);
+        if (!empty($filters['shop_type'])) {
+            $query->where('rental_shop_type', $filters['shop_type']);
         }
 
-        if (!empty($filters['rental_shop'])) {
-            $query->where('rental_shop', $filters['rental_shop']);
-        }
-
-        if (!empty($filters['merchant_name'])) {
-            $query->where('merchant_name', $filters['merchant_name']);
+        if (!empty($filters['shop_name'])) {
+            $query->where('rental_shop', $filters['shop_name']);
         }
 
         if (!empty($filters['payment_channel'])) {
@@ -79,8 +75,18 @@ class OrderDataTable extends BaseDatable
             }
 
             if ($filters['order_amount'] == 2) {
-                $query->where('order_amount', '<', 0);
+                $query->where('order_amount', '<=', 0);
             }
+        }
+
+        if ($filters['region']) {
+            $query->where('region', $filters['region']);
+        }
+        if ($filters['city']) {
+            $query->where('city', $filters['city']);
+        }
+        if ($filters['area']) {
+            $query->where('area', $filters['area']);
         }
 
         return $query;

@@ -50,16 +50,16 @@ class OrderController
                 Carbon::parse($date_to)->endOfDay(),
             ]);
 
-        if ($request->filled('employee_name')) {
-            $query->where('employee_name', $request->employee_name);
+        if ($request->filled('staff')) {
+            $query->where('employee_name', $request->staff);
         }
 
-        if ($request->filled('rental_shop')) {
-            $query->where('rental_shop', $request->rental_shop);
+        if ($request->filled('shop_name')) {
+            $query->where('rental_shop', $request->shop_name);
         }
 
-        if ($request->filled('merchant_name')) {
-            $query->where('merchant_name', $request->merchant_name);
+        if ($request->filled('shop_type')) {
+            $query->where('rental_shop_type', $request->shop_type);
         }
 
         if ($request->filled('region')) {
@@ -80,7 +80,7 @@ class OrderController
             }
 
             if ($request->order_amount == 2) {
-                $query->where('order_amount', '<', 0);
+                $query->where('order_amount', '<=', 0);
             }
         }
 
@@ -91,14 +91,14 @@ class OrderController
         $byShop = $orders->groupBy('rental_shop')->map(function ($group) {
             $shop = $group->first()->rental_shop;
             $address = $group->first()->rental_shop_address;
-            $agent_share_ratio = $group->first()->agent_share_ratio;
+            $merchant_share_ratio = $group->first()->merchant_share_ratio;
             $revenue = $group->sum('order_amount');
 
 //            $validRows = $group->filter(fn($o) => $o->order_amount > 0 && $o->agent_share_ratio !== null);
 //            $avg_ratio = $validRows->avg('agent_share_ratio');
-            $avg_ratio = $agent_share_ratio;
+            $avg_ratio = $merchant_share_ratio;
 
-            $sharing = ($avg_ratio === null || in_array($avg_ratio, [0, 0.9])) ? 0 : round((0.9 - $avg_ratio) * 100, 1);
+            $sharing = ($avg_ratio === null || in_array($avg_ratio, [0, 0.9])) ? 0 : $avg_ratio*100;
 
             return [
                 'shop' => $shop,
@@ -148,7 +148,7 @@ class OrderController
     public function import(Request $request)
     {
         $request->validate([
-            'import_file' => 'required|file|mimes:xlsx,xls',
+            'import_file' => 'required|file|mimes:xlsx,xls,csv',
         ]);
 
         try {

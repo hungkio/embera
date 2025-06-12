@@ -7,24 +7,30 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Maatwebsite\Excel\Concerns\ToCollection;
 use Maatwebsite\Excel\Concerns\WithCalculatedFormulas;
-use Maatwebsite\Excel\Concerns\WithHeadingRow;
 use PhpOffice\PhpSpreadsheet\Shared\Date as ExcelDate;
 
-class OrderImport implements ToCollection, WithHeadingRow, WithCalculatedFormulas
+class OrderImport implements ToCollection, WithCalculatedFormulas
 {
     public function collection(Collection $rows)
     {
         DB::transaction(function () use ($rows) {
-            foreach ($rows as $row) {
-                // Làm sạch key + value
+            // Lấy heading ở dòng đầu tiên (index = 0)
+            $headingRow = $rows[1]->map(function ($cell) {
+                return strtolower(trim(preg_replace('/\s+/', '_', $cell)));
+            })->toArray();
+
+
+            // Lặp qua các dòng còn lại từ dòng thứ 2 trở đi (index = 1)
+            foreach ($rows->slice(2) as $row) {
+                // Ghép key-value
                 $normalized = [];
-                foreach ($row as $key => $value) {
-                    $cleanKey = strtolower(trim(preg_replace('/\s+/', ' ', $key)));
+                foreach ($headingRow as $i => $key) {
+                    $value = $row[$i] ?? null;
                     $cleanValue = is_string($value) ? trim(preg_replace('/[\x00-\x1F\x7F]+/u', '', $value)) : $value;
-                    $normalized[$cleanKey] = $cleanValue;
+                    $normalized[$key] = $cleanValue;
                 }
 
-                // Helper hàm
+                // Helper
                 $clean = fn($v) => is_string($v) ? trim(preg_replace('/[\x00-\x1F\x7F]+/u', '', $v)) : $v;
                 $money = fn($v) => is_numeric($v) ? $v : (float) preg_replace('/[^0-9.]/', '', $v);
 
@@ -35,6 +41,7 @@ class OrderImport implements ToCollection, WithHeadingRow, WithCalculatedFormula
                 preg_match('/\((.*?)\)/', $shop, $matches);
                 list($region, $city, $area) = isset($matches[1]) ? explode('-', $matches[1]) + [null, null, null] : [null, null, null];
 
+                $merchant_share_ratio = (float) $clean($normalized['merchant_share_ratio'] ?? 0);
                 Order::updateOrCreate(['order_number' => $orderNumber], [
                     'payment_id' => $clean($normalized['payment_id'] ?? null),
                     'payment_failure_reason' => $clean($normalized['payment_failure_reason'] ?? null),
@@ -68,7 +75,7 @@ class OrderImport implements ToCollection, WithHeadingRow, WithCalculatedFormula
                     'agent_share_ratio' => (float) $clean($normalized['agent_share_ratio'] ?? 0),
                     'franchisee_share_ratio' => (float) $clean($normalized['franchisee_share_ratio'] ?? 0),
                     'service_provider_share_ratio' => (float) $clean($normalized['service_provider_share_ratio'] ?? 0),
-                    'merchant_share_ratio' => (float) $clean($normalized['merchant_share_ratio'] ?? 0),
+                    'merchant_share_ratio' => $merchant_share_ratio ? round($merchant_share_ratio/100, 4) : 0,
                     'charging_strategy' => $clean($normalized['charging_strategy'] ?? null),
                     'region' => trim($region),
                     'city' => trim($city),
@@ -84,7 +91,7 @@ class OrderImport implements ToCollection, WithHeadingRow, WithCalculatedFormula
 
         try {
             if (is_numeric($value)) {
-                return ExcelDate::excelToDateTimeObject($value);
+                return \PhpOffice\PhpSpreadsheet\Shared\Date::excelToDateTimeObject($value);
             } else {
                 return \Carbon\Carbon::parse($value);
             }
