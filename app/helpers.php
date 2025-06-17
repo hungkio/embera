@@ -89,16 +89,16 @@ if (!function_exists('currentAdmin')) {
 if (!function_exists('logActivity')) {
     function logActivity($subjectModel, $actionName, $customProperties = [])
     {
-        $activity = activity();
-        $activity->causedBy(auth()->user());
-        if ($subjectModel) {
-            $activity->performedOn($subjectModel);
-        }
-        if (!empty($customProperties)) {
-            $activity->withProperties($customProperties);
-        }
-        $activity->log($actionName);
-        return $activity;
+//        $activity = activity();
+//        $activity->causedBy(auth()->user());
+//        if ($subjectModel) {
+//            $activity->performedOn($subjectModel);
+//        }
+//        if (!empty($customProperties)) {
+//            $activity->withProperties($customProperties);
+//        }
+//        $activity->log($actionName);
+//        return $activity;
     }
 }
 if (!function_exists('site_get_mail_template')) {
