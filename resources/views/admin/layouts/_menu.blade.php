@@ -133,7 +133,29 @@
                         <span> {{ __("Đơn hàng") }} </span>
                     </a>
                 </li>
-{{--                @canany(['contacts.view', 'log-search.view', 'subscribe-email.view', 'mail-settings.view'])--}}
+
+                <li class="nav-item">
+                    <a href="{{ route('admin.contracts.index') }}"
+                       class="nav-link @if(request()->routeIs('admin.contracts*'))active @endif">
+                        <i class="fal fa-file-contract"></i>
+                        <span> {{ __("Hợp Đồng") }} </span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="{{ route('admin.merchants.index') }}"
+                       class="nav-link @if(request()->routeIs('admin.merchants*'))active @endif">
+                        <i class="fal fa-user-tie"></i>
+                        <span>{{ __("Merchant") }}</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="{{ route('admin.shops.index') }}"
+                       class="nav-link @if(request()->routeIs('admin.shops*'))active @endif">
+                        <i class="fal fa-store"></i>
+                        <span>{{ __("Shop") }}</span>
+                    </a>
+                </li>
+                {{--                @canany(['contacts.view', 'log-search.view', 'subscribe-email.view', 'mail-settings.view'])--}}
 {{--                <li class="nav-item-header">--}}
 {{--                    <div class="text-uppercase font-size-xs line-height-xs">{{ __('Khách Hàng') }}</div>--}}
 {{--                    <i class="fal fa-horizontal-rule" title="{{ __('Khách Hàng') }}"></i></li>--}}

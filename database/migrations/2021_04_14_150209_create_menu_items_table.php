@@ -16,6 +16,7 @@ class CreateMenuItemsTable extends Migration
             $table->bigInteger('type')->comment('1: category, 2: page');
             $table->tinyInteger('status')->comment('0: hide, 1: show');
             $table->bigInteger('item_id')->nullable();
+            $table->integer('order_column');
             $table->text('item_content')->nullable();
             $table->integer('order_column')->nullable();
             $table->timestamps();

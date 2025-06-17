@@ -2,6 +2,8 @@
 
 declare(strict_types=1);
 
+use App\Models\Merchant;
+use App\Models\Contract;
 use App\Domain\Acl\Models\Role;
 use App\Domain\Admin\Models\Admin;
 use App\Domain\Banner\Models\Banner;
@@ -187,7 +189,61 @@ Breadcrumbs::for('admin.orders.index', function (BreadcrumbsGenerator $trail) {
 
 Breadcrumbs::for('admin.orders.create', function (BreadcrumbsGenerator $trail) {
     $trail->parent('admin.orders.index');
-    $trail->push(__('Tạo'), route('admin.orders.create'));
+    $trail->push(__('Tạo'), route('admin.contract.create'));
+});
+
+// Home > Contracts
+Breadcrumbs::for('admin.contracts.index', function ($trail) {
+    $trail->parent('admin.dashboard');
+    $trail->push(__('Hợp đồng'), route('admin.contracts.index'), ['icon' => 'fal fa-file-contract']);
+});
+
+// Home > Contracts > Create
+Breadcrumbs::for('admin.contracts.create', function (BreadcrumbsGenerator $trail) {
+    $trail->parent('admin.contracts.index');
+    $trail->push(__('Tạo'), route('admin.contracts.create'));
+});
+
+// Home > Contracts > Edit
+Breadcrumbs::for('admin.contracts.edit', function (BreadcrumbsGenerator $trail, Contract $contract) {
+    $trail->parent('admin.contracts.index');
+    $trail->push(__('Chỉnh sửa'), route('admin.contracts.edit', $contract));
+});
+
+// Home > Merchants
+Breadcrumbs::for('admin.merchants.index', function (BreadcrumbsGenerator $trail) {
+    $trail->parent('admin.dashboard');
+    $trail->push(__('Merchant'), route('admin.merchants.index'), ['icon' => 'fal fa-user-tie']);
+});
+
+// Home > Merchants > Create
+Breadcrumbs::for('admin.merchants.create', function (BreadcrumbsGenerator $trail) {
+    $trail->parent('admin.merchants.index');
+    $trail->push(__('Tạo'), route('admin.merchants.create'));
+});
+
+// Home > Merchants > Edit
+Breadcrumbs::for('admin.merchants.edit', function (BreadcrumbsGenerator $trail, Merchant $merchant) {
+    $trail->parent('admin.merchants.index');
+    $trail->push(__('Chỉnh sửa'), route('admin.merchants.edit', $merchant));
+});
+
+// Home > Shops
+Breadcrumbs::for('admin.shops.index', function (BreadcrumbsGenerator $trail) {
+    $trail->parent('admin.dashboard');
+    $trail->push(__('Cửa hàng'), route('admin.shops.index'), ['icon' => 'fal fa-store-alt']);
+});
+
+// Home > Shops > Create
+Breadcrumbs::for('admin.shops.create', function (BreadcrumbsGenerator $trail) {
+    $trail->parent('admin.shops.index');
+    $trail->push(__('Tạo'), route('admin.shops.create'));
+});
+
+// Home > Shops > Edit
+Breadcrumbs::for('admin.shops.edit', function (BreadcrumbsGenerator $trail, \App\Models\Shop $shop) {
+    $trail->parent('admin.shops.index');
+    $trail->push(__('Chỉnh sửa'), route('admin.shops.edit', $shop));
 });
 
 // Home > Admins > [order] > Edit
