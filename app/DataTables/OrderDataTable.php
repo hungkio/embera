@@ -79,13 +79,13 @@ class OrderDataTable extends BaseDatable
             }
         }
 
-        if ($filters['region']) {
+        if (@$filters['region']) {
             $query->where('region', $filters['region']);
         }
-        if ($filters['city']) {
+        if (@$filters['city']) {
             $query->where('city', $filters['city']);
         }
-        if ($filters['area']) {
+        if (@$filters['area']) {
             $query->where('area', $filters['area']);
         }
 
