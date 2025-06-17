@@ -35,13 +35,22 @@
                                 required
                             />
 
-                            <x-select-field
-                                name="status"
-                                :label="__('Trạng thái')"
-                                :options="['pending' => 'Chờ duyệt', 'active' => 'Hoạt động', 'disabled' => 'Hủy']"
-                                :value="$contract->status"
-                                required
-                            />
+                            <div class="form-group row">
+                                <label for="status" class="col-lg-2 col-form-label text-lg-right">
+                                    {{ __('Trạng thái') }}
+                                </label>
+                                <div class="col-lg-9">
+                                    <select name="status" id="status" class="form-control" required>
+                                        <option value="">-- Trạng thái --</option>
+                                        <option value="đã_ký" {{ old('status', $contract->status ?? '') === 'đã_ký' ? 'selected' : '' }}>Đã ký</option>
+                                        <option value="chưa_ký" {{ old('status', $contract->status ?? '') === 'chưa_ký' ? 'selected' : '' }}>Chưa ký</option>
+                                        <option value="chỉ_có_BBNT" {{ old('status', $contract->status ?? '') === 'chỉ_có_BBNT' ? 'selected' : '' }}>Chỉ có BBNT</option>
+                                    </select>
+                                    @error('status')
+                                    <span class="form-text text-danger">{{ $message }}</span>
+                                    @enderror
+                                </div>
+                            </div>
 
                             <x-text-field
                                 name="expired_time"
@@ -86,11 +95,26 @@
                                 :value="$contract->location"
                             />
 
-                            <x-textarea-field
-                                name="note"
-                                :label="__('Ghi chú')"
-                                :value="$contract->note"
-                            />
+                            <div class="form-group row">
+                                <label for="shop_id" class="col-lg-2 col-form-label text-lg-right">
+                                    {{ __('Cửa hàng') }}
+                                </label>
+                                <div class="col-lg-9">
+                                    <select name="shop_id" id="shop_id" class="form-control" required>
+                                        <option value="">-- Chọn cửa hàng --</option>
+                                        @foreach($shops as $shop)
+                                        <option value="{{ $shop->id }}"
+                                                {{ old('shop_id', $contract->shop_id ?? null) == $shop->id ? 'selected' : '' }}>
+                                        {{ $shop->shop_name }} ({{ $shop->merchant->username ?? 'Merchant không tồn tại' }})
+                                        </option>
+                                        </option>
+                                        @endforeach
+                                    </select>
+                                    @error('shop_id')
+                                    <span class="form-text text-danger">{{ $message }}</span>
+                                    @enderror
+                                </div>
+                            </div>
 
                             <div class="form-group row">
                                 <label class="col-lg-2 text-lg-right col-form-label">

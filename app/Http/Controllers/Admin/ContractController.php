@@ -8,8 +8,6 @@ use App\DataTables\ContractDataTable;
 use App\Models\Contract;
 use App\Http\Requests\Admin\ContractStoreRequest;
 use App\Http\Requests\Admin\ContractUpdateRequest;
-use App\Imports\ContractImport;
-use App\Exports\ContractExportHandler;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 use Carbon\Carbon;
@@ -87,7 +85,8 @@ class ContractController
 
     public function create(): View
     {
-        return view('admin.contracts.create');
+        $shops = \App\Models\Shop::with('merchant')->get(); // Lấy danh sách shop (có kèm merchant)
+        return view('admin.contracts.create', compact('shops'));
     }
 
     public function store(ContractStoreRequest $request)
@@ -96,10 +95,12 @@ class ContractController
 
         if ($request->hasFile('upload')) {
             $file = $request->file('upload');
-            $filename = time().'_'.$file->getClientOriginalName();
+            $filename = time() . '_' . $file->getClientOriginalName();
             $file->move(public_path('uploads/contracts'), $filename);
             $data['upload'] = $filename;
         }
+
+        $data['expired_time'] = $request->input('expired_time', null); // Store as text
 
         Contract::create($data);
 
@@ -108,21 +109,24 @@ class ContractController
 
     public function edit(Contract $contract): View
     {
-        return view('admin.contracts.edit', compact('contract'));
+        $shops = \App\Models\Shop::with('merchant')->get();
+        return view('admin.contracts.edit', compact('contract', 'shops'));
     }
 
     public function update(ContractUpdateRequest $request, Contract $contract)
     {
-        $contract->update($request->validated());
+        $data = $request->validated();
+        $data['expired_time'] = $request->input('expired_time', $contract->expired_time); // Store as text
 
         if ($request->hasFile('upload')) {
             if ($contract->upload) {
                 Storage::delete($contract->upload);
             }
             $path = $request->file('upload')->store('contracts');
-            $contract->upload = $path;
-            $contract->save();
+            $data['upload'] = $path;
         }
+
+        $contract->update($data);
 
         flash()->success(__('Hợp đồng ":model" đã được cập nhật!', ['model' => $contract->contract_number]));
         return redirect()->route('admin.contracts.index');
@@ -202,5 +206,11 @@ class ContractController
             'status' => true,
             'message' => __('Đã cập nhật trạng thái cho :count hợp đồng.', ['count' => $contracts->count()]),
         ]);
+    }
+
+    protected function parseExpiredTime($input)
+    {
+        // No parsing needed since we're storing the raw text
+        return $input;
     }
 }

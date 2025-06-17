@@ -21,6 +21,9 @@ use App\Http\Controllers\Admin\Auth\RegisterController;
 use App\Http\Controllers\Admin\Auth\ResetPasswordController;
 use App\Http\Controllers\Admin\Auth\VerificationController;
 use App\Http\Controllers\Admin\BannerController;
+use App\Http\Controllers\Admin\ContractController;
+use App\Http\Controllers\Admin\MerchantController;
+use App\Http\Controllers\Admin\ShopController;
 use App\Http\Controllers\Admin\SubscribeGroupController;
 use App\Http\Controllers\Admin\CommentController;
 use App\Http\Controllers\Admin\ContactController;
@@ -157,6 +160,49 @@ Route::prefix('admin')->name('admin.')->group(function () {
             Route::post('/orders/{banner}/status', [OrderController::class, 'changeStatus'])->name('orders.change.status');
             Route::post('/orders/bulk-status', [OrderController::class, 'bulkStatus'])->name('orders.bulk.status');
             Route::post('/orders/import', [OrderController::class, 'import'])->name('orders.import');
+
+            // contracts
+            Route::get('/contracts', [ContractController::class, 'index'])->name('contracts.index');
+            Route::get('/contracts/create', [ContractController::class, 'create'])->name('contracts.create');
+            Route::post('/contracts', [ContractController::class, 'store'])->name('contracts.store');
+            Route::get('/contracts/{contract}/edit', [ContractController::class, 'edit'])->name('contracts.edit');
+            Route::put('/contracts/{contract}', [ContractController::class, 'update'])->name('contracts.update');
+            Route::delete('/contracts/{contract}', [ContractController::class, 'destroy'])->name('contracts.destroy');
+            Route::post('/contracts/bulk-delete', [ContractController::class, 'bulkDelete'])->name('contracts.bulk-delete');
+            Route::post('/contracts/{contract}/status', [ContractController::class, 'changeStatus'])->name('contracts.change.status');
+            Route::post('/contracts/bulk-status', [ContractController::class, 'bulkStatus'])->name('contracts.bulk.status');
+            Route::post('/contracts/import', [ContractController::class, 'import'])->name('contracts.import');
+            Route::get('/contracts/export', [ContractController::class, 'export'])->name('contracts.export');
+
+            // merchants
+            Route::get('/merchants', [MerchantController::class, 'index'])->name('merchants.index');
+            Route::get('/merchants/create', [MerchantController::class, 'create'])->name('merchants.create');
+            Route::post('/merchants', [MerchantController::class, 'store'])->name('merchants.store');
+            Route::get('/merchants/{merchant}/edit', [MerchantController::class, 'edit'])->name('merchants.edit');
+            Route::put('/merchants/{merchant}', [MerchantController::class, 'update'])->name('merchants.update');
+            Route::delete('/merchants/{merchant}', [MerchantController::class, 'destroy'])->name('merchants.destroy');
+            Route::post('/merchants/bulk-delete', [MerchantController::class, 'bulkDelete'])->name('merchants.bulk-delete');
+            Route::post('/merchants/{merchant}/status', [MerchantController::class, 'changeStatus'])->name('merchants.change.status');
+            Route::post('/merchants/bulk-status', [MerchantController::class, 'bulkStatus'])->name('merchants.bulk-status');
+            Route::post('/merchants/import', [MerchantController::class, 'import'])->name('merchants.import');
+            Route::get('/merchants/export', [MerchantController::class, 'export'])->name('merchants.export');
+
+            // AJAX routes for merchants and shops
+            Route::get('ajax/merchants', [MerchantController::class, 'search'])->name('admin.ajax.merchants');
+            Route::get('ajax/shops', [ShopController::class, 'search'])->name('admin.ajax.shops');
+
+            // shops
+            Route::get('/shops', [ShopController::class, 'index'])->name('shops.index');
+            Route::get('/shops/create', [ShopController::class, 'create'])->name('shops.create');
+            Route::post('/shops', [ShopController::class, 'store'])->name('shops.store');
+            Route::get('/shops/{shop}/edit', [ShopController::class, 'edit'])->name('shops.edit');
+            Route::put('/shops/{shop}', [ShopController::class, 'update'])->name('shops.update');
+            Route::delete('/shops/{shop}', [ShopController::class, 'destroy'])->name('shops.destroy');
+            Route::post('/shops/bulk-delete', [ShopController::class, 'bulkDelete'])->name('shops.bulk-delete');
+            Route::post('/shops/{shop}/status', [ShopController::class, 'changeStatus'])->name('shops.change.status');
+            Route::post('/shops/bulk-status', [ShopController::class, 'bulkStatus'])->name('shops.bulk-status');
+            Route::post('/shops/import', [ShopController::class, 'import'])->name('shops.import');
+            Route::get('/shops/export', [ShopController::class, 'export'])->name('shops.export');
 
             // BANNER
             Route::group(['middleware' => ['banner']], function () {

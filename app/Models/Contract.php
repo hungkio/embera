@@ -10,7 +10,6 @@ class Contract extends Model
     protected $casts = [
         'sign_date' => 'date',
         'expired_date' => 'date',
-        'expired_time' => 'integer',
         'title' => 'string',
         'is_deleted' => 'boolean', // Cast is_deleted to boolean
     ];
@@ -23,6 +22,7 @@ class Contract extends Model
         'bank_info',
         'email',
         'phone',
+        'shop_id',
         'admin_id',
         'title',
         'ceo_sign',
@@ -30,8 +30,13 @@ class Contract extends Model
         'note',
         'upload',
         'download_count',
-        'is_deleted', // Add to fillable if you want to set it manually
+        'is_deleted',
     ];
+
+    public function shop()
+    {
+        return $this->belongsTo(Shop::class);
+    }
 
     // Custom scope to filter non-deleted records
     public function scopeActive($query)
