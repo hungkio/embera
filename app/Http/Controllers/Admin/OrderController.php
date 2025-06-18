@@ -19,8 +19,6 @@ class OrderController
 
     public function index(OrderDataTable $dataTable, Request $request)
     {
-        $this->authorize('view', Order::class);
-
         $dateRange = $request->get('date_range');
         if ($dateRange && str_contains($dateRange, ' - ')) {
             list($date_from, $date_to) = explode(' - ', $dateRange);
