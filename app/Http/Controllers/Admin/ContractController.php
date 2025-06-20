@@ -8,11 +8,14 @@ use App\DataTables\ContractDataTable;
 use App\Models\Contract;
 use App\Http\Requests\Admin\ContractStoreRequest;
 use App\Http\Requests\Admin\ContractUpdateRequest;
+use App\Models\Shop;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Storage;
 use Maatwebsite\Excel\Facades\Excel;
+use App\Services\ContractEmailService;
+use Illuminate\Support\Facades\DB;
 
 class ContractController
 {
@@ -85,38 +88,62 @@ class ContractController
 
     public function create(): View
     {
-        $shops = \App\Models\Shop::with('merchant')->get(); // Lấy danh sách shop (có kèm merchant)
-        return view('admin.contracts.create', compact('shops'));
+
+        $shops = Shop::with('merchant')->get();
+        return view('admin.contracts.create', compact( 'shops'));
     }
 
     public function store(ContractStoreRequest $request)
     {
         $data = $request->validated();
 
+        // Lấy admin_id từ người dùng hiện tại
+        $adminId = auth()->id();
+
+        // Tính expired_time tự động
+        $signDate = Carbon::parse($data['sign_date']);
+        $expiredDate = Carbon::parse($data['expired_date']);
+        $data['expired_time'] = $signDate->diffInMonths($expiredDate) . ' tháng';
+
+        // Xử lý upload file
+        $uploadPath = null;
         if ($request->hasFile('upload')) {
             $file = $request->file('upload');
             $filename = time() . '_' . $file->getClientOriginalName();
             $file->move(public_path('uploads/contracts'), $filename);
-            $data['upload'] = $filename;
+            $uploadPath = $filename;
         }
 
-        $data['expired_time'] = $request->input('expired_time', null); // Store as text
+        // Tạo bản ghi mới với admin_id
+        $data['admin_id'] = $adminId;
+        $data['contract_number'] = $this->generateUniqueContractNumber();
+        $data['status'] = $data['status'] ?? 'pending';
+        $data['created_at'] = now();
+        $data['updated_at'] = now();
 
-        Contract::create($data);
+        if ($uploadPath) {
+            $data['upload'] = $uploadPath;
+        }
 
-        return redirect()->route('admin.contracts.index')->with('success', 'Thêm hợp đồng thành công');
+            Contract::create($data);
+
+        return redirect()->route('admin.contracts.index')->with('success', 'Hợp đồng đã được lưu thành công');
     }
 
     public function edit(Contract $contract): View
     {
-        $shops = \App\Models\Shop::with('merchant')->get();
+        $shops = Shop::with('merchant')->get();
         return view('admin.contracts.edit', compact('contract', 'shops'));
     }
 
     public function update(ContractUpdateRequest $request, Contract $contract)
     {
         $data = $request->validated();
-        $data['expired_time'] = $request->input('expired_time', $contract->expired_time); // Store as text
+
+        // Tự động tính expired_time theo số tháng
+        $signDate = Carbon::parse($data['sign_date']);
+        $expiredDate = Carbon::parse($data['expired_date']);
+        $data['expired_time'] = $signDate->diffInMonths($expiredDate) . ' tháng';
 
         if ($request->hasFile('upload')) {
             if ($contract->upload) {
@@ -210,7 +237,107 @@ class ContractController
 
     protected function parseExpiredTime($input)
     {
-        // No parsing needed since we're storing the raw text
         return $input;
+    }
+
+    public function sendEmail($id, ContractEmailService $emailService)
+    {
+        $contract = Contract::with('shop.merchant')->findOrFail($id);
+
+        if (!$contract->shop || !$contract->shop->merchant) {
+            return back()->with('error', 'Không thể gửi email vì thiếu thông tin.');
+        }
+
+        $emailService->sendContract($contract);
+
+        return redirect()->back()->with('success', 'Đã gửi email cho: ' . $contract->shop->merchant->email);
+    }
+
+    private function generateUniqueContractNumber(): string
+    {
+        $currentYear = now()->year;
+
+        $maxNumber = Contract::whereYear('created_at', $currentYear)
+            ->max(DB::raw('CAST(contract_number AS UNSIGNED)'));
+
+        $nextNumber = $maxNumber ? $maxNumber + 1 : 1;
+
+        return (string)$nextNumber;
+    }
+
+    public function printContract($id, ContractEmailService $emailService)
+    {
+        $contract = Contract::with('shop.merchant')->findOrFail($id);
+
+        if (!$contract->shop || !$contract->shop->merchant) {
+            return redirect()->back()->with('error', 'Không thể in vì thiếu thông tin cửa hàng hoặc thương nhân.');
+        }
+
+        $data = $emailService->prepareData($contract);
+
+        // Tạo file Word từ template
+        $templatePath = storage_path('app/templates/hd_xac_nhan_doanh_thu.docx');
+        $processor = new TemplateProcessor($templatePath);
+
+        foreach ($data as $key => $value) {
+            $processor->setValue($key, $value);
+        }
+
+        $fileName = 'Hop_Dong_' . $contract->contract_number . '_' . now()->format('Ymd_His') . '.docx';
+        $tempPath = storage_path('app/temp/' . $fileName);
+        $processor->saveAs($tempPath);
+
+        // Tải file về
+        return response()->download($tempPath, $fileName)->deleteFileAfterSend(true);
+    }
+
+    public function printMultipleContracts(Request $request, ContractEmailService $emailService)
+    {
+        $ids = explode(',', $request->query('ids'));
+        $contracts = Contract::with('shop.merchant')->whereIn('id', $ids)->get();
+
+        if ($contracts->isEmpty()) {
+            return redirect()->back()->with('error', 'Không có hợp đồng nào được chọn.');
+        }
+
+        $zip = new \ZipArchive();
+        $zipFileName = 'Hop_Dong_Multiple_' . now()->format('Ymd_His') . '.zip';
+        $tempZipPath = storage_path('app/temp/' . $zipFileName);
+
+        if ($zip->open($tempZipPath, \ZipArchive::CREATE) === TRUE) {
+            foreach ($contracts as $contract) {
+                if (!$contract->shop || !$contract->shop->merchant) {
+                    continue; // Bỏ qua nếu thiếu thông tin
+                }
+
+                $data = $emailService->prepareData($contract);
+                $templatePath = storage_path('app/templates/hd_xac_nhan_doanh_thu.docx');
+                $processor = new TemplateProcessor($templatePath);
+
+                foreach ($data as $key => $value) {
+                    $processor->setValue($key, $value);
+                }
+
+                $fileName = 'Hop_Dong_' . $contract->contract_number . '_' . now()->format('Ymd_His') . '.docx';
+                $tempPath = storage_path('app/temp/' . $fileName);
+                $processor->saveAs($tempPath);
+                $zip->addFile($tempPath, $fileName);
+            }
+
+            $zip->close();
+
+            // Xóa các file tạm
+            foreach ($contracts as $contract) {
+                $fileName = 'Hop_Dong_' . $contract->contract_number . '_' . now()->format('Ymd_His') . '.docx';
+                $tempPath = storage_path('app/temp/' . $fileName);
+                if (file_exists($tempPath)) {
+                    unlink($tempPath);
+                }
+            }
+
+            return response()->download($tempZipPath, $zipFileName)->deleteFileAfterSend(true);
+        }
+
+        return redirect()->back()->with('error', 'Lỗi khi tạo file ZIP.');
     }
 }

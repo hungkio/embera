@@ -32,11 +32,20 @@ class ContractDataTable extends BaseDatable
             ->editColumn('phone', fn(Contract $c) => $c->phone)
             ->editColumn('download_count', fn(Contract $c) => $c->download_count . ' lượt')
             ->editColumn('bank_info', fn(Contract $c) => $c->bank_info)
+            ->editColumn('bank_account_number', fn(Contract $c) => $c->bank_account_number ?? '-')
+            ->editColumn('bank_account_name', fn(Contract $c) => $c->bank_account_name ?? '-')
+            ->filterColumn('bank_account_number', fn($query, $keyword) => $query->where('bank_account_number', 'like', "%$keyword%"))
+            ->filterColumn('bank_account_name', fn($query, $keyword) => $query->where('bank_account_name', 'like', "%$keyword%"))
             ->editColumn('title', fn(Contract $c) => $c->title ?? '-')
             ->editColumn('ceo_sign', fn(Contract $c) => $c->ceo_sign)
             ->editColumn('location', fn(Contract $c) => $c->location)
             ->editColumn('note', fn(Contract $c) => $c->note)
-            ->editColumn('expired_time', fn(Contract $c) => $c->expired_time ?? '-') // Display as text
+            ->editColumn('expired_time', function (Contract $c) {
+                if ($c->sign_date && $c->expired_date) {
+                    return $c->sign_date->diffInMonths($c->expired_date) . ' tháng';
+                }
+                return '-';
+            })
             ->editColumn('created_at', fn(Contract $c) => optional($c->created_at)->format('d/m/Y H:i'))
             ->editColumn('updated_at', fn(Contract $c) => optional($c->updated_at)->format('d/m/Y H:i'))
             ->filterColumn('contract_number', fn($query, $keyword) => $query->where('contract_number', 'like', "%$keyword%"))
@@ -96,16 +105,18 @@ class ContractDataTable extends BaseDatable
             Column::make('contract_number')->title('Mã hợp đồng'),
             Column::make('sign_date')->title('Ngày ký'),
             Column::make('expired_date')->title('Ngày hết hạn'),
+            Column::make('expired_time')->title('Thời hạn'),
             Column::make('status')->title('Trạng thái'),
             Column::make('email')->title('Email'),
             Column::make('phone')->title('SĐT'),
             Column::make('title')->title('Tiêu đề'),
             Column::make('download_count')->title('Lượt tải'),
             Column::make('bank_info')->title('Ngân hàng'),
+            Column::make('bank_account_number')->title('STK'),
+            Column::make('bank_account_name')->title('Chủ tài khoản'),
             Column::make('ceo_sign')->title('Giám đốc ký'),
             Column::make('location')->title('Địa điểm'),
             Column::make('note')->title('Ghi chú'),
-            Column::make('expired_time')->title('Thời hạn'), // Updated to text
             Column::make('created_at')->title('Tạo lúc'),
             Column::make('updated_at')->title('Cập nhật lúc'),
             Column::computed('action')
@@ -128,11 +139,11 @@ class ContractDataTable extends BaseDatable
     protected function getTableButton(): array
     {
         return [
-            Button::make('create')->addClass('btn btn-success d-none')->text('<i class="fal fa-plus-circle mr-2"></i>'.__('Tạo mới')),
-            Button::make('bulkDelete')->addClass('btn bg-danger d-none')->text('<i class="fal fa-trash-alt mr-2"></i>'.__('Xóa')),
-            Button::make('export')->addClass('btn bg-blue')->text('<i class="fal fa-download mr-2"></i>'.__('Xuất')),
-            Button::make('print')->addClass('btn bg-blue')->text('<i class="fal fa-print mr-2"></i>'.__('In')),
-            Button::make('reset')->addClass('btn bg-blue')->text('<i class="fal fa-undo mr-2"></i>'.__('Thiết lập lại')),
+            Button::make('create')->addClass('btn btn-success d-none')->text('<i class="fal fa-plus-circle mr-2"></i>' . __('Tạo mới')),
+            Button::make('bulkDelete')->addClass('btn bg-danger d-none')->text('<i class="fal fa-trash-alt mr-2"></i>' . __('Xóa')),
+            Button::make('export')->addClass('btn bg-blue')->text('<i class="fal fa-download mr-2"></i>' . __('Xuất')),
+            Button::make('print')->addClass('btn bg-blue')->text('<i class="fal fa-print mr-2"></i>' . __('In'))->action('function() { printContracts(); }'),
+            Button::make('reset')->addClass('btn bg-blue')->text('<i class="fal fa-undo mr-2"></i>' . __('Thiết lập lại')),
         ];
     }
 

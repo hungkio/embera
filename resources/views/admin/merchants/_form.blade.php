@@ -13,9 +13,12 @@
                             </legend>
 
                             <div class="form-group row">
-                                <label class="col-lg-2 col-form-label text-lg-right">Tên đăng nhập</label>
+                                <label class="col-lg-2 col-form-label text-lg-right">
+                                    <span class="text-danger">*</span> Tên đăng nhập
+                                </label>
                                 <div class="col-lg-9">
-                                    <input type="text" name="username" class="form-control" value="{{ $merchant->username ?? old('username') }}" required>
+                                    <input type="text" name="username" class="form-control"
+                                           value="{{ $merchant->username ?? old('username') }}">
                                     @error('username')
                                     <span class="form-text text-danger">{{ $message }}</span>
                                     @enderror
@@ -23,12 +26,20 @@
                             </div>
 
                             <div class="form-group row">
-                                <label class="col-lg-2 col-form-label text-lg-right">Mật khẩu</label>
+                                <label class="col-lg-2 col-form-label text-lg-right">
+                                    <span class="text-danger">*</span> Mật khẩu
+                                </label>
                                 <div class="col-lg-9">
-                                    <input type="text" name="password" class="form-control" value="{{ old('password') ?? '' }}" placeholder="Để trống để giữ nguyên">
+                                    <input type="text" name="password" class="form-control"
+                                           value="{{ old('password') ?? '' }}"
+                                           placeholder="">
+
                                     @if (session()->has('plain_password'))
-                                    <small class="form-text text-success">Mật khẩu vừa tạo: {{ session()->get('plain_password') }}</small>
+                                    <small class="form-text text-success">
+                                        Mật khẩu vừa tạo: {{ session()->get('plain_password') }}
+                                    </small>
                                     @endif
+
                                     @error('password')
                                     <span class="form-text text-danger">{{ $message }}</span>
                                     @enderror
@@ -40,7 +51,6 @@
                                 type="email"
                                 :label="__('Email')"
                                 :value="$merchant->email ?? old('email')"
-                                required
                             />
 
                             <x-text-field
@@ -49,17 +59,22 @@
                                 :value="$merchant->phone ?? old('phone')"
                             />
 
-                            <x-text-field
-                                name="admin_id"
-                                :label="__('Admin ID')"
-                                :value="$merchant->admin_id ?? old('admin_id')"
-                            />
-
-                            <x-text-field
-                                name="status"
-                                :label="__('Trạng thái')"
-                                :value="$merchant->status ?? old('status')"
-                            />
+                            <div class="form-group row">
+                                <label class="col-lg-2 col-form-label text-lg-right">{{ __('Admin ID') }}</label>
+                                <div class="col-lg-9">
+                                    <select name="admin_id" id="admin_id" class="form-control">
+                                        <option value="" {{ old('admin_id') === '' || !$merchant->admin_id ? 'selected' : '' }}>
+                                        {{ __('Chọn Admin') }}
+                                        </option>
+                                        @foreach ($employees as $employee)
+                                        <option value="{{ $employee->id }}"
+                                                {{ ($merchant->admin_id ?? old('admin_id')) == $employee->id ? 'selected' : '' }}>
+                                            {{ $employee->first_name }} {{ $employee->last_name }} (ID: {{ $employee->id }})
+                                        </option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                            </div>
 
                         </fieldset>
                     </x-card>

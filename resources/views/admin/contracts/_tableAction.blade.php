@@ -15,4 +15,13 @@
         <i class="fal fa-trash-alt"></i>
     </a>
     @endcan
+
+    @can('contracts.send')
+    <a href="{{ route('admin.contracts.sendEmail', ['id' => $id]) }}"
+       class="item-action btn-info"
+       title="Gửi email hợp đồng"
+       onclick="return confirm('Bạn có chắc muốn gửi email hợp đồng này không?')">
+        <i class="fal fa-envelope"></i>
+    </a>
+    @endcan
 </div>

@@ -53,18 +53,18 @@ class AppServiceProvider extends ServiceProvider
 
 //        URL::forceScheme('https');
 
-        $this->setupMailConfig();
+//        $this->setupMailConfig();
     }
 
     public function setupMailConfig()
     {
-        $this->app['config']->set('mail.driver', 'smtp');
-        $this->app['config']->set('mail.from.address', setting('mail_from_address'));
-        $this->app['config']->set('mail.from.name', setting('mail_from_name'));
-        $this->app['config']->set('mail.host', setting('mail_host'));
-        $this->app['config']->set('mail.port', setting('mail_port'));
-        $this->app['config']->set('mail.username', setting('mail_username'));
-        $this->app['config']->set('mail.password', setting('mail_password'));
-        $this->app['config']->set('mail.encryption', setting('mail_encryption'));
+//        $this->app['config']->set('mail.driver', 'smtp');
+//        $this->app['config']->set('mail.from.address', setting('mail_from_address'));
+//        $this->app['config']->set('mail.from.name', setting('mail_from_name'));
+//        $this->app['config']->set('mail.host', setting('mail_host'));
+//        $this->app['config']->set('mail.port', setting('mail_port'));
+//        $this->app['config']->set('mail.username', setting('mail_username'));
+//        $this->app['config']->set('mail.password', setting('mail_password'));
+//        $this->app['config']->set('mail.encryption', setting('mail_encryption'));
     }
 }

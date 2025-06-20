@@ -1,6 +1,6 @@
 @extends('admin.layouts.master')
 
-@section('title', __('Tạo Shop'))
+@section('title', __('Tạo Merchant'))
 
 @section('page-header')
 <x-page-header>
@@ -10,13 +10,12 @@
 
 @section('page-content')
 @include('admin.merchants._form', [
-'url' =>  route('admin.merchants.store'),
-'contract' => new \App\Models\Merchant,
-
+'url' => route('admin.merchants.store'),
+'merchant' => new \App\Models\Merchant,
+'employees' => $employees,
 ])
-
 @stop
 
 @push('js')
-{!! JsValidator::formRequest('App\Http\Requests\Admin\MerchantStoreRequest', 'form'); !!}
+{!! JsValidator::formRequest('App\Http\Requests\Admin\MerchantStoreRequest', '#form'); !!}
 @endpush

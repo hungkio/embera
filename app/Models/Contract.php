@@ -20,6 +20,8 @@ class Contract extends Model
         'status',
         'expired_time',
         'bank_info',
+        'bank_account_number',
+        'bank_account_name',
         'email',
         'phone',
         'shop_id',

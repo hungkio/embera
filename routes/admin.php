@@ -180,7 +180,11 @@ Route::prefix('admin')->name('admin.')->group(function () {
             Route::post('/contracts/bulk-status', [ContractController::class, 'bulkStatus'])->name('contracts.bulk.status');
             Route::post('/contracts/import', [ContractController::class, 'import'])->name('contracts.import');
             Route::get('/contracts/export', [ContractController::class, 'export'])->name('contracts.export');
+            Route::get('/contracts/{id}/send-email', [ContractController::class, 'sendEmail'])->name('contracts.sendEmail');
 
+            Route::get('/contracts/{contract}/print', [ContractController::class, 'printContract'])->name('contracts.print');
+            Route::get('/contracts/print-multiple', [ContractController::class, 'printMultipleContracts'])->name('contracts.print.multiple');
+            Route::get('/contracts/{id}/print', [ContractController::class, 'printContract'])->name('contracts.print');
             // merchants
             Route::get('/merchants', [MerchantController::class, 'index'])->name('merchants.index');
             Route::get('/merchants/create', [MerchantController::class, 'create'])->name('merchants.create');

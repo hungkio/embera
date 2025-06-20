@@ -3,9 +3,11 @@
 namespace App\Http\Controllers\Admin;
 
 use App\DataTables\MerchantDataTable;
+use App\Domain\Admin\Models\Admin;
 use App\Http\Requests\Admin\MerchantStoreRequest;
 use App\Http\Requests\Admin\MerchantUpdateRequest;
 use App\Models\Merchant;
+use Illuminate\Contracts\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 use Illuminate\Support\Facades\Storage;
@@ -20,9 +22,13 @@ class MerchantController
 
     public function create(): View
     {
+        $employees = Admin::whereHas('roles', function (Builder $subQuery) {
+            $subQuery->whereIn(config('permission.table_names.roles') . '.name', ['BD']);
+        })->get();
         return view('admin.merchants.create', [
             'url' => route('admin.merchants.store'),
             'merchant' => new Merchant(),
+            'employees' => $employees,
         ]);
     }
 
@@ -42,12 +48,16 @@ class MerchantController
         session()->forget('temp_password');
 
         return redirect()->route('admin.merchants.index')->with('success', 'Thêm Merchant thành công')
-            ->with('plain_password', $plainPassword); // Pass plain password to view for display
+            ->with('plain_password', $plainPassword);
     }
 
     public function edit(Merchant $merchant): View
     {
-        return view('admin.merchants.edit', compact('merchant'));
+        $employees = Admin::whereHas('roles', function (Builder $subQuery) {
+            $subQuery->whereIn(config('permission.table_names.roles') . '.name', ['BD']);
+        })->get();
+
+        return view('admin.merchants.edit', compact('merchant', 'employees'));
     }
 
     public function update(MerchantUpdateRequest $request, Merchant $merchant)

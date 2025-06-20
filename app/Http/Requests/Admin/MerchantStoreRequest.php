@@ -18,7 +18,7 @@ class MerchantStoreRequest extends FormRequest
             'email' => 'required|email|unique:merchants,email',
             'phone' => 'nullable|string',
             'password' => 'required|string|min:6',
-            'admin_id' => 'nullable|exists:admins,id',
+            'admin_id' => 'required|exists:admins,id',
             'upload' => 'nullable|file|mimes:pdf|max:2048',
         ];
     }
