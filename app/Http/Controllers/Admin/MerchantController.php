@@ -34,21 +34,10 @@ class MerchantController
 
     public function store(MerchantStoreRequest $request)
     {
-        $data = $request->validated();
-        if ($request->hasFile('upload')) {
-            $file = $request->file('upload');
-            $filename = time() . '_' . $file->getClientOriginalName();
-            $file->move(public_path('uploads/merchants'), $filename);
-            $data['upload'] = $filename;
-        }
-        $merchant = Merchant::create($data);
+        $data = $request->all();
+        Merchant::create($data);
 
-        // Clear the temporary password from session after use
-        $plainPassword = session()->get('temp_password');
-        session()->forget('temp_password');
-
-        return redirect()->route('admin.merchants.index')->with('success', 'Thêm Merchant thành công')
-            ->with('plain_password', $plainPassword);
+        return redirect()->route('admin.merchants.index')->with('success', 'Thêm Merchant thành công');
     }
 
     public function edit(Merchant $merchant): View
@@ -62,16 +51,7 @@ class MerchantController
 
     public function update(MerchantUpdateRequest $request, Merchant $merchant)
     {
-        $data = $request->validated();
-        if ($request->hasFile('upload')) {
-            if ($merchant->upload) {
-                Storage::delete(public_path('uploads/merchants/' . $merchant->upload));
-            }
-            $file = $request->file('upload');
-            $filename = time() . '_' . $file->getClientOriginalName();
-            $file->move(public_path('uploads/merchants'), $filename);
-            $data['upload'] = $filename;
-        }
+        $data = $request->all();
         $merchant->update($data);
 
         flash()->success(__('Merchant ":model" đã được cập nhật!', ['model' => $merchant->username]));
@@ -80,9 +60,6 @@ class MerchantController
 
     public function destroy(Merchant $merchant)
     {
-        if ($merchant->upload) {
-            Storage::delete(public_path('uploads/merchants/' . $merchant->upload));
-        }
         $merchant->update(['is_deleted' => 1]);
 
         return response()->json([
@@ -110,45 +87,4 @@ class MerchantController
             'message' => __('Đã xóa :count Merchant.', ['count' => $deleted]),
         ]);
     }
-
-    public function changeStatus(Merchant $merchant, Request $request)
-    {
-        $merchant->update(['status' => $request->status]);
-
-        return response()->json([
-            'status' => true,
-            'message' => __('Trạng thái đã được cập nhật.'),
-        ]);
-    }
-
-    public function bulkStatus(Request $request)
-    {
-        $ids = $request->input('id', []);
-        $status = $request->input('status');
-
-        $merchants = Merchant::whereIn('id', $ids)->get();
-        foreach ($merchants as $merchant) {
-            $merchant->update(['status' => $status]);
-        }
-
-        return response()->json([
-            'status' => true,
-            'message' => __('Đã cập nhật trạng thái cho :count Merchant.', ['count' => $merchants->count()]),
-        ]);
-    }
-
-    public function import(Request $request)
-    {
-        $request->validate([
-            'import_file' => 'required|file|mimes:xlsx,xls',
-        ]);
-
-        return back()->with('success', 'Import thành công!');
-    }
-
-    public function export()
-    {
-        return redirect()->route('admin.merchants.index')->with('success', 'Xuất file thành công!');
-    }
-
 }

@@ -6,7 +6,6 @@
     "license": "MIT",
     "require": {
         "php": "^8.1",
-        "ext-intl": "*",
         "astrotomic/laravel-translatable": "^11.13",
         "barryvdh/laravel-translation-manager": "^0.6.6",
         "bensampo/laravel-enum": "^6.11",

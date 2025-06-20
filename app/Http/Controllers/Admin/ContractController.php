@@ -193,53 +193,6 @@ class ContractController
         ]);
     }
 
-    public function import(Request $request)
-    {
-        $request->validate([
-            'import_file' => 'required|file|mimes:xlsx,xls',
-        ]);
-
-        try {
-            Excel::import(new ContractImport, $request->file('import_file'));
-            return back()->with('success', 'Import thành công!');
-        } catch (\Exception $e) {
-            return back()->with('error', 'Import thất bại: ' . $e->getMessage());
-        }
-    }
-
-    public function export()
-    {
-        return Excel::download(new ContractExportHandler, 'Contracts_' . now()->format('Ymd_His') . '.xlsx');
-    }
-
-    public function changeStatus(Contract $contract, Request $request)
-    {
-        $contract->update(['status' => $request->status]);
-
-        return response()->json([
-            'status' => true,
-            'message' => __('Trạng thái đã được cập nhật.'),
-        ]);
-    }
-
-    public function bulkStatus(Request $request)
-    {
-        $contracts = Contract::whereIn('id', $request->id)->get();
-        foreach ($contracts as $contract) {
-            $contract->update(['status' => $request->status]);
-        }
-
-        return response()->json([
-            'status' => true,
-            'message' => __('Đã cập nhật trạng thái cho :count hợp đồng.', ['count' => $contracts->count()]),
-        ]);
-    }
-
-    protected function parseExpiredTime($input)
-    {
-        return $input;
-    }
-
     public function sendEmail($id, ContractEmailService $emailService)
     {
         $contract = Contract::with('shop.merchant')->findOrFail($id);

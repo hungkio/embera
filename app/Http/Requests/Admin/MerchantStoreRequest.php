@@ -19,7 +19,6 @@ class MerchantStoreRequest extends FormRequest
             'phone' => 'nullable|string',
             'password' => 'required|string|min:6',
             'admin_id' => 'required|exists:admins,id',
-            'upload' => 'nullable|file|mimes:pdf|max:2048',
         ];
     }
 
@@ -33,23 +32,7 @@ class MerchantStoreRequest extends FormRequest
             'email.unique' => 'Email đã được sử dụng.',
             'password.required' => 'Mật khẩu là trường bắt buộc.',
             'password.min' => 'Mật khẩu phải có ít nhất 6 ký tự.',
-            'admin_id.exists' => 'Admin ID không hợp lệ.',
-            'upload.mimes' => 'Tập tin phải là định dạng PDF.',
-            'upload.max' => 'Tập tin không được vượt quá 2MB.',
+            'admin_id.exists' => 'BD không hợp lệ.',
         ];
     }
-
-    public function validated($key = null, $default = null)
-    {
-        $data = parent::validated();
-
-        // KHÔNG hash nữa, chỉ lưu password plain text
-        if (isset($data['password'])) {
-            session()->put('temp_password', $data['password']);
-            // Không làm gì nữa, giữ nguyên
-        }
-
-        return $data;
-    }
-
 }

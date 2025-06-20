@@ -21,7 +21,6 @@ class MerchantUpdateRequest extends FormRequest
             'phone' => 'nullable|string',
             'password' => 'nullable|string|min:6',
             'admin_id' => 'required|exists:admins,id',
-            'upload' => 'nullable|file|mimes:pdf|max:2048',
         ];
     }
 
@@ -35,21 +34,7 @@ class MerchantUpdateRequest extends FormRequest
             'email.unique' => 'Email đã được sử dụng.',
             'password.min' => 'Mật khẩu phải có ít nhất 6 ký tự.',
             'admin_id.exists' => 'Admin ID không hợp lệ.',
-            'upload.mimes' => 'Tập tin phải là định dạng PDF.',
-            'upload.max' => 'Tập tin không được vượt quá 2MB.',
         ];
-    }
-
-    public function validated($key = null, $default = null)
-    {
-        $data = parent::validated();
-
-        // Không hash nữa
-        if (empty($data['password'])) {
-            unset($data['password']); // Nếu không nhập, không update
-        }
-
-        return $data;
     }
 
 }

@@ -60,16 +60,16 @@
                             />
 
                             <div class="form-group row">
-                                <label class="col-lg-2 col-form-label text-lg-right">{{ __('Admin ID') }}</label>
+                                <label class="col-lg-2 col-form-label text-lg-right">{{ __('BD') }}</label>
                                 <div class="col-lg-9">
                                     <select name="admin_id" id="admin_id" class="form-control">
                                         <option value="" {{ old('admin_id') === '' || !$merchant->admin_id ? 'selected' : '' }}>
-                                        {{ __('Chọn Admin') }}
+                                        {{ __('Chọn BD') }}
                                         </option>
                                         @foreach ($employees as $employee)
                                         <option value="{{ $employee->id }}"
                                                 {{ ($merchant->admin_id ?? old('admin_id')) == $employee->id ? 'selected' : '' }}>
-                                            {{ $employee->first_name }} {{ $employee->last_name }} (ID: {{ $employee->id }})
+                                            {{ $employee->first_name }} {{ $employee->last_name }}
                                         </option>
                                         @endforeach
                                     </select>
