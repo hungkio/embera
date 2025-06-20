@@ -105,28 +105,22 @@ class ContractController
         $expiredDate = Carbon::parse($data['expired_date']);
         $data['expired_time'] = $signDate->diffInMonths($expiredDate) . ' tháng';
 
-        // Xử lý upload file
-        $uploadPath = null;
-        if ($request->hasFile('upload')) {
-            $file = $request->file('upload');
-            $filename = time() . '_' . $file->getClientOriginalName();
-            $file->move(public_path('uploads/contracts'), $filename);
-            $uploadPath = $filename;
-        }
-
         // Tạo bản ghi mới với admin_id
         $data['admin_id'] = $adminId;
         $data['contract_number'] = $this->generateUniqueContractNumber();
         $data['status'] = $data['status'] ?? 'pending';
-        $data['created_at'] = now();
-        $data['updated_at'] = now();
 
-        if ($uploadPath) {
-            $data['upload'] = $uploadPath;
+        if ($request->hasFile('upload')) {
+            $file = $request->file('upload');
+            $uploadPath = $file->store('contracts', 'public'); // Lưu vào storage/app/public/contracts
+            $data['upload'] = $uploadPath; // Lưu đường dẫn vào DB
         }
 
-            Contract::create($data);
+        $contract = Contract::create($data);
 
+        if ($request->hasFile('upload')) {
+            $contract->addMedia($request->file('upload'))->toMediaCollection('contract');
+        }
         return redirect()->route('admin.contracts.index')->with('success', 'Hợp đồng đã được lưu thành công');
     }
 
@@ -138,19 +132,17 @@ class ContractController
 
     public function update(ContractUpdateRequest $request, Contract $contract)
     {
-        $data = $request->validated();
+        $data = $request->except('upload');
 
         // Tự động tính expired_time theo số tháng
         $signDate = Carbon::parse($data['sign_date']);
         $expiredDate = Carbon::parse($data['expired_date']);
         $data['expired_time'] = $signDate->diffInMonths($expiredDate) . ' tháng';
-
+        // Upload file qua Storage
         if ($request->hasFile('upload')) {
-            if ($contract->upload) {
-                Storage::delete($contract->upload);
-            }
-            $path = $request->file('upload')->store('contracts');
-            $data['upload'] = $path;
+            $file = $request->file('upload');
+            $uploadPath = $file->store('contracts', 'public'); // Lưu vào storage/app/public/contracts
+            $data['upload'] = $uploadPath; // Lưu đường dẫn vào DB
         }
 
         $contract->update($data);

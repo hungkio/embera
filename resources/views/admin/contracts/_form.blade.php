@@ -162,6 +162,34 @@
                                 :value="$shop->note ?? ''"
                             />
 
+                            <div class="form-group row">
+                                <label for="upload" class="col-lg-2 col-form-label text-right">
+                                    <span class="text-danger">*</span>{{ __("File hợp đồng") }} :
+                                </label>
+
+                                <div class="col-lg-9">
+                                    @if($contract->upload ?? false)
+                                        <p>
+                                            📄 <strong>File hiện tại:</strong>
+                                            <a href="{{ asset('storage/' . $contract->upload) }}" target="_blank">
+                                                {{ basename($contract->upload) }}
+                                            </a>
+                                        </p>
+                                    @endif
+
+                                    <input type="file" name="upload" id="upload"
+                                           class="form-control inputfile"
+                                           accept=".pdf">
+
+                                    <small class="form-text text-muted">Chỉ chấp nhận file PDF. Nếu bạn chọn file mới, file cũ sẽ được thay thế.</small>
+
+                                    @error('upload')
+                                    <span class="form-text text-danger">{{ $message }}</span>
+                                    @enderror
+                                </div>
+                            </div>
+
+
                         </fieldset>
                     </x-card>
 
