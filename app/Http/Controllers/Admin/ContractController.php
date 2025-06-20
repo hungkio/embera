@@ -95,7 +95,7 @@ class ContractController
 
     public function store(ContractStoreRequest $request)
     {
-        $data = $request->validated();
+        $data = $request->all();
 
         // Lấy admin_id từ người dùng hiện tại
         $adminId = auth()->id();
