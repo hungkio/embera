@@ -28,7 +28,6 @@ class MerchantDataTable extends BaseDatable
             ->editColumn('updated_at', fn(Merchant $m) => optional($m->updated_at)->format('d/m/Y H:i'))
             ->filterColumn('username', fn($query, $keyword) => $query->where('username', 'like', "%$keyword%"))
             ->filterColumn('email', fn($query, $keyword) => $query->where('email', 'like', "%$keyword%"))
-            ->filterColumn('status', fn($query, $keyword) => $query->where('status', 'like', "%$keyword%"))
             ->orderColumn('created_at', 'created_at $1')
             ->rawColumns(['action']);
     }
@@ -71,7 +70,6 @@ class MerchantDataTable extends BaseDatable
             Column::make('email')->title('Email'),
             Column::make('phone')->title('Số điện thoại'),
             Column::make('admin_id')->title('BD'),
-            Column::make('status')->title('Trạng thái'),
             Column::make('created_at')->title('Tạo lúc'),
             Column::make('updated_at')->title('Cập nhật lúc'),
             Column::computed('action')

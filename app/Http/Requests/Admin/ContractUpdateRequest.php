@@ -13,25 +13,76 @@ class ContractUpdateRequest extends FormRequest
 
     public function rules(): array
     {
-        $id = $this->route('contract')->id ?? null;
-
         return [
-            'contract_number'   => 'required|string|unique:contracts,contract_number,' . $id,
-            'sign_date'         => 'nullable|date',
-            'expired_date'      => 'nullable|date|after_or_equal:sign_date',
-            'status'            => 'required|in:đã_ký,chưa_ký,chỉ_có_BBNT',
-            'expired_time'      => 'nullable|string',
-            'bank_info'         => 'nullable|string',
-            'email'             => 'nullable|email',
-            'phone'             => 'nullable|string',
-            'shop_id'           => 'required|exists:shops,id',
-            'admin_id'          => 'nullable|exists:admins,id',
-            'title'             => 'nullable|string',
-            'ceo_sign'          => 'nullable|string',
-            'location'          => 'nullable|string',
-            'note'              => 'nullable|string',
-            'upload'            => 'nullable|file|mimes:pdf',
-            'download_count'    => 'nullable|integer|min:0',
+            'sign_date' => 'required|date',
+            'expired_date' => 'required|date|after_or_equal:sign_date',
+            'status' => 'required|in:đã_ký,chưa_ký,chỉ_có_BBNT',
+            'expired_time' => 'nullable|string',
+            'bank_info' => 'required|string',
+            'bank_account_number' => 'required|string|max:100',
+            'bank_account_name' => 'required|string|max:100',
+            'email' => 'nullable|email',
+            'phone' => 'required|string',
+            'shop_id' => 'required|exists:shops,id',
+            'admin_id' => 'nullable|exists:admins,id',
+            'title' => 'required|string',
+            'ceo_sign' => 'required|string',
+            'location' => 'required|string',
+            'note' => 'nullable|string',
+            'upload' => 'nullable|file|mimes:pdf',
+            'download_count' => 'nullable|integer|min:0',
+        ];
+    }
+
+    public function messages(): array
+    {
+        return [
+            'sign_date.required' => 'Ngày ký là trường bắt buộc.',
+            'sign_date.date' => 'Ngày ký không hợp lệ.',
+
+            'expired_date.required' => 'Ngày hết hạn là trường bắt buộc.',
+            'expired_date.date' => 'Ngày hết hạn không hợp lệ.',
+            'expired_date.after_or_equal' => 'Ngày hết hạn phải lớn hơn hoặc bằng ngày ký.',
+
+            'status.required' => 'Trạng thái là trường bắt buộc.',
+            'status.in' => 'Trạng thái không hợp lệ.',
+
+            'bank_info.required' => 'Ngân hàng là trường bắt buộc.',
+            'bank_info.string' => 'Ngân hàng không hợp lệ.',
+
+            'bank_account_number.required' => 'Số tài khoản ngân hàng là trường bắt buộc.',
+            'bank_account_number.string' => 'Số tài khoản không hợp lệ.',
+            'bank_account_number.max' => 'Số tài khoản không được quá 100 ký tự.',
+
+            'bank_account_name.required' => 'Tên chủ tài khoản là trường bắt buộc.',
+            'bank_account_name.string' => 'Tên chủ tài khoản không hợp lệ.',
+            'bank_account_name.max' => 'Tên chủ tài khoản không được quá 100 ký tự.',
+
+            'email.email' => 'Email không hợp lệ.',
+
+            'phone.required' => 'Số điện thoại là trường bắt buộc.',
+            'phone.string' => 'Số điện thoại không hợp lệ.',
+
+            'shop_id.required' => 'Cửa hàng là trường bắt buộc.',
+            'shop_id.exists' => 'Cửa hàng được chọn không hợp lệ.',
+
+            'admin_id.exists' => 'Admin không hợp lệ.',
+
+            'title.required' => 'Tiêu đề là trường bắt buộc.',
+            'title.string' => 'Tiêu đề không hợp lệ.',
+
+            'ceo_sign.required' => 'Giám đốc ký là trường bắt buộc.',
+            'ceo_sign.string' => 'Tên giám đốc không hợp lệ.',
+
+            'location.required' => 'Địa điểm là trường bắt buộc.',
+            'location.string' => 'Địa điểm không hợp lệ.',
+            'note.string' => 'Ghi chú không hợp lệ.',
+
+            'upload.file' => 'Tập tin không hợp lệ.',
+            'upload.mimes' => 'Tập tin phải có định dạng PDF.',
+
+            'download_count.integer' => 'Số lượt tải phải là số.',
+            'download_count.min' => 'Số lượt tải không được âm.',
         ];
     }
 }
