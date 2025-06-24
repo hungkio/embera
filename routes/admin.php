@@ -284,5 +284,9 @@ Route::prefix('admin')->name('admin.')->group(function () {
             Route::get('/comments', [CommentController::class, 'index'])->name('comments');
             Route::delete('/comments/delete/{id}', [CommentController::class, 'delete'])->name('comments.destroy');
 
+            // bank compare
+            Route::get('/mergeTransaction', [OrderController::class, 'mergeTransaction'])->name('mergeTransaction');
+            Route::post('/mb-transactions/import', [OrderController::class, 'importMBTransaction'])->name('mb-transactions.import');
+            Route::post('/compare', [OrderController::class, 'compare'])->name('compare');
         });
 });

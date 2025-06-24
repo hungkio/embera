@@ -17,7 +17,7 @@ class MerchantUpdateRequest extends FormRequest
 
         return [
             'username' => 'required|string|unique:merchants,username,' . $merchantId,
-            'email' => 'required|email|unique:merchants,email,' . $merchantId,
+            'email' => 'nullable|email|unique:merchants,email,' . $merchantId,
             'phone' => 'nullable|string',
             'password' => 'nullable|string|min:6',
             'admin_id' => 'required|exists:admins,id',

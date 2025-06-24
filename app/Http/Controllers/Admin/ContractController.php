@@ -107,7 +107,7 @@ class ContractController
 
         // Tạo bản ghi mới với admin_id
         $data['admin_id'] = $adminId;
-        $data['contract_number'] = $this->generateUniqueContractNumber();
+        $data['contract_number'] = $data['contract_number'] ?? $this->generateUniqueContractNumber();
         $data['status'] = $data['status'] ?? 'pending';
 
         if ($request->hasFile('upload')) {

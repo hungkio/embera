@@ -16,7 +16,7 @@
                                 name="contract_number"
                                 :label="__('Mã hợp đồng')"
                                 :value="$contract->contract_number ?? ''"
-                                readonly
+{{--                                readonly--}}
                             />
 
                             <x-text-field

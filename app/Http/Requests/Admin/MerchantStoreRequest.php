@@ -15,7 +15,7 @@ class MerchantStoreRequest extends FormRequest
     {
         return [
             'username' => 'required|string|unique:merchants,username',
-            'email' => 'required|email|unique:merchants,email',
+            'email' => 'nullable|email|unique:merchants,email',
             'phone' => 'nullable|string',
             'password' => 'required|string|min:6',
             'admin_id' => 'required|exists:admins,id',

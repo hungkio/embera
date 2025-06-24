@@ -218,7 +218,7 @@
                     <i class="fal fa-horizontal-rule" title="{{ __('Hệ thống') }}"></i></li>
                 @endcan
                 @canany(['admins.view', 'roles.view'])
-                <li class="nav-item nav-item-submenu {{ request()->routeIs('admin.admins*') || request()->routeIs('admin.roles*') ? 'nav-item-expanded nav-item-open' : null }}">
+                <li class="nav-item nav-item-submenu {{ request()->routeIs('admin.admins*') || request()->routeIs('admin.roles*') || request()->routeIs('admin.mergeTransaction*') ? 'nav-item-expanded nav-item-open' : null }}">
                     <a href="#" class="nav-link"><i class="fal fa-user"></i> <span>{{ __('Tài khoản') }}</span></a>
                     <ul class="nav nav-group-sub" data-submenu-title="{{ __('Tài khoản') }}">
                         @can('admins.view')
@@ -231,6 +231,9 @@
                                                     class="nav-link @if(request()->routeIs('admin.roles*'))active @endif">{{ __('Vai trò') }}</a>
                             </li>
                         @endcan
+                            <li class="nav-item"><a href="{{ route('admin.mergeTransaction') }}"
+                                                    class="nav-link @if(request()->routeIs('admin.mergeTransaction*'))active @endif">{{ __('Dối soát MB') }}</a>
+                            </li>
                     </ul>
                 </li>
                 @endcan

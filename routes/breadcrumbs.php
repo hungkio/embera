@@ -363,3 +363,13 @@ Breadcrumbs::for('admin.subs_group.update', function (BreadcrumbsGenerator $trai
     $trail->parent('admin.subs_group.index');
     $trail->push(__('Cập nhật'), route('admin.subs_group.update', $banner));
 });
+
+// Compare MB
+Breadcrumbs::for('admin.mergeTransaction', function (BreadcrumbsGenerator $trail) {
+    $trail->parent('admin.dashboard');
+    $trail->push(__('Đối soát'), route('admin.mergeTransaction'), ['icon' => 'fal fa-image']);
+});
+Breadcrumbs::for('admin.post-compare', function (BreadcrumbsGenerator $trail) {
+    $trail->parent('admin.dashboard');
+    $trail->push(__('Đối soát'), route('admin.compare'), ['icon' => 'fal fa-image']);
+});
