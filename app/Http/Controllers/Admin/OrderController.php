@@ -265,7 +265,7 @@ class OrderController
             ->whereBetween('date_in', [$from, $to])
             ->get();
 
-        if (empty($mbTransactions)) {
+        if ($mbTransactions->isEmpty()) {
             return response()->json([
                 'data' => [],
             ]);
