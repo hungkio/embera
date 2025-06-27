@@ -27,16 +27,6 @@ class Merchant extends Model
         'upload' => 'string',
     ];
 
-    public static function boot()
-    {
-        parent::boot();
-        static::saving(function ($merchant) {
-            if ($merchant->isDirty('password') && !empty($merchant->password)) {
-                $merchant->password = bcrypt($merchant->password);
-            }
-        });
-    }
-
     public function admin()
     {
         return $this->belongsTo(Admin::class, 'admin_id', 'id');

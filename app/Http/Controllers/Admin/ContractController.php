@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Admin;
 
 use App\DataTables\ContractDataTable;
+use App\Imports\ContractImport;
 use App\Models\Contract;
 use App\Http\Requests\Admin\ContractStoreRequest;
 use App\Http\Requests\Admin\ContractUpdateRequest;
@@ -284,5 +285,17 @@ class ContractController
         }
 
         return redirect()->back()->with('error', 'Lỗi khi tạo file ZIP.');
+    }
+
+    public function import(Request $request)
+    {
+        try {
+            Excel::import(new ContractImport, $request->file);
+            flash()->success(__('Đã import danh sách HĐ!'));
+        } catch (\Exception $exception) {
+            flash()->error($exception->getMessage());
+        }
+
+        return back();
     }
 }

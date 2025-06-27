@@ -83,12 +83,11 @@
     <script src="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 
-{{--    <script src="https://cdn.datatables.net/buttons/2.4.2/js/dataTables.buttons.min.js"></script>--}}
 {{--    <script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.html5.min.js"></script>--}}
 {{--    <script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.print.min.js"></script>--}}
-{{--    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.1.3/jszip.min.js"></script>--}}
-
     {{$dataTable->scripts()}}
+    <script src="https://cdn.datatables.net/buttons/2.4.2/js/dataTables.buttons.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.1.3/jszip.min.js"></script>
     <script>
         $(document).ready(function () {
             let start = moment("{{ request('date_from') ?? now()->startOfMonth()->format('Y-m-d') }}");
@@ -128,7 +127,7 @@
                     paging: true,
                     pageLength: 25,
                     buttons: [
-                        // 'copy', 'csv', 'pdf', 'print'
+                        // 'copy', 'csv', 'pdf', 'print',
                         'excel',
                     ],
                     dom: 'Bfrtip',

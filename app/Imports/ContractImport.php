@@ -1,0 +1,158 @@
+<?php
+
+namespace App\Imports;
+
+use App\Domain\Admin\Models\Admin;
+use App\Models\Contract;
+use App\Models\Merchant;
+use App\Models\Shop;
+use Carbon\Carbon;
+use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
+use Maatwebsite\Excel\Concerns\ToCollection;
+use Maatwebsite\Excel\Concerns\WithCalculatedFormulas;
+
+class ContractImport implements ToCollection, WithCalculatedFormulas
+{
+    public function collection(Collection $rows)
+    {
+        DB::transaction(function () use ($rows) {
+            // Gom theo contract_number
+            $grouped = $rows->groupBy(fn($row) => trim($row[0]));
+
+            if ($grouped['contract_number']) {
+                unset($grouped['contract_number']);
+            }
+            foreach ($grouped as $contractNumber => $items) {
+                $firstRow = $items->first();
+
+                $contractNumber = trim($firstRow[0] ?? '');
+                $signDate = $this->parseDate($firstRow[1] ?? null);
+                $expiredDate = $this->parseDate($firstRow[2] ?? null);
+                $status = trim($firstRow[3] ?? 'chưa_ký');
+                $bankInfo = trim($firstRow[4] ?? '');
+                $bankNumber = trim($firstRow[5] ?? '');
+                $bankName = trim($firstRow[6] ?? '');
+                $merchantEmail = trim($firstRow[7] ?? '');
+                $merchantPhone = trim($firstRow[8] ?? '');
+                $adminName = trim($firstRow[9] ?? '');
+
+                $shopName = trim($firstRow[10] ?? '');
+                $title = trim($firstRow[11] ?? '');
+                $ceoSign = trim($firstRow[12] ?? '');
+                $location = trim($firstRow[13] ?? '');
+                $shopType = trim($firstRow[14] ?? '');
+                $merchantName = trim($firstRow[15] ?? '');
+                $shareRate = trim($firstRow[16] ?? '');
+
+                $deviceName = trim($firstRow[17] ?? '');
+                $deviceQuantity = (int) ($firstRow[18] ?? 0);
+                $devicePin = (int) ($firstRow[19] ?? 0);
+
+                $merchantUsername = trim($firstRow[20] ?? '');
+                $merchantPassword = trim($firstRow[21] ?? '');
+
+
+                // Tìm admin_id từ tên
+                $admin = Admin::whereRaw("CONCAT(first_name, ' ', last_name) = ?", $adminName)->first();
+
+                if (!$admin) {
+                    throw new \Exception("Không tìm thấy BD: $adminName");
+                }
+
+                // Merchant
+                $merchant = Merchant::firstOrCreate(
+                    [
+                        'username' => $merchantUsername,
+                    ],
+                    [
+                        'phone' => $merchantPhone,
+                        'email' => $merchantEmail,
+                        'password' => $merchantPassword, // Có thể thay bằng logic khác
+                        'admin_id' => $admin->id,
+                    ]
+                );
+
+                // Gom thiết bị
+                $devices = [];
+                foreach ($items as $row) {
+                    $deviceName = trim($row[17] ?? '');
+                    $quantity = (int) $row[18];
+                    $pin = (int) $row[19];
+                    if ($deviceName) {
+                        $devices[] = [
+                            'name' => $deviceName,
+                            'quantity' => $quantity,
+                            'pin' => $pin,
+                        ];
+                    }
+                }
+                $deviceJson = json_encode(['devices' => $devices]);
+
+                // Shop
+                if (isset($shopName) && preg_match('/\((.*?)\)/', $shopName, $matches)) {
+                    $parts = explode('-', $matches[1]);
+                    $region = $parts[0] ?? null;
+                    $city   = $parts[1] ?? null;
+                    $area   = $parts[2] ?? null;
+                }
+                $shop = Shop::firstOrCreate(
+                    [
+                        'shop_name' => $shopName,
+                    ],
+                    [
+                        'merchant_id' => $merchant->id,
+                        'address' => $location,
+                        'shop_type' => $shopType,
+                        'contact_phone' => $merchantPhone,
+                        'strategy' => '(VND-1h)5-10000-52000',
+                        'area' => trim($area),
+                        'city' => trim($city),
+                        'region' => trim($region),
+                        'device_json' => $deviceJson,
+                        'admin_id' => $admin->id,
+                    ]
+                );
+
+                // Contract
+                $expiredTime = $signDate->diffInMonths($expiredDate) . ' tháng';
+
+                Contract::updateOrCreate(
+                    ['contract_number' => $contractNumber],
+                    [
+                        'sign_date' => $signDate,
+                        'expired_date' => $expiredDate,
+                        'status' => $status,
+                        'expired_time' => $expiredTime,
+                        'bank_info' => $bankInfo,
+                        'bank_account_number' => $bankNumber,
+                        'bank_account_name' => $bankName,
+                        'email' => $merchantEmail,
+                        'phone' => $merchantPhone,
+                        'admin_id' => $admin->id,
+                        'shop_id' => $shop->id,
+                        'title' => $title,
+                        'ceo_sign' => $ceoSign,
+                        'location' => $location,
+                    ]
+                );
+            }
+        }, 1);
+    }
+
+    private function parseDate($value)
+    {
+        if (empty($value)) return null;
+
+        try {
+            if (is_numeric($value)) {
+                $date = \PhpOffice\PhpSpreadsheet\Shared\Date::excelToDateTimeObject($value);
+                return Carbon::parse($date);
+            } else {
+                return \Carbon\Carbon::createFromFormat('d/m/Y', $value);
+            }
+        } catch (\Exception $e) {
+            return null;
+        }
+    }
+}

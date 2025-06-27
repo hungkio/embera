@@ -77,23 +77,6 @@ class ContractDataTable extends BaseDatable
             $query->where('contracts.is_deleted', 0);
         }
 
-        $filters = $this->request->all();
-
-        if (!empty($filters['status'])) {
-            $query->where('status', $filters['status']);
-        }
-
-        if (!empty($filters['email'])) {
-            $query->where('email', 'like', '%' . $filters['email'] . '%');
-        }
-
-        if (!empty($filters['date_from']) && !empty($filters['date_to'])) {
-            $query->whereBetween('sign_date', [
-                Carbon::parse($filters['date_from'])->startOfDay(),
-                Carbon::parse($filters['date_to'])->endOfDay(),
-            ]);
-        }
-
         return $query;
     }
 
@@ -144,6 +127,9 @@ class ContractDataTable extends BaseDatable
             Button::make('export')->addClass('btn bg-blue')->text('<i class="fal fa-download mr-2"></i>' . __('Xuất')),
             Button::make('print')->addClass('btn bg-blue')->text('<i class="fal fa-print mr-2"></i>' . __('In'))->action('function() { printContracts(); }'),
             Button::make('reset')->addClass('btn bg-blue')->text('<i class="fal fa-undo mr-2"></i>' . __('Thiết lập lại')),
+            Button::make('selected')->addClass('btn bg-teal-400 import')
+                ->text('<i class="icon-compose mr-2"></i>' . __('Import')
+                ),
         ];
     }
 

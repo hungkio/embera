@@ -42,23 +42,6 @@ class MerchantDataTable extends BaseDatable
             $query->active();
         }
 
-        $filters = $this->request->all();
-
-        if (!empty($filters['status'])) {
-            $query->where('status', $filters['status']);
-        }
-
-        if (!empty($filters['email'])) {
-            $query->where('email', 'like', '%' . $filters['email'] . '%');
-        }
-
-        if (!empty($filters['date_from']) && !empty($filters['date_to'])) {
-            $query->whereBetween('created_at', [
-                Carbon::parse($filters['date_from'])->startOfDay(),
-                Carbon::parse($filters['date_to'])->endOfDay(),
-            ]);
-        }
-
         return $query;
     }
 

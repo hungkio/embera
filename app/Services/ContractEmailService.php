@@ -8,13 +8,13 @@ use App\Models\EmailContent;
 use App\Mail\MerchantEmail;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
-use PhpOffice\PhpWord\TemplateProcessor;
 use PhpOffice\PhpWord\IOFactory;
 use Illuminate\Support\Str;
+use PhpOffice\PhpWord\TemplateProcessor;
 
 class ContractEmailService
 {
-    public function sendContract(Contract $contract): void
+    public function sendContract(Contract $contract)
     {
         $data = $this->prepareData($contract);
         $html = $this->generateHtmlFromDocx(storage_path('app/templates/hd_xac_nhan_doanh_thu.docx'), $data);
