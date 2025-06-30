@@ -10,10 +10,12 @@
 
 @section('page-content')
 @include('admin.contracts._form', [
-'url' =>  route('admin.contracts.store'),
+'url' => route('admin.contracts.store'),
 'contract' => new \App\Models\Contract,
-
+'shops' => $shops,
+'merchants' => $merchants,
 ])
+
 
 @stop
 

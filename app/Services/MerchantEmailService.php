@@ -2,24 +2,31 @@
 
 namespace App\Services;
 
-use App\Models\Contract;
+use App\Models\Merchant;
 use App\Models\Email;
 use App\Models\EmailContent;
 use App\Mail\MerchantEmail;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use PhpOffice\PhpWord\IOFactory;
-use Illuminate\Support\Str;
 use PhpOffice\PhpWord\TemplateProcessor;
+use Illuminate\Support\Str;
 
-class ContractEmailService
+class MerchantEmailService
 {
-    public function sendContract(Contract $contract)
+    public function sendMail(Merchant $merchant): void
     {
-        $data = $this->prepareData($contract);
-        $html = $this->generateHtmlFromDocx(storage_path('app/templates/hd_xac_nhan_doanh_thu.docx'), $data);
+        $shop = $merchant->shop;
+        if (!$shop) {
+            Log::warning("Merchant ID {$merchant->id} has no shop attached.");
+            return;
+        }
 
-        $merchant = $contract->shops->merchant;
+        $data = $this->prepareData($merchant);
+        $html = $this->generateHtmlFromDocx(
+            storage_path('app/templates/hd_xac_nhan_doanh_thu.docx'),
+            $data
+        );
 
         $email = Email::create([
             'to' => $merchant->email,
@@ -34,22 +41,21 @@ class ContractEmailService
 
         try {
             Mail::to($merchant->email)->queue(new MerchantEmail($html));
-            Log::info('Đã thêm email vào hàng đợi cho: ' . $merchant->email . ' (ID: ' . $email->id . ')');
             $email->update(['status' => 'queued']);
+            Log::info("Email queued successfully for merchant ID {$merchant->id}");
         } catch (\Exception $e) {
-            Log::error('Lỗi khi thêm email vào hàng đợi: ' . $e->getMessage(), ['email_id' => $email->id]);
             $email->update(['status' => 'failed']);
+            Log::error("Failed to send email to merchant ID {$merchant->id}: {$e->getMessage()}");
         }
     }
 
-    public function prepareData(Contract $contract): array
+
+    public function prepareData(Merchant $merchant): array
     {
-        $shop = $contract->shops;
-        $merchant = $shop->merchant;
+        $shop = $merchant->shop;
         $deviceJson = $shop->device_json['devices'] ?? [];
         $today = now();
 
-        // 👉 Tách tên shop và mã
         $fullShopName = $shop->shop_name ?? '';
         $shopName = trim(Str::before($fullShopName, '('));
         $shopCode = Str::between($fullShopName, '(', ')');
@@ -61,25 +67,25 @@ class ContractEmailService
 
             'ben_b' => $shopName,
             'ma_diem' => $shopCode,
-            'hop_dong_so' => $contract->contract_number ?? '',
-            'ky_tu_ngay' => optional($contract->sign_date)->format('d/m/Y'),
-            'ky_den_ngay' => optional($contract->expired_date)->format('d/m/Y'),
-            'tong_tien' => number_format($contract->total_revenue ?? 0) . ' VNĐ',
-            'giam_doc_ky' => $contract->ceo_sign ?? '',
-            'ten_ngan_hang' => $contract->bank_info ?? '',
-            'chu_tai_khoan' => $contract->bank_account_name ?? '',
-            'so_tai_khoan' => $contract->bank_account_number ?? '',
+            'hop_dong_so' => $shop->contract->contract_number ?? '',
+            'ky_tu_ngay' => optional($shop->contract->sign_date)->format('d/m/Y'),
+            'ky_den_ngay' => optional($shop->contract->expired_date)->format('d/m/Y'),
+            'tong_tien' => number_format($shop->contract->total_revenue ?? 0) . ' VNĐ',
+            'giam_doc_ky' => $shop->contract->ceo_sign ?? '',
+            'ten_ngan_hang' => $shop->contract->bank_info ?? '',
+            'chu_tai_khoan' => $shop->contract->bank_account_name ?? '',
+            'so_tai_khoan' => $shop->contract->bank_account_number ?? '',
             'dia_chi_shop' => $shop->address ?? '',
             'nguoi_lap' => $merchant->username ?? '',
             'chuc_vu' => $merchant->position ?? '',
-            'so_dien_thoai' => $contract->phone ?? '',
+            'so_dien_thoai' => $shop->contract->phone ?? '',
             'email' => $merchant->email ?? '',
             'doanh_thu' => number_format($shop->share_rate ?? 0, 0, ',', '.') . ' VNĐ',
             'doanh_thu_text' => $this->number_to_vietnamese($shop->share_rate ?? 0),
         ];
 
-        $from = optional($contract->sign_date);
-        $to = optional($contract->expired_date);
+        $from = optional($shop->contract->sign_date);
+        $to = optional($shop->contract->expired_date);
 
         $base['from_day'] = $from->format('d');
         $base['from_month'] = $from->format('m');
@@ -89,16 +95,7 @@ class ContractEmailService
         $base['to_month'] = $to->format('m');
         $base['to_year'] = $to->format('Y');
 
-        $deviceData = $this->extractDeviceData($deviceJson);
-
-        return array_merge($base, $deviceData);
-    }
-
-    function number_to_vietnamese($number)
-    {
-        $formatter = new \NumberFormatter("vi", \NumberFormatter::SPELLOUT);
-        $text = $formatter->format($number);
-        return ucfirst($text) . ' đồng';
+        return array_merge($base, $this->extractDeviceData($deviceJson));
     }
 
     private function extractDeviceData(array $devices): array
@@ -126,11 +123,18 @@ class ContractEmailService
         return $result;
     }
 
+    private function number_to_vietnamese($number): string
+    {
+        $formatter = new \NumberFormatter("vi", \NumberFormatter::SPELLOUT);
+        $text = $formatter->format($number);
+        return ucfirst($text) . ' đồng';
+    }
+
     public function generateHtmlFromDocx(string $templatePath, array $data): string
     {
         $processor = new TemplateProcessor($templatePath);
         foreach ($data as $key => $value) {
-            $processor->setValue($key, htmlspecialchars((string) $value));
+            $processor->setValue($key, htmlspecialchars((string)$value));
         }
 
         $tempPath = storage_path('app/generated_' . uniqid() . '.docx');

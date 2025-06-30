@@ -21,33 +21,51 @@ class ShopDataTable extends BaseDatable
             ->editColumn('address', fn(Shop $shop) => $shop->address)
             ->editColumn('shop_type', fn(Shop $shop) => $shop->shop_type)
             ->editColumn('contact_phone', fn(Shop $shop) => $shop->contact_phone)
-
             ->editColumn('share_rate', function (Shop $shop) {
                 return $shop->share_rate_type === 'fixed'
                     ? number_format($shop->share_rate, 0) . ' VNĐ'
                     : number_format($shop->share_rate, 0) . ' %';
             })
-
             ->editColumn('share_rate_type', fn(Shop $shop) =>
             $shop->share_rate_type === 'fixed' ? 'Doanh thu (VNĐ)' : 'Phần trăm (%)'
             )
-
             ->editColumn('strategy', fn(Shop $shop) => $shop->strategy ?? '-')
             ->editColumn('area', fn(Shop $shop) => $shop->area ?? '-')
             ->editColumn('city', fn(Shop $shop) => $shop->city ?? '-')
             ->editColumn('region', fn(Shop $shop) => $shop->region ?? '-')
-            ->editColumn('merchant_id', fn(Shop $shop) => $shop->merchant->username ?? '-')
+            ->addColumn('contract_id', fn(Shop $shop) => $shop->contract_id ?? '-')
             ->editColumn('device_json', function (Shop $shop) {
                 if (!$shop->device_json) return '-';
                 $devices = $shop->device_json['devices'] ?? [];
-                if (!is_array($devices)) return '-';
-                $html = '<table style="width: 100%; border-collapse: collapse;"><tr><th>TÊN</th><th>SL</th><th>PIN</th></tr>';
+                if (!is_array($devices) || empty($devices)) return '-';
+
+                $html = '<div class="table-responsive">
+                <table class="table table-bordered table-sm mb-0 text-center">
+                    <thead class="thead-light">
+                        <tr>
+                            <th>Tên</th>
+                            <th>Mã máy</th>
+                            <th>Số lượng</th>
+                            <th>Pin</th>
+                        </tr>
+                    </thead>
+                    <tbody>';
+
                 foreach ($devices as $device) {
-                    $html .= '<tr><td>' . e($device['name'] ?? '-') . '</td><td>' . e($device['quantity'] ?? '-') . '</td><td>' . e($device['pin'] ?? '-') . '</td></tr>';
+                    $html .= '<tr>
+                    <td>' . e($device['name'] ?? '-') . '</td>
+                    <td>' . e($device['code'] ?? '-') . '</td>
+                    <td>' . e($device['quantity'] ?? '-') . '</td>
+                    <td>' . e($device['pin'] ?? '-') . '</td>
+                  </tr>';
                 }
-                $html .= '</table>';
+
+                $html .= '</tbody></table></div>';
+
                 return $html;
             })
+
+
             ->addColumn('is_deleted', fn(Shop $shop) => $shop->is_deleted ? 'Đã xóa' : 'Hoạt động')
             ->filterColumn('is_deleted', fn($query, $keyword) => $query->where('is_deleted', $keyword === 'Đã xóa' ? 1 : 0))
             ->rawColumns(['action', 'device_json']);
@@ -56,7 +74,7 @@ class ShopDataTable extends BaseDatable
     public function query(Shop $model)
     {
         return $model->newQuery()
-            ->with('merchant')
+            ->with('contract')
             ->when(request('show_deleted') === 'yes', fn($q) => $q->where('is_deleted', 1))
             ->when(request('show_deleted') !== 'yes', fn($q) => $q->where('is_deleted', 0));
     }
@@ -75,7 +93,7 @@ class ShopDataTable extends BaseDatable
             Column::make('area')->title('Khu vực'),
             Column::make('city')->title('Thành phố'),
             Column::make('region')->title('Vùng'),
-            Column::make('merchant_id')->title('Merchant'),
+            Column::make('contract_id')->title('Hợp đồng'),
             Column::make('device_json')->title('Thiết bị'),
             Column::computed('action')->title('Tác vụ')->exportable(false)->printable(false)->width(60)->addClass('text-center'),
         ];

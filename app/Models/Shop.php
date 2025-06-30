@@ -16,6 +16,7 @@ class Shop extends Model
         'city',
         'region',
         'merchant_id',
+        'contract_id',
         'is_deleted',
         'share_rate',
         'share_rate_type',
@@ -36,6 +37,6 @@ class Shop extends Model
 
     public function contract()
     {
-        return $this->hasOne(Contract::class);
+        return $this->belongsTo(Contract::class);
     }
 }

@@ -22,7 +22,7 @@ class ShopStoreRequest extends FormRequest
             'area' => 'nullable|string|max:255',
             'city' => 'nullable|string|max:255',
             'region' => 'nullable|string|max:255',
-            'merchant_id' => 'required|exists:merchants,id',
+            'contract_id' => 'nullable|exists:contracts,id',
             'is_deleted' => 'boolean',
             'share_rate' => 'required|numeric|min:0',
             'share_rate_type' => 'required|in:percentage,fixed',

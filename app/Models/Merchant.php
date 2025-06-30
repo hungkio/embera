@@ -32,15 +32,16 @@ class Merchant extends Model
         return $this->belongsTo(Admin::class, 'admin_id', 'id');
     }
 
-    public function shops()
+    public function contract()
     {
-        return $this->hasMany(Shop::class);
+        return $this->hasOne(Contract::class);
     }
 
-    public function contracts()
+    public function shops()
     {
-        return $this->hasMany(Contract::class);
+        return $this->hasOne(Contract::class)->with('shops');
     }
+
 
     public function scopeActive($query)
     {

@@ -142,26 +142,23 @@
                     </div>
 
                     <div class="form-group row">
-                        <label for="merchant_id" class="col-lg-2 col-form-label text-lg-right">
-                            <span class="text-danger">*</span> {{ __('Thuộc Merchant') }}:
+                        <label for="contract_id" class="col-lg-2 col-form-label text-lg-right">
+                            {{ __('Hợp đồng') }}
                         </label>
                         <div class="col-lg-9">
-                            <select name="merchant_id" id="merchant_id" class="form-control" required>
-                                <option value="">{{ __('-- Thuộc Merchant --') }}</option>
-                                @foreach($merchants as $id => $name)
-                                <option value="{{ $id }}"
-                                        {{ old('merchant_id', $shop->merchant_id ?? '') == $id ? 'selected' : '' }}>
-                                {{ $name }}
+                            <select name="contract_id" id="contract_id" class="form-control" required>
+                                <option value="">-- Chọn hợp đồng --</option>
+                                @foreach($contracts as $id => $label)
+                                <option value="{{ $id }}" {{ old('contract_id', $shop->contract_id ?? '') == $id ? 'selected' : '' }}>
+                                {{ $label }}
                                 </option>
                                 @endforeach
                             </select>
-
-                            @error('merchant_id')
+                            @error('contract_id')
                             <span class="form-text text-danger">{{ $message }}</span>
                             @enderror
                         </div>
                     </div>
-
 
                     <div class="form-group row">
                         <label class="col-lg-2 col-form-label text-lg-right">{{ __('Thiết bị')
@@ -177,16 +174,15 @@
                                         <option value="CP32">CP32</option>
                                     </select>
 
-                                    <input type="number" name="device_quantity[]"
-                                           class="form-control mr-2" placeholder="Số lượng"
-                                           required>
+                                    <input type="text" name="device_code[]" class="form-control mr-2" placeholder="Mã máy" required>
 
-                                    <input type="number" name="device_pin[]"
-                                           class="form-control mr-2" placeholder="Số pin" required>
+                                    <input type="number" name="device_quantity[]" class="form-control mr-2" placeholder="Số lượng" required>
 
-                                    <button type="button" class="btn btn-danger remove-device">–
-                                    </button>
+                                    <input type="number" name="device_pin[]" class="form-control mr-2" placeholder="Số pin" required>
+
+                                    <button type="button" class="btn btn-danger remove-device">–</button>
                                 </div>
+
                             </div>
 
                             <button type="button" class="btn btn-sm btn-primary mt-2"

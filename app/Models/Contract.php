@@ -25,6 +25,7 @@ class Contract extends Model
         'email',
         'phone',
         'shop_id',
+        'merchant_id',
         'admin_id',
         'title',
         'ceo_sign',
@@ -35,9 +36,14 @@ class Contract extends Model
         'is_deleted',
     ];
 
-    public function shop()
+    public function shops()
     {
-        return $this->belongsTo(Shop::class);
+        return $this->hasMany(Shop::class);
+    }
+
+    public function merchant()
+    {
+        return $this->belongsTo(Merchant::class);
     }
 
     // Custom scope to filter non-deleted records

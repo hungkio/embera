@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\DataTables\ShopDataTable;
 use App\Http\Requests\Admin\ShopStoreRequest;
 use App\Http\Requests\Admin\ShopUpdateRequest;
+use App\Models\Contract;
 use App\Models\Merchant;
 use App\Models\Shop;
 use Illuminate\Http\Request;
@@ -18,14 +19,23 @@ class ShopController extends \App\Http\Controllers\Controller
 
     public function create()
     {
-        $merchants = Merchant::pluck('username', 'id');
+        $contracts = Contract::with('merchant')
+            ->where('is_deleted', false)
+            ->get()
+            ->filter(fn($c) => $c->merchant)
+            ->mapWithKeys(function ($contract) {
+                return [$contract->id => "{$contract->contract_number} - {$contract->merchant->username}"];
+            });
+
         return view('admin.shops.create', [
             'url' => route('admin.shops.store'),
             'method' => 'POST',
             'shop' => new Shop(),
-            'merchants' => $merchants,
+            'contracts' => $contracts, // <- Phải có dòng này
         ]);
     }
+
+
 
     public function store(ShopStoreRequest $request)
     {
@@ -49,14 +59,21 @@ class ShopController extends \App\Http\Controllers\Controller
 
     public function edit(Shop $shop)
     {
-        $merchants = Merchant::pluck('username', 'id');
+        $contracts = Contract::with('merchant')->get()
+            ->mapWithKeys(function ($contract) {
+                $merchantName = $contract->merchant->username ?? 'Không có merchant';
+                return [$contract->id => "{$contract->contract_number} - {$merchantName}"];
+            });
+
+
         return view('admin.shops.edit', [
             'url' => route('admin.shops.update', $shop),
             'method' => 'PUT',
             'shop' => $shop,
-            'merchants' => $merchants,
+            'contracts' => $contracts,
         ]);
     }
+
 
     public function update(ShopUpdateRequest $request, Shop $shop)
     {

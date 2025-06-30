@@ -185,6 +185,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
             Route::get('/contracts/{contract}/print', [ContractController::class, 'printContract'])->name('contracts.print');
             Route::get('/contracts/print-multiple', [ContractController::class, 'printMultipleContracts'])->name('contracts.print.multiple');
             Route::get('/contracts/{id}/print', [ContractController::class, 'printContract'])->name('contracts.print');
+
             // merchants
             Route::get('/merchants', [MerchantController::class, 'index'])->name('merchants.index');
             Route::get('/merchants/create', [MerchantController::class, 'create'])->name('merchants.create');
@@ -197,6 +198,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
             Route::post('/merchants/bulk-status', [MerchantController::class, 'bulkStatus'])->name('merchants.bulk-status');
             Route::post('/merchants/import', [MerchantController::class, 'import'])->name('merchants.import');
             Route::get('/merchants/export', [MerchantController::class, 'export'])->name('merchants.export');
+            Route::post('/merchants/send-email', [MerchantController::class, 'sendEmail'])->name('merchants.sendEmail');
 
             // AJAX routes for merchants and shops
             Route::get('ajax/merchants', [MerchantController::class, 'search'])->name('admin.ajax.merchants');

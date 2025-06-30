@@ -16,7 +16,9 @@ class ContractDataTable extends BaseDatable
             ->eloquent($query)
             ->addIndexColumn()
             ->addColumn('action', 'admin.contracts._tableAction')
-            ->addColumn('shop_name', fn(Contract $c) => $c->shop->shop_name ?? '-')
+            ->addColumn('shop_name', function (Contract $c) {
+                return $c->shops->pluck('shop_name')->join(', ') ?: '-';
+            })
             ->editColumn('contract_number', fn(Contract $c) => $c->contract_number)
             ->editColumn('sign_date', fn(Contract $c) => optional($c->sign_date)->format('d/m/Y'))
             ->editColumn('expired_date', fn(Contract $c) => optional($c->expired_date)->format('d/m/Y'))
@@ -53,14 +55,14 @@ class ContractDataTable extends BaseDatable
             ->filterColumn('status', fn($query, $keyword) => $query->where('status', 'like', "%$keyword%"))
             ->orderColumn('sign_date', 'sign_date $1')
             ->filterColumn('shop_name', function ($query, $keyword) {
-                $query->whereHas('shop', function ($q) use ($keyword) {
+                $query->whereHas('shops', function ($q) use ($keyword) {
                     $q->where('shop_name', 'like', "%$keyword%");
                 });
             })
             ->orderColumn('shop_name', function ($query, $direction) {
-                $query->join('shops', 'contracts.shop_id', '=', 'shops.id')
-                    ->orderBy('shops.shop_name', $direction)
-                    ->select('contracts.*');
+                $query->leftJoin('shops', 'shops.contract_id', '=', 'contracts.id')
+                    ->select('contracts.*')
+                    ->orderBy('shops.shop_name', $direction);
             })
             ->filterColumn('expired_time', fn($query, $keyword) => $query->where('expired_time', 'like', "%$keyword%")) // Text search
             ->rawColumns(['action']);
@@ -69,7 +71,7 @@ class ContractDataTable extends BaseDatable
     public function query(Contract $model)
     {
         $query = $model->newQuery()
-            ->with(['shop.merchant']);
+            ->with(['shops.merchant']);
 
         if ($this->request->get('show_deleted', 'no') === 'yes') {
             $query->where('contracts.is_deleted', 1);
@@ -84,7 +86,6 @@ class ContractDataTable extends BaseDatable
     {
         return [
             Column::checkbox(''),
-            Column::make('shop_name')->title('Tên cửa hàng'),
             Column::make('contract_number')->title('Mã hợp đồng'),
             Column::make('sign_date')->title('Ngày ký'),
             Column::make('expired_date')->title('Ngày hết hạn'),

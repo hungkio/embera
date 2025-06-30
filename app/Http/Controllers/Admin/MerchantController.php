@@ -6,8 +6,13 @@ use App\DataTables\MerchantDataTable;
 use App\Domain\Admin\Models\Admin;
 use App\Http\Requests\Admin\MerchantStoreRequest;
 use App\Http\Requests\Admin\MerchantUpdateRequest;
+use App\Models\Contract;
+use App\Models\Email;
 use App\Models\Merchant;
+use App\Services\ContractEmailService;
+use App\Services\MerchantEmailService;
 use Illuminate\Contracts\Database\Eloquent\Builder;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 use Illuminate\Support\Facades\Storage;
@@ -52,6 +57,11 @@ class MerchantController
     public function update(MerchantUpdateRequest $request, Merchant $merchant)
     {
         $data = $request->all();
+
+        if (empty($data['password'])) {
+            unset($data['password']);
+        }
+
         $merchant->update($data);
 
         flash()->success(__('Merchant ":model" đã được cập nhật!', ['model' => $merchant->username]));
@@ -87,4 +97,44 @@ class MerchantController
             'message' => __('Đã xóa :count Merchant.', ['count' => $deleted]),
         ]);
     }
+
+
+    public function sendEmail(Request $request, ContractEmailService $emailService)
+    {
+        $merchantIds = $request->input('ids');
+
+        if (empty($merchantIds) || !is_array($merchantIds)) {
+            return response()->json(['message' => 'Vui lòng chọn ít nhất một merchant để gửi mail.'], 422);
+        }
+
+        $merchants = Merchant::with(['contract', 'shops'])->whereIn('id', $merchantIds)->get();
+
+        foreach ($merchants as $merchant) {
+            $contract = $merchant->contract;
+
+            if (!$contract) {
+                // Bỏ qua merchant nếu không có hợp đồng
+                continue;
+            }
+
+            $shops = $merchant->shops ?? [];
+
+            foreach ($shops as $shop) {
+                $email = new Email([
+                    'to' => $merchant->email,
+                    'content' => json_encode([
+                        'contract' => $contract,
+                        'shop' => $shop,
+                    ]),
+                    'status' => 'pending',
+                ]);
+
+                $email->save();
+                $emailService->send($email);
+            }
+        }
+
+        return response()->json(['message' => 'Đã gửi mail thành công.']);
+    }
+
 }
