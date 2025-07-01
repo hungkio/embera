@@ -87,13 +87,13 @@ class ContractDataTable extends BaseDatable
     {
         return [
             Column::checkbox(''),
+            Column::make('customer_name')->title('Tên khách hàng'),
             Column::make('contract_number')->title('Mã hợp đồng'),
             Column::make('sign_date')->title('Ngày ký'),
             Column::make('expired_date')->title('Ngày hết hạn'),
             Column::make('expired_time')->title('Thời hạn'),
             Column::make('status')->title('Trạng thái'),
             Column::make('email')->title('Email'),
-            Column::make('customer_name')->title('Tên khách hàng'),
             Column::make('phone')->title('SĐT'),
             Column::make('title')->title('Tiêu đề'),
             Column::make('download_count')->title('Lượt tải'),
