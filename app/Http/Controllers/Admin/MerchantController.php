@@ -99,10 +99,9 @@ class MerchantController
     }
 
 
-    public function sendEmail(Request $request, ContractEmailService $emailService)
+    public function sendEmail(Request $request, MerchantEmailService $emailService)
     {
         $merchantIds = $request->input('ids');
-
         if (empty($merchantIds) || !is_array($merchantIds)) {
             return response()->json(['message' => 'Vui lòng chọn ít nhất một merchant để gửi mail.'], 422);
         }
@@ -110,31 +109,15 @@ class MerchantController
         $merchants = Merchant::with(['contract', 'shops'])->whereIn('id', $merchantIds)->get();
 
         foreach ($merchants as $merchant) {
-            $contract = $merchant->contract;
-
-            if (!$contract) {
-                // Bỏ qua merchant nếu không có hợp đồng
-                continue;
+            if (!$merchant->contract || $merchant->shops->isEmpty()) {
+                continue; // bỏ qua nếu thiếu dữ liệu
             }
 
-            $shops = $merchant->shops ?? [];
-
-            foreach ($shops as $shop) {
-                $email = new Email([
-                    'to' => $merchant->email,
-                    'content' => json_encode([
-                        'contract' => $contract,
-                        'shop' => $shop,
-                    ]),
-                    'status' => 'pending',
-                ]);
-
-                $email->save();
-                $emailService->send($email);
-            }
+            $emailService->sendMail($merchant);
         }
 
         return response()->json(['message' => 'Đã gửi mail thành công.']);
     }
+
 
 }

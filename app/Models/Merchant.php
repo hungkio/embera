@@ -39,7 +39,14 @@ class Merchant extends Model
 
     public function shops()
     {
-        return $this->hasOne(Contract::class)->with('shops');
+        return $this->hasManyThrough(
+            Shop::class,
+            Contract::class,
+            'merchant_id',   // Foreign key on contracts table
+            'contract_id',   // Foreign key on shops table
+            'id',            // Local key on merchants table
+            'id'             // Local key on contracts table
+        );
     }
 
 

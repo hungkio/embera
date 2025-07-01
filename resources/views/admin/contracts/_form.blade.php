@@ -99,6 +99,12 @@
                                 </div>
                             </div>
 
+                            <x-text-field
+                                name="customer_name"
+                                :label="__('Tên khách hàng')"
+                                :value="$merchant->customer_name ?? ''"
+                                required
+                            />
 
                             <div class="form-group row">
                                 <label class="col-lg-2 col-form-label text-lg-right">

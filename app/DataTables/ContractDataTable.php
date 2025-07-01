@@ -52,6 +52,7 @@ class ContractDataTable extends BaseDatable
             ->editColumn('updated_at', fn(Contract $c) => optional($c->updated_at)->format('d/m/Y H:i'))
             ->filterColumn('contract_number', fn($query, $keyword) => $query->where('contract_number', 'like', "%$keyword%"))
             ->filterColumn('email', fn($query, $keyword) => $query->where('email', 'like', "%$keyword%"))
+            ->filterColumn('customer_name', fn($query, $keyword) => $query->where('customer_name', 'like', "%$keyword%"))
             ->filterColumn('status', fn($query, $keyword) => $query->where('status', 'like', "%$keyword%"))
             ->orderColumn('sign_date', 'sign_date $1')
             ->filterColumn('shop_name', function ($query, $keyword) {
@@ -92,6 +93,7 @@ class ContractDataTable extends BaseDatable
             Column::make('expired_time')->title('Thời hạn'),
             Column::make('status')->title('Trạng thái'),
             Column::make('email')->title('Email'),
+            Column::make('customer_name')->title('Tên khách hàng'),
             Column::make('phone')->title('SĐT'),
             Column::make('title')->title('Tiêu đề'),
             Column::make('download_count')->title('Lượt tải'),

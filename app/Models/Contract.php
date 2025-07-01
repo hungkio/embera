@@ -23,6 +23,7 @@ class Contract extends Model
         'bank_account_number',
         'bank_account_name',
         'email',
+        'customer_name',
         'phone',
         'shop_id',
         'merchant_id',

@@ -198,7 +198,8 @@ Route::prefix('admin')->name('admin.')->group(function () {
             Route::post('/merchants/bulk-status', [MerchantController::class, 'bulkStatus'])->name('merchants.bulk-status');
             Route::post('/merchants/import', [MerchantController::class, 'import'])->name('merchants.import');
             Route::get('/merchants/export', [MerchantController::class, 'export'])->name('merchants.export');
-            Route::post('/merchants/send-email', [MerchantController::class, 'sendEmail'])->name('merchants.sendEmail');
+
+            Route::post('/merchants/send-email', [MerchantController::class, 'sendEmail'])->name('merchants.send-email');
 
             // AJAX routes for merchants and shops
             Route::get('ajax/merchants', [MerchantController::class, 'search'])->name('admin.ajax.merchants');

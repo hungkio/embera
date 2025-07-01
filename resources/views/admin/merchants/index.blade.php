@@ -34,7 +34,7 @@
                 return idStr.replace('merchant_', '');
             });
 
-            fetch('{{ route('admin.merchants.sendEmail') }}', {
+            fetch('{{ route('admin.merchants.send-email') }}', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
