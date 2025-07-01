@@ -61,13 +61,13 @@ class ContractImport implements ToCollection, WithCalculatedFormulas
                 }
 
                 // Merchant
-                $merchant = Merchant::firstOrCreate(
+                $merchant = Merchant::updateOrCreate(
                     [
                         'username' => $merchantUsername,
                     ],
                     [
-                        'phone' => $merchantPhone,
                         'email' => $merchantEmail,
+                        'phone' => $merchantPhone,
                         'password' => $merchantPassword, // Có thể thay bằng logic khác
                         'admin_id' => $admin->id,
                     ]
@@ -96,7 +96,7 @@ class ContractImport implements ToCollection, WithCalculatedFormulas
                     $city   = $parts[1] ?? null;
                     $area   = $parts[2] ?? null;
                 }
-                $shop = Shop::firstOrCreate(
+                $shop = Shop::updateOrCreate(
                     [
                         'shop_name' => $shopName,
                     ],
@@ -104,6 +104,7 @@ class ContractImport implements ToCollection, WithCalculatedFormulas
                         'merchant_id' => $merchant->id,
                         'address' => $location,
                         'shop_type' => $shopType,
+                        'share_rate' => $shareRate*100,
                         'contact_phone' => $merchantPhone,
                         'strategy' => '(VND-1h)5-10000-52000',
                         'area' => trim($area),
@@ -115,7 +116,10 @@ class ContractImport implements ToCollection, WithCalculatedFormulas
                 );
 
                 // Contract
-                $expiredTime = $signDate->diffInMonths($expiredDate) . ' tháng';
+                $expiredTime = null;
+                if ($signDate && $expiredDate) {
+                    $expiredTime = $signDate->diffInMonths($expiredDate) . ' tháng';
+                }
 
                 Contract::updateOrCreate(
                     ['contract_number' => $contractNumber],

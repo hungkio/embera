@@ -28,17 +28,12 @@ class ContractDataTable extends BaseDatable
                     default => ucfirst($c->status),
                 };
             })
-            ->editColumn('email', fn(Contract $c) => $c->email)
-            ->editColumn('phone', fn(Contract $c) => $c->phone)
             ->editColumn('download_count', fn(Contract $c) => $c->download_count . ' lượt')
-            ->editColumn('bank_info', fn(Contract $c) => $c->bank_info)
-            ->editColumn('bank_account_number', fn(Contract $c) => $c->bank_account_number ?? '-')
-            ->editColumn('bank_account_name', fn(Contract $c) => $c->bank_account_name ?? '-')
+            ->editColumn('admin_id', fn(Contract $c) => $c->admin->full_name ?? '')
             ->filterColumn('bank_account_number', fn($query, $keyword) => $query->where('bank_account_number', 'like', "%$keyword%"))
             ->filterColumn('bank_account_name', fn($query, $keyword) => $query->where('bank_account_name', 'like', "%$keyword%"))
             ->editColumn('title', fn(Contract $c) => $c->title ?? '-')
             ->editColumn('ceo_sign', fn(Contract $c) => $c->ceo_sign)
-            ->editColumn('location', fn(Contract $c) => $c->location)
             ->editColumn('note', fn(Contract $c) => $c->note)
             ->editColumn('expired_time', function (Contract $c) {
                 if ($c->sign_date && $c->expired_date) {
@@ -71,6 +66,15 @@ class ContractDataTable extends BaseDatable
         $query = $model->newQuery()
             ->with(['shop.merchant']);
 
+        $filters = $this->request->all();
+
+        if (!empty($filters['date_from']) && !empty($filters['date_to'])) {
+            $query->whereBetween('sign_date', [
+                Carbon::parse($filters['date_from'])->startOfDay(),
+                Carbon::parse($filters['date_to'])->endOfDay(),
+            ]);
+        }
+
         if ($this->request->get('show_deleted', 'no') === 'yes') {
             $query->where('contracts.is_deleted', 1);
         } else {
@@ -90,15 +94,10 @@ class ContractDataTable extends BaseDatable
             Column::make('expired_date')->title('Ngày hết hạn'),
             Column::make('expired_time')->title('Thời hạn'),
             Column::make('status')->title('Trạng thái'),
-            Column::make('email')->title('Email'),
-            Column::make('phone')->title('SĐT'),
             Column::make('title')->title('Tiêu đề'),
             Column::make('download_count')->title('Lượt tải'),
-            Column::make('bank_info')->title('Ngân hàng'),
-            Column::make('bank_account_number')->title('STK'),
-            Column::make('bank_account_name')->title('Chủ tài khoản'),
+            Column::make('admin_id')->title('BD'),
             Column::make('ceo_sign')->title('Giám đốc ký'),
-            Column::make('location')->title('Địa điểm'),
             Column::make('note')->title('Ghi chú'),
             Column::make('created_at')->title('Tạo lúc'),
             Column::make('updated_at')->title('Cập nhật lúc'),

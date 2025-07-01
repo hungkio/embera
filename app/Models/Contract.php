@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Domain\Admin\Models\Admin;
 use Illuminate\Database\Eloquent\Model;
 
 class Contract extends Model
@@ -38,6 +39,11 @@ class Contract extends Model
     public function shop()
     {
         return $this->belongsTo(Shop::class);
+    }
+
+    public function admin()
+    {
+        return $this->belongsTo(Admin::class);
     }
 
     // Custom scope to filter non-deleted records

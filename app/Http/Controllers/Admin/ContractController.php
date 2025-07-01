@@ -24,66 +24,17 @@ class ContractController
     {
         $dateRange = $request->get('date_range');
         if ($dateRange && str_contains($dateRange, ' - ')) {
-            [$date_from, $date_to] = explode(' - ', $dateRange);
-        } else {
-            $date_from = now()->startOfMonth()->toDateString();
-            $date_to = now()->endOfMonth()->toDateString();
+            list($date_from, $date_to) = explode(' - ', $dateRange);
+            $request->merge([
+                'date_from' => $date_from,
+                'date_to' => $date_to,
+            ]);
         }
-
-        $request->merge([
-            'date_from' => $date_from,
-            'date_to' => $date_to,
-        ]);
-
-        $statusList = Contract::distinct()->pluck('status')->filter()->sort()->toArray();
-        $emailList = Contract::distinct()->pluck('email')->filter()->sort()->toArray();
-        $titleList = Contract::distinct()->pluck('title')->filter()->sort()->toArray();
-
-        $query = Contract::query();
-        $query->whereBetween('sign_date', [
-            Carbon::parse($date_from)->startOfDay(),
-            Carbon::parse($date_to)->endOfDay()
-        ]);
-
-        if ($request->filled('status')) {
-            $query->where('status', $request->status);
-        }
-
-        if ($request->filled('email')) {
-            $query->where('email', $request->email);
-        }
-
-        if ($request->filled('title')) {
-            $query->where('title', $request->title);
-        }
-
-        $contracts = $query->get();
-        $downloadCount = $contracts->sum('download_count');
-
-        $byStatus = $contracts->groupBy('status')->map(function ($group, $status) {
-            return [
-                'status' => $status,
-                'count' => $group->count(),
-                'downloads' => $group->sum('download_count'),
-            ];
-        })->values();
-
-        $byDate = $contracts->groupBy(fn($c) => Carbon::parse($c->sign_date)->format('Y-m-d'))
-            ->map(fn($group, $date) => [
-                'date' => $date,
-                'count' => $group->count(),
-            ])->sortKeys()->values();
 
         return $dataTable->with([
-            'filters' => $request->only(['status', 'email', 'title', 'date_from', 'date_to', 'show_deleted' => $request->get('show_deleted', 'no')]),
+            'filters' => $request->only(['date_from', 'date_to']),
         ])->render('admin.contracts.index', [
-            'statusList' => $statusList,
-            'emailList' => $emailList,
-            'titleList' => $titleList,
-            'downloadCount' => $downloadCount,
-            'byStatus' => $byStatus,
-            'byDate' => $byDate,
-            'filters' => $request->only(['status', 'email', 'title', 'date_from', 'date_to', 'show_deleted' => $request->get('show_deleted', 'no')]),
+            'filters' => $request->only(['date_from', 'date_to']),
         ]);
     }
 
