@@ -6,31 +6,28 @@ use App\Models\Merchant;
 use App\Models\Email;
 use App\Models\EmailContent;
 use App\Mail\MerchantEmail;
+use App\Models\Order;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
-use PhpOffice\PhpWord\IOFactory;
-use PhpOffice\PhpWord\TemplateProcessor;
 use Illuminate\Support\Str;
 
 class MerchantEmailService
 {
     public function sendMail(Merchant $merchant): void
     {
-
         $shops = $merchant->shops;
 
-        if (!$shops) {
+        if (!$shops || $shops->isEmpty()) {
             Log::warning("Merchant ID {$merchant->id} has no shop attached.");
             return;
         }
 
+        // Chuẩn bị dữ liệu
         $data = $this->prepareData($merchant, $shops);
-        $html = $this->generateHtmlFromDocx(
-            storage_path('app/templates/hd_xac_nhan_doanh_thu.docx'),
-            $data
-        );
 
+        // Ghi log gửi mail (render nội dung trước để lưu)
+        $html = view('admin.emails.merchant_revenue', ['content' => $data])->render();
 
         $email = Email::create([
             'to' => $merchant->email,
@@ -44,15 +41,16 @@ class MerchantEmailService
         ]);
 
         try {
-            Mail::to($merchant->email)->queue(new MerchantEmail($html));
+            Mail::to($merchant->email)->queue(new MerchantEmail($data));
             $email->update(['status' => 'sent']);
             Log::info("Email queued successfully for merchant ID {$merchant->id}");
         } catch (\Exception $e) {
             $email->update(['status' => 'failed']);
             Log::error("Failed to send email to merchant ID {$merchant->id}: {$e->getMessage()}");
         }
-    }
+        Log::debug('Shop data:', $data['shop_data']);
 
+    }
 
     public function prepareData(Merchant $merchant, $shops = []): array
     {
@@ -74,7 +72,7 @@ class MerchantEmailService
             'ten_ngan_hang' => $merchant->contract->bank_info ?? '',
             'chu_tai_khoan' => $merchant->contract->bank_account_name ?? '',
             'so_tai_khoan' => $merchant->contract->bank_account_number ?? '',
-            'giam_doc_ky' => $merchant->contract->ceo_sign ?? '',
+            'giam_doc_ky' => trim($bd->last_name . ' ' . $bd->first_name),
 
             'from_day' => $lastMonth->firstOfMonth()->format('d'),
             'from_month' => $lastMonth->firstOfMonth()->format('m'),
@@ -88,22 +86,30 @@ class MerchantEmailService
         $totalPayment = 0;
 
         foreach ($shops as $key => $shop) {
-            $shopName = trim(Str::before($shop->shop_name ?? '', '('));
+            $fullShopName = $shop->shop_name ?? ''; // tên đầy đủ để truy query
+            $displayShopName = trim(Str::before($fullShopName, '(')); // hiển thị
             $address = $shop->address ?? '';
 
-            $revenue = $shop->contract->total_revenue ?? 0;
-            $shareRate = $shop->contract->share_ratio ?? 0;
-            $payment = $revenue * ($shareRate / 100);
+            // Truy vấn doanh thu tháng trước
+            $revenue = Order::query()
+                ->whereRaw('LOWER(rental_shop) = ?', [Str::lower($shop->shop_name)])
+                ->sum('order_amount');
 
-            $totalPayment += $payment;
+
+            $shareRate = $shop->share_rate ?? 0;
+            $payment = $revenue * ($shareRate / 100);
+                $totalPayment += $payment;
+
+            // Log debug chi tiết
+            Log::info("Shop: {$shop->shop_name} — Revenue: {$revenue} — Share rate: {$shareRate} — Payment: {$payment}");
 
             $shops_data[] = [
                 'stt' => $key + 1,
-                'shop_name' => $shopName,
+                'shop_name' => $displayShopName,
                 'dia_chi_shop' => $address,
                 'doanh_thu' => number_format($revenue, 0, ',', '.'),
-                'chia_se' => $shareRate,
-                'thanh_toan' => number_format($payment, 0, ',', '.'),
+                'chia_se' => number_format($shareRate, 2, '.', '') . '%',
+                'thanh_toan' => number_format($payment, 0, ',', '.') . ' VNĐ',
             ];
         }
 
@@ -114,42 +120,10 @@ class MerchantEmailService
         return $data;
     }
 
-
     private function number_to_vietnamese($number): string
     {
         $formatter = new \NumberFormatter("vi", \NumberFormatter::SPELLOUT);
         $text = $formatter->format($number);
         return ucfirst($text) . ' đồng';
-    }
-
-    public function generateHtmlFromDocx(string $templatePath, array $data): string
-    {
-        $processor = new TemplateProcessor($templatePath);
-
-        if (!empty($data['shop_data'])) {
-            $processor->cloneRow('stt', count($data['shop_data']));
-            foreach ($data['shop_data'] as $index => $shop) {
-                foreach ($shop as $key => $value) {
-                    $processor->setValue("{$key}#" . ($index + 1), $value);
-                }
-            }
-        }
-
-        unset($data['shop_data']);
-
-        foreach ($data as $key => $value) {
-            $processor->setValue($key, htmlspecialchars((string)$value));
-        }
-
-
-        $tempPath = storage_path('app/generated_' . uniqid() . '.docx');
-        $processor->saveAs($tempPath);
-
-        $phpWord = IOFactory::load($tempPath);
-        $writer = IOFactory::createWriter($phpWord, 'HTML');
-
-        ob_start();
-        $writer->save('php://output');
-        return ob_get_clean();
     }
 }

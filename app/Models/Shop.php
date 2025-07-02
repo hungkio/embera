@@ -39,4 +39,9 @@ class Shop extends Model
     {
         return $this->belongsTo(Contract::class);
     }
+
+    public function orders()
+    {
+        return $this->hasMany(Order::class, 'rental_shop', 'shop_name');
+    }
 }

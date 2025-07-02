@@ -34,6 +34,7 @@ class ShopUpdateRequest extends FormRequest
     {
         return [
             'shop_name.required' => 'Tên shop là trường bắt buộc.',
+            'contract_id.required' => 'Hợp đồng là trường bắt buộc.',
             'share_rate.numeric' => 'Phần trăm chia lợi nhuận phải là số.',
             'share_rate.min' => 'Phần trăm chia lợi nhuận phải từ 0.',
             'share_rate.max' => 'Phần trăm chia lợi nhuận không được vượt quá 100.',

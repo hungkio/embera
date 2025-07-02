@@ -10,9 +10,9 @@ class MerchantEmail extends Mailable
 {
     use Queueable, SerializesModels;
 
-    public $content;
+    public array $content;
 
-    public function __construct($content)
+    public function __construct(array $content)
     {
         $this->content = $content;
     }
@@ -20,8 +20,7 @@ class MerchantEmail extends Mailable
     public function build()
     {
         return $this->subject('Hợp đồng từ hệ thống')
-            ->view('admin.emails.contract')
-            ->with(['content' => $this->content]);
-
+            ->view('admin.emails.merchant_revenue')
+            ->with(['content' => $this->content]); // Blade sẽ tự fill
     }
 }
