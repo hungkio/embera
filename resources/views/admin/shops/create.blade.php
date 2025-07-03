@@ -24,14 +24,22 @@
         let devices = [];
         document.querySelectorAll('#device-container .device-entry').forEach(entry => {
             const name = entry.querySelector('[name="device_name[]"]').value;
+            const code = entry.querySelector('[name="device_code[]"]').value;
             const quantity = entry.querySelector('[name="device_quantity[]"]').value;
             const pin = entry.querySelector('[name="device_pin[]"]').value;
-            if (name && quantity && pin) {
-                devices.push({ name, quantity: parseInt(quantity), pin: parseInt(pin) });
+
+            if (name && code && quantity && pin) {
+                devices.push({
+                    name,
+                    code,
+                    quantity: parseInt(quantity),
+                    pin: parseInt(pin)
+                });
             }
         });
         document.getElementById('device_json').value = JSON.stringify({ devices });
     }
+
 
     // Thêm mới thiết bị
     document.getElementById('add-device').addEventListener('click', function () {

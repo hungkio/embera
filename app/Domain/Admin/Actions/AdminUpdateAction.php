@@ -18,6 +18,7 @@ class AdminUpdateAction
             $admin->first_name = $adminData->first_name;
             $admin->last_name = $adminData->last_name;
             $admin->email = $adminData->email;
+            $admin->phone = $adminData->phone;
             if (! empty($adminData->password)) {
                 $admin->password = Hash::make($adminData->password);
             }

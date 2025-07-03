@@ -26,7 +26,7 @@ class Admin extends Authenticatable implements HasMedia
      * @var array
      */
     protected $fillable = [
-        'first_name', 'last_name', 'email', 'password',
+        'first_name', 'last_name', 'email', 'password', 'phone',
     ];
 
     /**

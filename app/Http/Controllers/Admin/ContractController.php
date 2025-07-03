@@ -40,14 +40,17 @@ class ContractController
 
     public function create(): View
     {
-
         $shops = Shop::with('merchant')->get();
-        return view('admin.contracts.create', compact( 'shops'));
+        $merchants = \App\Models\Merchant::pluck('username', 'id'); // ← Add this line
+
+        return view('admin.contracts.create', compact('shops', 'merchants')); // ← Pass both
     }
+
 
     public function store(ContractStoreRequest $request)
     {
-        $data = $request->all();
+        $data = $request->validated();
+        $data['merchant_id'] = $request->input('merchant_id');
 
         // Lấy admin_id từ người dùng hiện tại
         $adminId = auth()->id();
@@ -64,40 +67,56 @@ class ContractController
 
         if ($request->hasFile('upload')) {
             $file = $request->file('upload');
-            $uploadPath = $file->store('contracts', 'public'); // Lưu vào storage/app/public/contracts
-            $data['upload'] = $uploadPath; // Lưu đường dẫn vào DB
+            $uploadPath = $file->store('contracts', 'public');
+            $data['upload'] = $uploadPath;
         }
 
         $contract = Contract::create($data);
 
+        // Gán nhiều cửa hàng cho hợp đồng
+        if ($request->filled('shop_ids')) {
+            Shop::whereIn('id', $request->input('shop_ids'))->update(['contract_id' => $contract->id]);
+        }
+
         if ($request->hasFile('upload')) {
             $contract->addMedia($request->file('upload'))->toMediaCollection('contract');
         }
+
         return redirect()->route('admin.contracts.index')->with('success', 'Hợp đồng đã được lưu thành công');
     }
 
     public function edit(Contract $contract): View
     {
         $shops = Shop::with('merchant')->get();
-        return view('admin.contracts.edit', compact('contract', 'shops'));
+
+        $merchants = \App\Models\Merchant::pluck('username', 'id');
+
+        return view('admin.contracts.edit', compact('contract', 'shops', 'merchants'));
     }
 
     public function update(ContractUpdateRequest $request, Contract $contract)
     {
-        $data = $request->except('upload');
+        $data = $request->except(['upload', 'merchant_id']);
 
-        // Tự động tính expired_time theo số tháng
+        // Tự động tính expired_time
         $signDate = Carbon::parse($data['sign_date']);
         $expiredDate = Carbon::parse($data['expired_date']);
         $data['expired_time'] = $signDate->diffInMonths($expiredDate) . ' tháng';
-        // Upload file qua Storage
+
         if ($request->hasFile('upload')) {
             $file = $request->file('upload');
-            $uploadPath = $file->store('contracts', 'public'); // Lưu vào storage/app/public/contracts
-            $data['upload'] = $uploadPath; // Lưu đường dẫn vào DB
+            $uploadPath = $file->store('contracts', 'public');
+            $data['upload'] = $uploadPath;
         }
 
         $contract->update($data);
+
+        // Gỡ liên kết cũ và gán lại shop mới
+        Shop::where('contract_id', $contract->id)->update(['contract_id' => null]);
+
+        if ($request->filled('shop_ids')) {
+            Shop::whereIn('id', $request->input('shop_ids'))->update(['contract_id' => $contract->id]);
+        }
 
         flash()->success(__('Hợp đồng ":model" đã được cập nhật!', ['model' => $contract->contract_number]));
         return redirect()->route('admin.contracts.index');
@@ -108,7 +127,7 @@ class ContractController
         if ($contract->upload) {
             Storage::delete($contract->upload);
         }
-        $contract->update(['is_deleted' => 1]); // Soft delete by setting is_deleted to 1
+        $contract->update(['is_deleted' => 1]);
 
         return response()->json([
             'success' => true,
@@ -127,7 +146,7 @@ class ContractController
             if ($contract->upload) {
                 Storage::delete($contract->upload);
             }
-            $contract->update(['is_deleted' => 1]); // Soft delete
+            $contract->update(['is_deleted' => 1]);
             $deleted++;
         }
 
@@ -139,15 +158,17 @@ class ContractController
 
     public function sendEmail($id, ContractEmailService $emailService)
     {
-        $contract = Contract::with('shop.merchant')->findOrFail($id);
+        $contract = Contract::with('shops.merchant')->findOrFail($id);
 
-        if (!$contract->shop || !$contract->shop->merchant) {
+        $firstShopWithMerchant = $contract->shops->firstWhere('merchant');
+
+        if (!$firstShopWithMerchant) {
             return back()->with('error', 'Không thể gửi email vì thiếu thông tin.');
         }
 
         $emailService->sendContract($contract);
 
-        return redirect()->back()->with('success', 'Đã gửi email cho: ' . $contract->shop->merchant->email);
+        return redirect()->back()->with('success', 'Đã gửi email cho: ' . $firstShopWithMerchant->merchant->email);
     }
 
     private function generateUniqueContractNumber(): string
@@ -164,15 +185,16 @@ class ContractController
 
     public function printContract($id, ContractEmailService $emailService)
     {
-        $contract = Contract::with('shop.merchant')->findOrFail($id);
+        $contract = Contract::with('shops.merchant')->findOrFail($id);
 
-        if (!$contract->shop || !$contract->shop->merchant) {
+        $firstShopWithMerchant = $contract->shops->firstWhere('merchant');
+
+        if (!$firstShopWithMerchant) {
             return redirect()->back()->with('error', 'Không thể in vì thiếu thông tin cửa hàng hoặc thương nhân.');
         }
 
         $data = $emailService->prepareData($contract);
 
-        // Tạo file Word từ template
         $templatePath = storage_path('app/templates/hd_xac_nhan_doanh_thu.docx');
         $processor = new TemplateProcessor($templatePath);
 
@@ -184,14 +206,13 @@ class ContractController
         $tempPath = storage_path('app/temp/' . $fileName);
         $processor->saveAs($tempPath);
 
-        // Tải file về
         return response()->download($tempPath, $fileName)->deleteFileAfterSend(true);
     }
 
     public function printMultipleContracts(Request $request, ContractEmailService $emailService)
     {
         $ids = explode(',', $request->query('ids'));
-        $contracts = Contract::with('shop.merchant')->whereIn('id', $ids)->get();
+        $contracts = Contract::with('shops.merchant')->whereIn('id', $ids)->get();
 
         if ($contracts->isEmpty()) {
             return redirect()->back()->with('error', 'Không có hợp đồng nào được chọn.');
@@ -203,8 +224,9 @@ class ContractController
 
         if ($zip->open($tempZipPath, \ZipArchive::CREATE) === TRUE) {
             foreach ($contracts as $contract) {
-                if (!$contract->shop || !$contract->shop->merchant) {
-                    continue; // Bỏ qua nếu thiếu thông tin
+                $firstShopWithMerchant = $contract->shops->firstWhere('merchant');
+                if (!$firstShopWithMerchant) {
+                    continue;
                 }
 
                 $data = $emailService->prepareData($contract);
@@ -223,7 +245,6 @@ class ContractController
 
             $zip->close();
 
-            // Xóa các file tạm
             foreach ($contracts as $contract) {
                 $fileName = 'Hop_Dong_' . $contract->contract_number . '_' . now()->format('Ymd_His') . '.docx';
                 $tempPath = storage_path('app/temp/' . $fileName);

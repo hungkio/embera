@@ -23,6 +23,7 @@ class AdminDataTable extends BaseDatable
             ->addColumn('full_name', fn (Admin $admin) => view('admin.admins._tableFullName', compact('admin')))
             ->addColumn('roles', fn (Admin $admin) => $admin->roles->implode('display_name', ', '))
             ->editColumn('created_at', fn (Admin $admin) => formatDate($admin->created_at))
+            ->editColumn('phone', fn(Admin $admin) => $admin->phone)
             ->orderColumn('full_name',
                 fn($query, $direction) => $query->orderByRaw("CONCAT(first_name, ' ', last_name) $direction")
             )
@@ -50,6 +51,7 @@ class AdminDataTable extends BaseDatable
             Column::make('id')->title(__('STT'))->data('DT_RowIndex')->searchable(false),
             Column::make('full_name')->title(__('Họ tên'))->searchable(),
             Column::make('email')->title(__('Email')),
+            Column::make('phone')->title(__('Số điện thoại')),
             Column::make('roles')->title(__('Quyền')),
             Column::make('created_at')->title(__('Thời gian tạo'))->searchable(false),
             Column::computed('action')

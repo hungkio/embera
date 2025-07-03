@@ -15,6 +15,9 @@ class MerchantDataTable extends BaseDatable
         return datatables()
             ->eloquent($query)
             ->addIndexColumn()
+            ->setRowId(function (Merchant $m) {
+                return 'merchant_' . $m->id; // để bạn tách được ID dễ dàng
+            })
             ->addColumn('action', 'admin.merchants._tableAction')
             ->editColumn('admin_id', fn(Merchant $m) => $m->admin->full_name ?? '')
             ->editColumn('status', function (Merchant $m) {
@@ -31,6 +34,7 @@ class MerchantDataTable extends BaseDatable
             ->orderColumn('created_at', 'created_at $1')
             ->rawColumns(['action']);
     }
+
 
     public function query(Merchant $model)
     {
@@ -80,6 +84,11 @@ class MerchantDataTable extends BaseDatable
             Button::make('export')->addClass('btn bg-blue')->text('<i class="fal fa-download mr-2"></i>'.__('Xuất')),
             Button::make('print')->addClass('btn bg-blue')->text('<i class="fal fa-print mr-2"></i>'.__('In')),
             Button::make('reset')->addClass('btn bg-blue')->text('<i class="fal fa-undo mr-2"></i>'.__('Thiết lập lại')),
+            Button::make('selected')
+                ->addClass('btn bg-orange btn-send-email sendmail') // thêm 'sendmail'
+                ->text('<i class="fal fa-envelope mr-2"></i> Gửi Mail')
+
+
         ];
     }
 

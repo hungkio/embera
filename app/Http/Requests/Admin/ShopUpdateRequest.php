@@ -22,10 +22,11 @@ class ShopUpdateRequest extends FormRequest
             'area' => 'nullable|string|max:255',
             'city' => 'nullable|string|max:255',
             'region' => 'nullable|string|max:255',
-            'merchant_id' => 'required|exists:merchants,id',
+            'contract_id' => 'required|exists:contracts,id',
             'is_deleted' => 'boolean',
             'share_rate' => 'required|numeric|min:0',
             'share_rate_type' => 'required|in:percentage,fixed',
+            'is_bound' => ['required', 'in:0,1'],
             'device_json' => 'nullable|json',
         ];
     }
@@ -34,6 +35,7 @@ class ShopUpdateRequest extends FormRequest
     {
         return [
             'shop_name.required' => 'Tên shop là trường bắt buộc.',
+            'contract_id.required' => 'Hợp đồng là trường bắt buộc.',
             'share_rate.numeric' => 'Phần trăm chia lợi nhuận phải là số.',
             'share_rate.min' => 'Phần trăm chia lợi nhuận phải từ 0.',
             'share_rate.max' => 'Phần trăm chia lợi nhuận không được vượt quá 100.',

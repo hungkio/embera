@@ -19,7 +19,7 @@ class ContractEmailService
         $data = $this->prepareData($contract);
         $html = $this->generateHtmlFromDocx(storage_path('app/templates/hd_xac_nhan_doanh_thu.docx'), $data);
 
-        $merchant = $contract->shop->merchant;
+        $merchant = $contract->shops->merchant;
 
         $email = Email::create([
             'to' => $merchant->email,
@@ -44,7 +44,7 @@ class ContractEmailService
 
     public function prepareData(Contract $contract): array
     {
-        $shop = $contract->shop;
+        $shop = $contract->shops;
         $merchant = $shop->merchant;
         $deviceJson = $shop->device_json['devices'] ?? [];
         $today = now();

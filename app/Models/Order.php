@@ -54,4 +54,12 @@ class Order extends Model implements HasMedia
 
     protected $casts = [
     ];
+
+    // Trong Order.php
+    public function shop()
+    {
+        return $this->belongsTo(Shop::class); // dùng shop_id mặc định
+    }
+
+
 }

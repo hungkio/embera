@@ -11,8 +11,11 @@
 @include('admin.contracts._form', [
 'url' => route('admin.contracts.update', $contract),
 'contract' => $contract,
-'method' => 'PUT'
+'method' => 'PUT',
+'shops' => $shops,
+'merchants' => $merchants,
 ])
+
 
 @stop
 

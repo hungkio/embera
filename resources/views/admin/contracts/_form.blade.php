@@ -16,7 +16,7 @@
                                 name="contract_number"
                                 :label="__('Mã hợp đồng')"
                                 :value="$contract->contract_number ?? ''"
-{{--                                readonly--}}
+                                readonly
                             />
 
                             <x-text-field
@@ -81,6 +81,33 @@
 
                             <div class="form-group row">
                                 <label class="col-lg-2 col-form-label text-lg-right">
+                                    <span class="text-danger">*</span> {{ __('Chọn Merchant') }}
+                                </label>
+                                <div class="col-lg-9">
+                                    <select name="merchant_id" class="form-control" required>
+                                        <option value="">{{ __('-- Chọn merchant --') }}</option>
+                                        @foreach($merchants as $id => $username)
+                                        <option value="{{ $id }}" {{ old('merchant_id', $contract->merchant_id ?? '') == $id ? 'selected' : '' }}>
+                                        {{ $username }}
+                                        </option>
+                                        @endforeach
+                                    </select>
+
+                                    @error('merchant_id')
+                                    <span class="form-text text-danger">{{ $message }}</span>
+                                    @enderror
+                                </div>
+                            </div>
+
+                            <x-text-field
+                                name="customer_name"
+                                :label="__('Tên khách hàng')"
+                                :value="$merchant->customer_name ?? ''"
+                                required
+                            />
+
+                            <div class="form-group row">
+                                <label class="col-lg-2 col-form-label text-lg-right">
                                     {{ __('Ngân hàng') }}
                                 </label>
                                 <div class="col-lg-3">
@@ -116,31 +143,6 @@
                                 :value="$contract->phone"
                                 required
                             />
-
-                            {{--Cửa hàng( *) --}}
-                            <div class="form-group row">
-                                <label for="shop_id" class="col-lg-2 col-form-label text-lg-right">
-                                    <span class="text-danger">*</span> {{ __('Cửa hàng') }}
-                                </label>
-                                <div class="col-lg-9">
-                                    <select name="shop_id" id="shop_id" class="form-control"
-                                            required>
-                                        <option value="">-- Chọn cửa hàng --</option>
-                                        @foreach($shops as $shop)
-                                        <option value="{{ $shop->id }}"
-                                                {{ old(
-                                        'shop_id', $contract->shop_id ?? null) == $shop->id ?
-                                        'selected' : '' }}>
-                                        {{ $shop->shop_name }} ({{ $shop->merchant->username
-                                            ?? 'Merchant không tồn tại' }})
-                                        </option>
-                                        @endforeach
-                                    </select>
-                                    @error('shop_id')
-                                    <span class="form-text text-danger">{{ $message }}</span>
-                                    @enderror
-                                </div>
-                            </div>
 
                             <x-text-field
                                 name="ceo_sign"

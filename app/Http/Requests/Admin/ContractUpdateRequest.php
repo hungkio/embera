@@ -22,8 +22,11 @@ class ContractUpdateRequest extends FormRequest
             'bank_account_number' => 'required|string|max:100',
             'bank_account_name' => 'required|string|max:100',
             'email' => 'nullable|email',
+            'customer_name' => 'nullable|string|max:255',
             'phone' => 'required|string',
-            'shop_id' => 'required|exists:shops,id',
+            'merchant_id' => 'required|exists:merchants,id',
+            'shop_ids' => 'nullable|array',
+            'shop_ids.*' => 'exists:shops,id',
             'admin_id' => 'nullable|exists:admins,id',
             'title' => 'required|string',
             'ceo_sign' => 'required|string',
@@ -60,11 +63,17 @@ class ContractUpdateRequest extends FormRequest
 
             'email.email' => 'Email không hợp lệ.',
 
+            'customer_name.required' => 'Tên khách là trường bắt buộc.',
+            'customer_name.string' => 'Tên khách hàng không hợp lệ.',
+
             'phone.required' => 'Số điện thoại là trường bắt buộc.',
             'phone.string' => 'Số điện thoại không hợp lệ.',
 
-            'shop_id.required' => 'Cửa hàng là trường bắt buộc.',
-            'shop_id.exists' => 'Cửa hàng được chọn không hợp lệ.',
+            'merchant_id.required' => 'Merchant là trường bắt buộc.',
+            'merchant_id.exists' => 'Merchant không hợp lệ.',
+
+            'shop_ids.array' => 'Danh sách cửa hàng không hợp lệ.',
+            'shop_ids.*.exists' => 'Một hoặc nhiều cửa hàng không tồn tại.',
 
             'admin_id.exists' => 'Admin không hợp lệ.',
 
@@ -76,6 +85,7 @@ class ContractUpdateRequest extends FormRequest
 
             'location.required' => 'Địa điểm là trường bắt buộc.',
             'location.string' => 'Địa điểm không hợp lệ.',
+
             'note.string' => 'Ghi chú không hợp lệ.',
 
             'upload.file' => 'Tập tin không hợp lệ.',

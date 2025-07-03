@@ -41,6 +41,14 @@
                                 >
                                 </x-text-field>
 
+                                <x-text-field
+                                    name="phone"
+                                    :placeholder="__('0912345678')"
+                                    :label="__('Số điện thoại')"
+                                    :value="$admin->phone ?? ''"
+                                    required
+                                />
+
                                 <x-select-field
                                     name="roles"
                                     :placeholder="__('Chọn quyền')"
