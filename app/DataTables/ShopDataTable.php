@@ -33,7 +33,6 @@ class ShopDataTable extends BaseDatable
             ->editColumn('area', fn(Shop $shop) => $shop->area ?? '-')
             ->editColumn('city', fn(Shop $shop) => $shop->city ?? '-')
             ->editColumn('region', fn(Shop $shop) => $shop->region ?? '-')
-            ->addColumn('contract_id', fn(Shop $shop) => $shop->contract_id ?? '-')
             ->editColumn('device_json', function (Shop $shop) {
                 if (!$shop->device_json) return '-';
                 $devices = $shop->device_json['devices'] ?? [];
@@ -99,7 +98,6 @@ class ShopDataTable extends BaseDatable
             Column::make('area')->title('Khu vực'),
             Column::make('city')->title('Thành phố'),
             Column::make('region')->title('Vùng'),
-            Column::make('contract_id')->title('Hợp đồng'),
             Column::make('is_bound')->title('Bind thiết bị'),
             Column::make('device_json')->title('Thiết bị'),
             Column::computed('action')->title('Tác vụ')->exportable(false)->printable(false)->width(60)->addClass('text-center'),

@@ -44,15 +44,13 @@ class ContractImport implements ToCollection, WithCalculatedFormulas
                 $shopType = trim($firstRow[14] ?? '');
                 $merchantName = trim($firstRow[15] ?? '');
                 $shareRate = trim($firstRow[16] ?? '');
-
-                $deviceName = trim($firstRow[17] ?? '');
-                $deviceQuantity = (int) ($firstRow[18] ?? 0);
-                $devicePin = (int) ($firstRow[19] ?? 0);
-
                 $merchantUsername = trim($firstRow[20] ?? '');
                 $merchantPassword = trim($firstRow[21] ?? '');
 
 
+                if (!$adminName) {
+                    continue;
+                }
                 // Tìm admin_id từ tên
                 $admin = Admin::whereRaw("CONCAT(first_name, ' ', last_name) = ?", $adminName)->first();
 
@@ -76,44 +74,27 @@ class ContractImport implements ToCollection, WithCalculatedFormulas
                 // Gom thiết bị
                 $devices = [];
                 foreach ($items as $row) {
-                    $deviceName = trim($row[17] ?? '');
-                    $quantity = (int) $row[18];
+                    $deviceCode = trim($row[17] ?? '');
+                    $deviceName = trim($row[18] ?? '');
                     $pin = (int) $row[19];
+
+
                     if ($deviceName) {
                         $devices[] = [
+                            'code' => $deviceCode,
                             'name' => $deviceName,
-                            'quantity' => $quantity,
+//                            'quantity' => $quantity,
                             'pin' => $pin,
                         ];
                     }
                 }
+                $devices = collect($devices);
+                $result = $devices->groupBy('device_code')->map(function ($group) {
+                    $first = $group->first();
+                    $first['quantity'] = $group->count();
+                    return $first;
+                })->values()->all();
                 $deviceJson = json_encode(['devices' => $devices]);
-
-                // Shop
-                if (isset($shopName) && preg_match('/\((.*?)\)/', $shopName, $matches)) {
-                    $parts = explode('-', $matches[1]);
-                    $region = $parts[0] ?? null;
-                    $city   = $parts[1] ?? null;
-                    $area   = $parts[2] ?? null;
-                }
-                $shop = Shop::updateOrCreate(
-                    [
-                        'shop_name' => $shopName,
-                    ],
-                    [
-                        'merchant_id' => $merchant->id,
-                        'address' => $location,
-                        'shop_type' => $shopType,
-                        'share_rate' => $shareRate*100,
-                        'contact_phone' => $merchantPhone,
-                        'strategy' => '(VND-1h)5-10000-52000',
-                        'area' => trim($area),
-                        'city' => trim($city),
-                        'region' => trim($region),
-                        'device_json' => $deviceJson,
-                        'admin_id' => $admin->id,
-                    ]
-                );
 
                 // Contract
                 $expiredTime = null;
@@ -121,7 +102,7 @@ class ContractImport implements ToCollection, WithCalculatedFormulas
                     $expiredTime = $signDate->diffInMonths($expiredDate) . ' tháng';
                 }
 
-                Contract::updateOrCreate(
+                $contract = Contract::updateOrCreate(
                     ['contract_number' => $contractNumber],
                     [
                         'sign_date' => $signDate,
@@ -134,10 +115,36 @@ class ContractImport implements ToCollection, WithCalculatedFormulas
                         'email' => $merchantEmail,
                         'phone' => $merchantPhone,
                         'admin_id' => $admin->id,
-                        'shop_id' => $shop->id,
+                        'merchant_id' => $merchant->id,
                         'title' => $title,
                         'ceo_sign' => $ceoSign,
                         'location' => $location,
+                    ]
+                );
+
+                // Shop
+                if (isset($shopName) && preg_match('/\((.*?)\)/', $shopName, $matches)) {
+                    $parts = explode('-', $matches[1]);
+                    $region = $parts[0] ?? null;
+                    $city   = $parts[1] ?? null;
+                    $area   = $parts[2] ?? null;
+                }
+                Shop::updateOrCreate(
+                    [
+                        'shop_name' => $shopName,
+                    ],
+                    [
+                        'contract_id' => $contract->id,
+                        'address' => $location,
+                        'shop_type' => $shopType,
+                        'share_rate' => $shareRate*100,
+                        'contact_phone' => $merchantPhone,
+                        'strategy' => '(VND-1h)5-10000-52000',
+                        'area' => trim($area),
+                        'city' => trim($city),
+                        'region' => trim($region),
+                        'device_json' => ['devices' => $result],
+                        'admin_id' => $admin->id,
                     ]
                 );
             }
