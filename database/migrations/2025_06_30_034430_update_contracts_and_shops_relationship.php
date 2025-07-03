@@ -19,7 +19,6 @@ class UpdateContractsAndShopsRelationship extends Migration
         Schema::table('shops', function (Blueprint $table) {
             if (!Schema::hasColumn('shops', 'contract_id')) {
                 $table->unsignedBigInteger('contract_id')->nullable()->after('merchant_id');
-                $table->foreign('contract_id')->references('id')->on('contracts')->onDelete('set null');
             }
         });
     }
@@ -33,7 +32,6 @@ class UpdateContractsAndShopsRelationship extends Migration
 
         Schema::table('contracts', function (Blueprint $table) {
             $table->unsignedBigInteger('shop_id')->nullable();
-            $table->foreign('shop_id')->references('id')->on('shops')->onDelete('set null');
         });
     }
 }
