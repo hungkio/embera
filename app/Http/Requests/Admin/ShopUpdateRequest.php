@@ -26,6 +26,7 @@ class ShopUpdateRequest extends FormRequest
             'is_deleted' => 'boolean',
             'share_rate' => 'required|numeric|min:0',
             'share_rate_type' => 'required|in:percentage,fixed',
+            'is_bound' => ['required', 'in:0,1'],
             'device_json' => 'nullable|json',
         ];
     }

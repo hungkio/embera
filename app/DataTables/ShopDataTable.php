@@ -64,8 +64,14 @@ class ShopDataTable extends BaseDatable
 
                 return $html;
             })
-
-
+            ->editColumn('is_bound', fn($shop) => $shop->is_bound ? 'Đã bind' : 'Chưa bind')
+            ->filterColumn('is_bound', function ($query, $keyword) {
+                if (str_contains($keyword, 'đã')) {
+                    $query->where('is_bound', true);
+                } elseif (str_contains($keyword, 'chưa')) {
+                    $query->where('is_bound', false);
+                }
+            })
             ->addColumn('is_deleted', fn(Shop $shop) => $shop->is_deleted ? 'Đã xóa' : 'Hoạt động')
             ->filterColumn('is_deleted', fn($query, $keyword) => $query->where('is_deleted', $keyword === 'Đã xóa' ? 1 : 0))
             ->rawColumns(['action', 'device_json']);
@@ -94,6 +100,7 @@ class ShopDataTable extends BaseDatable
             Column::make('city')->title('Thành phố'),
             Column::make('region')->title('Vùng'),
             Column::make('contract_id')->title('Hợp đồng'),
+            Column::make('is_bound')->title('Bind thiết bị'),
             Column::make('device_json')->title('Thiết bị'),
             Column::computed('action')->title('Tác vụ')->exportable(false)->printable(false)->width(60)->addClass('text-center'),
         ];

@@ -20,6 +20,7 @@ class Shop extends Model
         'is_deleted',
         'share_rate',
         'share_rate_type',
+        'is_bound',
         'device_json',
     ];
 
@@ -28,6 +29,7 @@ class Shop extends Model
         'device_json' => 'array',
         'share_rate' => 'float',
         'share_rate_type' => 'string',
+        'is_bound' => 'boolean',
     ];
 
     public function merchant()

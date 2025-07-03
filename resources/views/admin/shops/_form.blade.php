@@ -161,6 +161,26 @@
                     </div>
 
                     <div class="form-group row">
+                        <label class="col-lg-2 col-form-label text-lg-right">
+                            {{ __('Bind thiết bị') }}
+                        </label>
+                        <div class="col-lg-9">
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input" type="radio" name="is_bound" id="bound_yes" value="1"
+                                       {{ old('is_bound', $shop->is_bound ?? null) === true ? 'checked' : '' }}>
+                                <label class="form-check-label" for="bound_yes">{{ __('Đã bind') }}</label>
+                            </div>
+
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input" type="radio" name="is_bound" id="bound_no" value="0"
+                                       {{ old('is_bound', $shop->is_bound ?? null) === false ? 'checked' : '' }}>
+                                <label class="form-check-label" for="bound_no">{{ __('Chưa bind') }}</label>
+                            </div>
+                        </div>
+                    </div>
+
+
+                    <div class="form-group row">
                         <label class="col-lg-2 col-form-label text-lg-right">{{ __('Thiết bị')
                             }}</label>
                         <div class="col-lg-9">
