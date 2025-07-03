@@ -44,7 +44,6 @@ class ShopDataTable extends BaseDatable
                         <tr>
                             <th>Tên</th>
                             <th>Mã máy</th>
-                            <th>Số lượng</th>
                             <th>Pin</th>
                         </tr>
                     </thead>
@@ -54,7 +53,6 @@ class ShopDataTable extends BaseDatable
                     $html .= '<tr>
                     <td>' . e($device['name'] ?? '-') . '</td>
                     <td>' . e($device['code'] ?? '-') . '</td>
-                    <td>' . e($device['quantity'] ?? '-') . '</td>
                     <td>' . e($device['pin'] ?? '-') . '</td>
                   </tr>';
                 }
@@ -63,7 +61,7 @@ class ShopDataTable extends BaseDatable
 
                 return $html;
             })
-            ->editColumn('is_bound', fn($shop) => $shop->is_bound ? 'Đã bind' : 'Chưa bind')
+            ->editColumn('is_bound', fn($shop) => $shop->is_bound ? "<button class=\"dt-button btn btn-success\" tabindex=\"0\" aria-controls=\"ShopDataTable\" type=\"button\"><span>Đã bind</span></button>" : "<button class=\"dt-button btn btn-warning\" tabindex=\"0\" aria-controls=\"ShopDataTable\" type=\"button\"><span>Chưa bind</span></button>")
             ->filterColumn('is_bound', function ($query, $keyword) {
                 if (str_contains($keyword, 'đã')) {
                     $query->where('is_bound', true);
@@ -73,7 +71,7 @@ class ShopDataTable extends BaseDatable
             })
             ->addColumn('is_deleted', fn(Shop $shop) => $shop->is_deleted ? 'Đã xóa' : 'Hoạt động')
             ->filterColumn('is_deleted', fn($query, $keyword) => $query->where('is_deleted', $keyword === 'Đã xóa' ? 1 : 0))
-            ->rawColumns(['action', 'device_json']);
+            ->rawColumns(['action', 'device_json', 'is_bound']);
     }
 
     public function query(Shop $model)

@@ -91,7 +91,6 @@ class ShopController extends \App\Http\Controllers\Controller
             $data['device_json'] = null;
         }
 
-        dd($data);
         $shop->update($data);
         return redirect()->route('admin.shops.index')->with('success', 'Đã cập nhật shop!');
     }

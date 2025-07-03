@@ -23,7 +23,6 @@ class ContractStoreRequest extends FormRequest
             'bank_account_name' => 'required|string|max:100',
             'email' => 'nullable|email',
             'customer_name' => 'nullable|string|max:255',
-            'phone' => 'required|string',
             'merchant_id' => 'required|exists:merchants,id',
             'shop_ids' => 'nullable|array',
             'shop_ids.*' => 'exists:shops,id',
@@ -65,9 +64,6 @@ class ContractStoreRequest extends FormRequest
 
             'customer_name.required' => 'Tên khách là trường bắt buộc.',
             'customer_name.string' => 'Tên khách hàng không hợp lệ.',
-
-            'phone.required' => 'Số điện thoại là trường bắt buộc.',
-            'phone.string' => 'Số điện thoại không hợp lệ.',
 
             'merchant_id.required' => 'Merchant là trường bắt buộc.',
             'merchant_id.exists' => 'Merchant không hợp lệ.',

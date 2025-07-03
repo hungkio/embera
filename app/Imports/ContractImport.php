@@ -47,7 +47,6 @@ class ContractImport implements ToCollection, WithCalculatedFormulas
                 $merchantUsername = trim($firstRow[20] ?? '');
                 $merchantPassword = trim($firstRow[21] ?? '');
 
-
                 if (!$adminName) {
                     continue;
                 }
@@ -83,17 +82,10 @@ class ContractImport implements ToCollection, WithCalculatedFormulas
                         $devices[] = [
                             'code' => $deviceCode,
                             'name' => $deviceName,
-//                            'quantity' => $quantity,
                             'pin' => $pin,
                         ];
                     }
                 }
-                $devices = collect($devices);
-                $result = $devices->groupBy('device_code')->map(function ($group) {
-                    $first = $group->first();
-                    $first['quantity'] = $group->count();
-                    return $first;
-                })->values()->all();
                 $deviceJson = json_encode(['devices' => $devices]);
 
                 // Contract
@@ -137,13 +129,13 @@ class ContractImport implements ToCollection, WithCalculatedFormulas
                         'contract_id' => $contract->id,
                         'address' => $location,
                         'shop_type' => $shopType,
-                        'share_rate' => $shareRate*100,
+                        'share_rate' => $shareRate ? $shareRate*100 : 0,
                         'contact_phone' => $merchantPhone,
                         'strategy' => '(VND-1h)5-10000-52000',
                         'area' => trim($area),
                         'city' => trim($city),
                         'region' => trim($region),
-                        'device_json' => ['devices' => $result],
+                        'device_json' => ['devices' => $devices],
                         'admin_id' => $admin->id,
                     ]
                 );

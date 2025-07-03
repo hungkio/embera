@@ -38,6 +38,15 @@ class Contract extends Model
         'is_deleted',
     ];
 
+    CONST BBNT = 'Chỉ có BBNT';
+    CONST NOT_SIGN = 'Chưa Ký';
+    CONST SIGN = 'Đã ký';
+    CONST STATUS = [
+        self::BBNT => 'Chỉ có BBNT',
+        self::NOT_SIGN => 'Chưa Ký',
+        self::SIGN => 'Đã ký',
+    ];
+
     public function shops()
     {
         return $this->hasMany(Shop::class);

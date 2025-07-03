@@ -31,15 +31,8 @@
                                 </label>
                                 <div class="col-lg-9">
                                     <input type="text" name="password" class="form-control"
-                                           value="{{ old('password') ?? '' }}"
+                                           value="{{ $merchant->password ?? '' }}"
                                            placeholder="">
-
-                                    @if (session()->has('plain_password'))
-                                    <small class="form-text text-success">
-                                        Mật khẩu vừa tạo: {{ session()->get('plain_password') }}
-                                    </small>
-                                    @endif
-
                                     @error('password')
                                     <span class="form-text text-danger">{{ $message }}</span>
                                     @enderror

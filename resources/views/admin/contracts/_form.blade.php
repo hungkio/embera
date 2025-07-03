@@ -64,13 +64,13 @@
                                     <select name="status" id="status" class="form-control" required>
                                         <option value="">-- Trạng thái --</option>
                                         <option value="đã_ký" {{ old(
-                                        'status', $contract->status ?? '') === 'đã_ký' ? 'selected'
+                                        'status', $contract->status ?? '') === \App\Models\Contract::SIGN ? 'selected'
                                         : '' }}>Đã ký</option>
                                         <option value="chưa_ký" {{ old(
-                                        'status', $contract->status ?? '') === 'chưa_ký' ?
+                                        'status', $contract->status ?? '') === \App\Models\Contract::NOT_SIGN ?
                                         'selected' : '' }}>Chưa ký</option>
                                         <option value="chỉ_có_BBNT" {{ old(
-                                        'status', $contract->status ?? '') === 'chỉ_có_BBNT' ?
+                                        'status', $contract->status ?? '') === \App\Models\Contract::BBNT ?
                                         'selected' : '' }}>Chỉ có BBNT</option>
                                     </select>
                                     @error('status')
@@ -141,7 +141,6 @@
                                 name="phone"
                                 :label="__('Số điện thoại (Zalo)')"
                                 :value="$contract->phone"
-                                required
                             />
 
                             <x-text-field

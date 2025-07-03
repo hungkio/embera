@@ -26,14 +26,12 @@
         document.querySelectorAll('#device-container .device-entry').forEach(entry => {
             const name = entry.querySelector('[name="device_name[]"]').value;
             const code = entry.querySelector('[name="device_code[]"]').value;
-            const quantity = entry.querySelector('[name="device_quantity[]"]').value;
             const pin = entry.querySelector('[name="device_pin[]"]').value;
 
-            if (name && code && quantity && pin) {
+            if (name && code && pin) {
                 devices.push({
                     name,
                     code,
-                    quantity: parseInt(quantity),
                     pin: parseInt(pin)
                 });
             }
@@ -53,7 +51,6 @@
                 const entry = template.cloneNode(true);
                 entry.querySelector('[name="device_name[]"]').value = device.name || '';
                 entry.querySelector('[name="device_code[]"]').value = device.code || '';
-                entry.querySelector('[name="device_quantity[]"]').value = device.quantity || '';
                 entry.querySelector('[name="device_pin[]"]').value = device.pin || '';
                 container.appendChild(entry);
             });

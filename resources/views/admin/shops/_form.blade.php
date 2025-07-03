@@ -190,13 +190,13 @@
                                     <select name="device_name[]" class="form-control mr-2" required>
                                         <option value="">-- Chọn thiết bị --</option>
                                         <option value="CP8">CP8</option>
-                                        <option value="CP8 PRO">CP8 PRO</option>
+                                        <option value="CB8PRO">CP8 PRO</option>
                                         <option value="CP32">CP32</option>
                                     </select>
 
                                     <input type="text" name="device_code[]" class="form-control mr-2" placeholder="Mã máy" required>
 
-                                    <input type="number" name="device_quantity[]" class="form-control mr-2" placeholder="Số lượng" required>
+{{--                                    <input type="number" name="device_quantity[]" class="form-control mr-2" placeholder="Số lượng" required>--}}
 
                                     <input type="number" name="device_pin[]" class="form-control mr-2" placeholder="Số pin" required>
 
