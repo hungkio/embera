@@ -59,11 +59,14 @@ class ShopController extends \App\Http\Controllers\Controller
 
     public function edit(Shop $shop)
     {
-        $contracts = Contract::with('merchant')->get()
+        $contracts = Contract::with('merchant')
+            ->where('is_deleted', false) // <- Chỉ lấy hợp đồng chưa bị xóa
+            ->get()
+            ->filter(fn($c) => $c->merchant) // phòng trường hợp thiếu merchant
             ->mapWithKeys(function ($contract) {
-                $merchantName = $contract->merchant->username ?? 'Không có merchant';
-                return [$contract->id => "{$contract->contract_number} - {$merchantName}"];
+                return [$contract->id => "{$contract->contract_number} - {$contract->merchant->username}"];
             });
+
 
 
         return view('admin.shops.edit', [

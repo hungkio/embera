@@ -76,13 +76,6 @@
                         </div>
                     </div>
 
-                    <x-text-field
-                        name="contact_phone"
-                        :label="__('Số điện thoại (Zalo)')"
-                        :value="$shop->contact_phone ?? ''"
-                        required
-                    />
-
                     <div class="form-group row">
                         <label class="col-lg-2 col-form-label text-lg-right">
                             <span class="text-danger">*</span> {{ __('Chia lợi nhuận') }}

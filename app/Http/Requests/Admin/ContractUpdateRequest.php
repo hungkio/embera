@@ -16,7 +16,7 @@ class ContractUpdateRequest extends FormRequest
         return [
             'sign_date' => 'required|date',
             'expired_date' => 'required|date|after_or_equal:sign_date',
-            'status' => 'required|in:đã_ký,chưa_ký,chỉ_có_BBNT',
+            'status' => 'required|in:SIGN,NOT_SIGN,BBNT',
             'expired_time' => 'nullable|string',
             'bank_info' => 'required|string',
             'bank_account_number' => 'required|string|max:100',

@@ -24,10 +24,10 @@ class ContractDataTable extends BaseDatable
             ->editColumn('expired_date', fn(Contract $c) => optional($c->expired_date)->format('d/m/Y'))
             ->editColumn('status', function (Contract $c) {
                 return match ($c->status) {
-                    'đã_ký' => 'Đã ký',
-                    'chưa_ký' => 'Chưa ký',
-                    'chỉ_có_BBNT' => 'Chỉ có BBNT',
-                    default => ucfirst($c->status),
+                    'SIGN' => 'Đã ký',
+                    'NOT_SIGN' => 'Chưa ký',
+                    'BBNT' => 'Chỉ có BBNT',
+                    default => ucfirst(strtolower($c->status)),
                 };
             })
             ->editColumn('download_count', fn(Contract $c) => $c->download_count . ' lượt')
@@ -126,8 +126,6 @@ class ContractDataTable extends BaseDatable
         return [
             Button::make('create')->addClass('btn btn-success')->text('<i class="fal fa-plus-circle mr-2"></i>' . __('Tạo mới')),
             Button::make('bulkDelete')->addClass('btn bg-danger')->text('<i class="fal fa-trash-alt mr-2"></i>' . __('Xóa')),
-            Button::make('export')->addClass('btn bg-blue')->text('<i class="fal fa-download mr-2"></i>' . __('Xuất')),
-            Button::make('print')->addClass('btn bg-blue')->text('<i class="fal fa-print mr-2"></i>' . __('In'))->action('function() { printContracts(); }'),
             Button::make('reset')->addClass('btn bg-blue')->text('<i class="fal fa-undo mr-2"></i>' . __('Thiết lập lại')),
             Button::make('selected')->addClass('btn bg-teal-400 import')
                 ->text('<i class="icon-compose mr-2"></i>' . __('Import')

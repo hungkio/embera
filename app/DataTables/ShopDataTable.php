@@ -20,7 +20,6 @@ class ShopDataTable extends BaseDatable
             ->editColumn('shop_name', fn(Shop $shop) => $shop->shop_name)
             ->editColumn('address', fn(Shop $shop) => $shop->address)
             ->editColumn('shop_type', fn(Shop $shop) => $shop->shop_type)
-            ->editColumn('contact_phone', fn(Shop $shop) => $shop->contact_phone)
             ->editColumn('share_rate', function (Shop $shop) {
                 return $shop->share_rate_type === 'fixed'
                     ? number_format($shop->share_rate, 0) . ' VNĐ'
@@ -33,28 +32,124 @@ class ShopDataTable extends BaseDatable
             ->editColumn('area', fn(Shop $shop) => $shop->area ?? '-')
             ->editColumn('city', fn(Shop $shop) => $shop->city ?? '-')
             ->editColumn('region', fn(Shop $shop) => $shop->region ?? '-')
+//            ->editColumn('device_json', function (Shop $shop) {
+//                if (!$shop->device_json) return '-';
+//                $devices = $shop->device_json['devices'] ?? [];
+//                if (!is_array($devices) || empty($devices)) return '-';
+//
+//                // Đếm số lượng theo tên
+//                $countMap = [];
+//                foreach ($devices as $device) {
+//                    $name = strtoupper(trim($device['name'] ?? ''));
+//                    if ($name) {
+//                        $countMap[$name] = ($countMap[$name] ?? 0) + 1;
+//                    }
+//                }
+//
+//                // Render bảng
+//                $html = '<div class="table-responsive">
+//        <table class="table table-bordered table-sm mb-0 text-center">
+//            <thead class="thead-light">
+//                <tr>
+//                    <th>Tên thiết bị</th>
+//                    <th>Số lượng</th>
+//                </tr>
+//            </thead>
+//            <tbody>';
+//
+//                foreach ($countMap as $name => $count) {
+//                    $html .= '<tr>
+//            <td>' . e($name) . '</td>
+//            <td>' . $count . '</td>
+//        </tr>';
+//                }
+//
+//                $html .= '</tbody></table></div>';
+//
+//                return $html;
+//            })
+
             ->editColumn('device_json', function (Shop $shop) {
                 if (!$shop->device_json) return '-';
                 $devices = $shop->device_json['devices'] ?? [];
                 if (!is_array($devices) || empty($devices)) return '-';
 
                 $html = '<div class="table-responsive">
-                <table class="table table-bordered table-sm mb-0 text-center">
-                    <thead class="thead-light">
-                        <tr>
-                            <th>Tên</th>
-                            <th>Mã máy</th>
-                            <th>Pin</th>
-                        </tr>
-                    </thead>
-                    <tbody>';
+        <table class="table table-bordered table-sm mb-0 text-center">
+            <thead class="thead-light">
+                <tr>
+                    <th>Tên</th>
+                    <th>Mã máy</th>
+                    <th>Pin</th>
+                </tr>
+            </thead>
+            <tbody>';
 
                 foreach ($devices as $device) {
                     $html .= '<tr>
-                    <td>' . e($device['name'] ?? '-') . '</td>
-                    <td>' . e($device['code'] ?? '-') . '</td>
-                    <td>' . e($device['pin'] ?? '-') . '</td>
-                  </tr>';
+        <td>' . e($device['name'] ?? '-') . '</td>
+        <td>' . e($device['code'] ?? '-') . '</td>
+        <td>' . e($device['pin'] ?? '-') . '</td>
+      </tr>';
+                }
+
+                $html .= '</tbody></table></div>';
+
+                return $html;
+            })
+
+            ->editColumn('device_json', function (Shop $shop) {
+                if (!$shop->device_json) return '-';
+                $devices = $shop->device_json['devices'] ?? [];
+                if (!is_array($devices) || empty($devices)) return '-';
+
+                $summary = [];
+
+                foreach ($devices as $device) {
+                    $name = strtoupper(trim($device['name'] ?? ''));
+                    $code = trim($device['code'] ?? '');
+                    $pin  = (int)($device['pin'] ?? 0);
+
+                    if (!$name) continue;
+
+                    $key = $name . '_' . $pin;
+
+                    if (!isset($summary[$key])) {
+                        $summary[$key] = [
+                            'name' => $name,
+                            'pin' => $pin,
+                            'count' => 0,
+                            'codes' => [],
+                        ];
+                    }
+
+                    $summary[$key]['count'] += 1;
+
+                    if ($code) {
+                        $summary[$key]['codes'][] = $code;
+                    }
+                }
+
+                $html = '<div class="table-responsive">
+        <table class="table table-bordered table-sm mb-0 text-center">
+            <thead class="thead-light">
+                <tr>
+                    <th>Tên thiết bị</th>
+                    <th>Mã máy</th>
+                    <th>Số pin</th>
+                    <th>Số lượng</th>
+                </tr>
+            </thead>
+            <tbody>';
+
+                foreach ($summary as $row) {
+                    $uniqueCodes = implode(', ', array_unique($row['codes']));
+                    $html .= '<tr>
+            <td>' . e($row['name']) . '</td>
+            <td>' . e($uniqueCodes) . '</td>
+            <td>' . $row['pin'] . '</td>
+            <td>' . $row['count'] . '</td>
+        </tr>';
                 }
 
                 $html .= '</tbody></table></div>';
@@ -89,7 +184,6 @@ class ShopDataTable extends BaseDatable
             Column::make('shop_name')->title('Tên cửa hàng'),
             Column::make('address')->title('Địa chỉ'),
             Column::make('shop_type')->title('Loại cửa hàng'),
-            Column::make('contact_phone')->title('Số điện thoại'),
             Column::make('share_rate')->title('Lợi nhuận'),
             Column::make('share_rate_type')->title('Loại chia'),
             Column::make('strategy')->title('Chiến lược'),

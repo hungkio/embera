@@ -16,7 +16,7 @@ class MerchantEmailService
 {
     public function sendMail(Merchant $merchant): void
     {
-        $shops = $merchant->shops;
+        $shops = $merchant->shops()->where('shops.is_deleted', false)->get();
 
         if (!$shops || $shops->isEmpty()) {
             Log::warning("Merchant ID {$merchant->id} has no shop attached.");

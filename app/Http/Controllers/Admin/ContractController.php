@@ -10,6 +10,7 @@ use App\Models\Contract;
 use App\Http\Requests\Admin\ContractStoreRequest;
 use App\Http\Requests\Admin\ContractUpdateRequest;
 use App\Models\Shop;
+use App\Services\PrintContractToWord;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 use Carbon\Carbon;
@@ -183,80 +184,18 @@ class ContractController
         return (string)$nextNumber;
     }
 
-    public function printContract($id, ContractEmailService $emailService)
+    public function printContract($contract, PrintContractToWord $printService)
     {
-        $contract = Contract::with('shops.merchant')->findOrFail($id);
+        \Log::info('Starting printContract for ID: ' . $contract);
+        $contract = Contract::with('shops')->findOrFail($contract);
 
-        $firstShopWithMerchant = $contract->shops->firstWhere('merchant');
-
-        if (!$firstShopWithMerchant) {
-            return redirect()->back()->with('error', 'Không thể in vì thiếu thông tin cửa hàng hoặc thương nhân.');
+        try {
+            \Log::info('Attempting to generate and download Word file for contract ID: ' . $contract->id);
+            return $printService->printContractToWord($contract);
+        } catch (\Exception $e) {
+            \Log::error('Exception in printContract: ' . $e->getMessage() . ' at ' . $e->getFile() . ':' . $e->getLine());
+            return redirect()->back()->with('error', 'Lỗi khi in hợp đồng: ' . $e->getMessage());
         }
-
-        $data = $emailService->prepareData($contract);
-
-        $templatePath = storage_path('app/templates/hd_xac_nhan_doanh_thu.docx');
-        $processor = new TemplateProcessor($templatePath);
-
-        foreach ($data as $key => $value) {
-            $processor->setValue($key, $value);
-        }
-
-        $fileName = 'Hop_Dong_' . $contract->contract_number . '_' . now()->format('Ymd_His') . '.docx';
-        $tempPath = storage_path('app/temp/' . $fileName);
-        $processor->saveAs($tempPath);
-
-        return response()->download($tempPath, $fileName)->deleteFileAfterSend(true);
-    }
-
-    public function printMultipleContracts(Request $request, ContractEmailService $emailService)
-    {
-        $ids = explode(',', $request->query('ids'));
-        $contracts = Contract::with('shops.merchant')->whereIn('id', $ids)->get();
-
-        if ($contracts->isEmpty()) {
-            return redirect()->back()->with('error', 'Không có hợp đồng nào được chọn.');
-        }
-
-        $zip = new \ZipArchive();
-        $zipFileName = 'Hop_Dong_Multiple_' . now()->format('Ymd_His') . '.zip';
-        $tempZipPath = storage_path('app/temp/' . $zipFileName);
-
-        if ($zip->open($tempZipPath, \ZipArchive::CREATE) === TRUE) {
-            foreach ($contracts as $contract) {
-                $firstShopWithMerchant = $contract->shops->firstWhere('merchant');
-                if (!$firstShopWithMerchant) {
-                    continue;
-                }
-
-                $data = $emailService->prepareData($contract);
-                $templatePath = storage_path('app/templates/hd_xac_nhan_doanh_thu.docx');
-                $processor = new TemplateProcessor($templatePath);
-
-                foreach ($data as $key => $value) {
-                    $processor->setValue($key, $value);
-                }
-
-                $fileName = 'Hop_Dong_' . $contract->contract_number . '_' . now()->format('Ymd_His') . '.docx';
-                $tempPath = storage_path('app/temp/' . $fileName);
-                $processor->saveAs($tempPath);
-                $zip->addFile($tempPath, $fileName);
-            }
-
-            $zip->close();
-
-            foreach ($contracts as $contract) {
-                $fileName = 'Hop_Dong_' . $contract->contract_number . '_' . now()->format('Ymd_His') . '.docx';
-                $tempPath = storage_path('app/temp/' . $fileName);
-                if (file_exists($tempPath)) {
-                    unlink($tempPath);
-                }
-            }
-
-            return response()->download($tempZipPath, $zipFileName)->deleteFileAfterSend(true);
-        }
-
-        return redirect()->back()->with('error', 'Lỗi khi tạo file ZIP.');
     }
 
     public function import(Request $request)

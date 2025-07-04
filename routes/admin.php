@@ -183,10 +183,8 @@ Route::prefix('admin')->name('admin.')->group(function () {
             Route::get('/contracts/{id}/send-email', [ContractController::class, 'sendEmail'])->name('contracts.sendEmail');
 
             Route::get('/contracts/{contract}/print', [ContractController::class, 'printContract'])->name('contracts.print');
-            Route::get('/contracts/print-multiple', [ContractController::class, 'printMultipleContracts'])->name('contracts.print.multiple');
-            Route::get('/contracts/{id}/print', [ContractController::class, 'printContract'])->name('contracts.print');
+            Route::get('/contracts/print-multiple', [ContractController::class, 'printMultipleContracts'])->name('contracts.print-multiple');        // merchants
 
-            // merchants
             Route::get('/merchants', [MerchantController::class, 'index'])->name('merchants.index');
             Route::get('/merchants/create', [MerchantController::class, 'create'])->name('merchants.create');
             Route::post('/merchants', [MerchantController::class, 'store'])->name('merchants.store');
