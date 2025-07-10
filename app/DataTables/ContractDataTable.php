@@ -24,10 +24,10 @@ class ContractDataTable extends BaseDatable
             ->editColumn('expired_date', fn(Contract $c) => optional($c->expired_date)->format('d/m/Y'))
             ->editColumn('status', function (Contract $c) {
                 return match ($c->status) {
-                    'SIGN' => 'Đã ký',
-                    'NOT_SIGN' => 'Chưa ký',
-                    'BBNT' => 'Chỉ có BBNT',
-                    default => ucfirst(strtolower($c->status)),
+                    'đã_ký' => 'Đã ký',
+                    'chưa_ký' => 'Chưa ký',
+                    'chỉ_có_BBNT' => 'Chỉ có BBNT',
+                    default => ucfirst($c->status),
                 };
             })
             ->editColumn('download_count', fn(Contract $c) => $c->download_count . ' lượt')

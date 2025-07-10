@@ -62,10 +62,16 @@
                                     </label>
                                     <div class="col-lg-9">
                                         <select name="status" id="status" class="form-control" required>
-                                            <option value="" {{ old('status', $contract->status ?? '') === '' ? 'selected' : '' }}>-- Trạng thái --</option>
-                                            <option value="SIGN" {{ old('status', $contract->status ?? '') === 'SIGN' ? 'selected' : '' }}>Đã ký</option>
-                                            <option value="NOT_SIGN" {{ old('status', $contract->status ?? '') === 'NOT_SIGN' ? 'selected' : '' }}>Chưa ký</option>
-                                            <option value="BBNT" {{ old('status', $contract->status ?? '') === 'BBNT' ? 'selected' : '' }}>Chỉ có BBNT</option>
+                                            <option value="">-- Trạng thái --</option>
+                                            <option value="đã_ký" {{ old(
+                                            'status', $contract->status ?? '') === \App\Models\Contract::SIGN ? 'selected'
+                                            : '' }}>Đã ký</option>
+                                            <option value="chưa_ký" {{ old(
+                                            'status', $contract->status ?? '') === \App\Models\Contract::NOT_SIGN ?
+                                            'selected' : '' }}>Chưa ký</option>
+                                            <option value="chỉ_có_BBNT" {{ old(
+                                            'status', $contract->status ?? '') === \App\Models\Contract::BBNT ?
+                                            'selected' : '' }}>Chỉ có BBNT</option>
                                         </select>
                                         @error('status')
                                         <span class="form-text text-danger">{{ $message }}</span>
