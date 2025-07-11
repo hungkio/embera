@@ -32,74 +32,10 @@ class ShopDataTable extends BaseDatable
             ->editColumn('area', fn(Shop $shop) => $shop->area ?? '-')
             ->editColumn('city', fn(Shop $shop) => $shop->city ?? '-')
             ->editColumn('region', fn(Shop $shop) => $shop->region ?? '-')
-//            ->editColumn('device_json', function (Shop $shop) {
-//                if (!$shop->device_json) return '-';
-//                $devices = $shop->device_json['devices'] ?? [];
-//                if (!is_array($devices) || empty($devices)) return '-';
-//
-//                // Đếm số lượng theo tên
-//                $countMap = [];
-//                foreach ($devices as $device) {
-//                    $name = strtoupper(trim($device['name'] ?? ''));
-//                    if ($name) {
-//                        $countMap[$name] = ($countMap[$name] ?? 0) + 1;
-//                    }
-//                }
-//
-//                // Render bảng
-//                $html = '<div class="table-responsive">
-//        <table class="table table-bordered table-sm mb-0 text-center">
-//            <thead class="thead-light">
-//                <tr>
-//                    <th>Tên thiết bị</th>
-//                    <th>Số lượng</th>
-//                </tr>
-//            </thead>
-//            <tbody>';
-//
-//                foreach ($countMap as $name => $count) {
-//                    $html .= '<tr>
-//            <td>' . e($name) . '</td>
-//            <td>' . $count . '</td>
-//        </tr>';
-//                }
-//
-//                $html .= '</tbody></table></div>';
-//
-//                return $html;
-//            })
 
             ->editColumn('device_json', function (Shop $shop) {
                 if (!$shop->device_json) return '-';
-                $devices = $shop->device_json['devices'] ?? [];
-                if (!is_array($devices) || empty($devices)) return '-';
 
-                $html = '<div class="table-responsive">
-        <table class="table table-bordered table-sm mb-0 text-center">
-            <thead class="thead-light">
-                <tr>
-                    <th>Tên</th>
-                    <th>Mã máy</th>
-                    <th>Pin</th>
-                </tr>
-            </thead>
-            <tbody>';
-
-                foreach ($devices as $device) {
-                    $html .= '<tr>
-        <td>' . e($device['name'] ?? '-') . '</td>
-        <td>' . e($device['code'] ?? '-') . '</td>
-        <td>' . e($device['pin'] ?? '-') . '</td>
-      </tr>';
-                }
-
-                $html .= '</tbody></table></div>';
-
-                return $html;
-            })
-
-            ->editColumn('device_json', function (Shop $shop) {
-                if (!$shop->device_json) return '-';
                 $devices = $shop->device_json['devices'] ?? [];
                 if (!is_array($devices) || empty($devices)) return '-';
 
@@ -112,42 +48,37 @@ class ShopDataTable extends BaseDatable
 
                     if (!$name) continue;
 
-                    $key = $name . '_' . $pin;
-
-                    if (!isset($summary[$key])) {
-                        $summary[$key] = [
-                            'name' => $name,
-                            'pin' => $pin,
-                            'count' => 0,
+                    if (!isset($summary[$name])) {
+                        $summary[$name] = [
                             'codes' => [],
+                            'total_pin' => 0,
+                            'count' => 0,
                         ];
                     }
 
-                    $summary[$key]['count'] += 1;
-
-                    if ($code) {
-                        $summary[$key]['codes'][] = $code;
-                    }
+                    if ($code) $summary[$name]['codes'][] = $code;
+                    $summary[$name]['total_pin'] += $pin;
+                    $summary[$name]['count']++;
                 }
 
                 $html = '<div class="table-responsive">
-        <table class="table table-bordered table-sm mb-0 text-center">
-            <thead class="thead-light">
-                <tr>
-                    <th>Tên thiết bị</th>
-                    <th>Mã máy</th>
-                    <th>Số pin</th>
-                    <th>Số lượng</th>
-                </tr>
-            </thead>
-            <tbody>';
+    <table class="table table-bordered table-sm mb-0 text-center">
+        <thead class="thead-light">
+            <tr>
+                <th>Tên thiết bị</th>
+                <th>Mã máy</th>
+                <th>Tổng số pin</th>
+                <th>Số lượng</th>
+            </tr>
+        </thead>
+        <tbody>';
 
-                foreach ($summary as $row) {
-                    $uniqueCodes = implode(', ', array_unique($row['codes']));
+                foreach ($summary as $deviceName => $row) {
+                    $codes = implode(', ', array_unique($row['codes']));
                     $html .= '<tr>
-            <td>' . e($row['name']) . '</td>
-            <td>' . e($uniqueCodes) . '</td>
-            <td>' . $row['pin'] . '</td>
+            <td>' . e($deviceName) . '</td>
+            <td>' . e($codes) . '</td>
+            <td>' . $row['total_pin'] . '</td>
             <td>' . $row['count'] . '</td>
         </tr>';
                 }
@@ -156,6 +87,7 @@ class ShopDataTable extends BaseDatable
 
                 return $html;
             })
+
             ->editColumn('is_bound', fn($shop) => $shop->is_bound ? "<button class=\"dt-button btn btn-success\" tabindex=\"0\" aria-controls=\"ShopDataTable\" type=\"button\"><span>Đã bind</span></button>" : "<button class=\"dt-button btn btn-warning\" tabindex=\"0\" aria-controls=\"ShopDataTable\" type=\"button\"><span>Chưa bind</span></button>")
             ->filterColumn('is_bound', function ($query, $keyword) {
                 if (str_contains($keyword, 'đã')) {

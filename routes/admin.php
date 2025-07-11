@@ -216,6 +216,12 @@ Route::prefix('admin')->name('admin.')->group(function () {
             Route::post('/shops/import', [ShopController::class, 'import'])->name('shops.import');
             Route::get('/shops/export', [ShopController::class, 'export'])->name('shops.export');
 
+            // BBNT export cho Shop
+            Route::get('/shops/{shop}/bbnt-preview', [ShopController::class, 'bbntPreview'])->name('shops.bbnt.preview');
+            Route::put('/shops/{shop}/bbnt', [ShopController::class, 'bbntUpdate'])->name('shops.bbnt.update');
+            Route::put('shops/{shop}/bbnt', [ShopController::class, 'bbntUpdate'])->name('shops.bbnt.update');
+            Route::get('shops/{shop}/bbnt/download', [ShopController::class, 'bbntDownload'])->name('shops.bbnt.download');
+
             // BANNER
             Route::group(['middleware' => ['banner']], function () {
                 Route::post('/banners/bulk-delete', [BannerController::class, 'bulkDelete'])->name('banners.bulk-delete');

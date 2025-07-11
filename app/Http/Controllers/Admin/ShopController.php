@@ -3,15 +3,24 @@
 namespace App\Http\Controllers\Admin;
 
 use App\DataTables\ShopDataTable;
+use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\ShopStoreRequest;
 use App\Http\Requests\Admin\ShopUpdateRequest;
 use App\Models\Contract;
-use App\Models\Merchant;
 use App\Models\Shop;
+use App\Services\BBNTExportService;
+use App\Services\BBNTService;
 use Illuminate\Http\Request;
 
-class ShopController extends \App\Http\Controllers\Controller
+class ShopController extends Controller
 {
+    protected $bbntService;
+
+    public function __construct(BBNTService $bbntService)
+    {
+        $this->bbntService = $bbntService;
+    }
+
     public function index(ShopDataTable $dataTable)
     {
         return $dataTable->render('admin.shops.index');
@@ -31,11 +40,9 @@ class ShopController extends \App\Http\Controllers\Controller
             'url' => route('admin.shops.store'),
             'method' => 'POST',
             'shop' => new Shop(),
-            'contracts' => $contracts, // <- Phải có dòng này
+            'contracts' => $contracts,
         ]);
     }
-
-
 
     public function store(ShopStoreRequest $request)
     {
@@ -60,14 +67,12 @@ class ShopController extends \App\Http\Controllers\Controller
     public function edit(Shop $shop)
     {
         $contracts = Contract::with('merchant')
-            ->where('is_deleted', false) // <- Chỉ lấy hợp đồng chưa bị xóa
+            ->where('is_deleted', false)
             ->get()
-            ->filter(fn($c) => $c->merchant) // phòng trường hợp thiếu merchant
+            ->filter(fn($c) => $c->merchant)
             ->mapWithKeys(function ($contract) {
                 return [$contract->id => "{$contract->contract_number} - {$contract->merchant->username}"];
             });
-
-
 
         return view('admin.shops.edit', [
             'url' => route('admin.shops.update', $shop),
@@ -76,7 +81,6 @@ class ShopController extends \App\Http\Controllers\Controller
             'contracts' => $contracts,
         ]);
     }
-
 
     public function update(ShopUpdateRequest $request, Shop $shop)
     {
@@ -114,5 +118,49 @@ class ShopController extends \App\Http\Controllers\Controller
             $data['area']   = $parts[2] ?? null;
         }
         return $data;
+    }
+
+    public function bbntPreview(Shop $shop)
+    {
+        $contract = $shop->contract;
+        $deviceSummary = $this->bbntService->parseDeviceJson($shop->device_json);
+        $productSummary = $this->bbntService->parseProductJson($shop->product_json);
+
+        return view('admin.shops.bbnt.create', [
+            'shop' => $shop,
+            'contract' => $contract,
+            'deviceSummary' => $deviceSummary,
+            'productSummary' => $productSummary,
+            'url' => route('admin.shops.bbnt.update', $shop),
+            'method' => 'PUT',
+        ]);
+    }
+
+    public function bbntUpdate(Request $request, Shop $shop)
+    {
+        $request->validate([
+            'product_json' => 'required|json',
+        ]);
+
+        $productJson = $request->input('product_json');
+        try {
+            $decoded = json_decode($productJson, true);
+            if (!is_array($decoded) || empty($decoded['products'])) {
+                return redirect()->route('admin.shops.index')->with('error', 'Dữ liệu sản phẩm không hợp lệ.');
+            }
+            $shop->update([
+                'product_json' => $decoded,
+            ]);
+        } catch (\Exception $e) {
+            return redirect()->route('admin.shops.index')->with('error', 'Lỗi khi lưu dữ liệu sản phẩm: ' . $e->getMessage());
+        }
+
+        return redirect()->route('admin.shops.index')->with('success', 'Đã lưu BBNT thành công.');
+    }
+
+    public function bbntDownload(Shop $shop, BBNTExportService $service)
+    {
+        $path = $service->generateBBNTDocx($shop);
+        return response()->download($path)->deleteFileAfterSend(true);
     }
 }

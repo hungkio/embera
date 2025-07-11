@@ -42,11 +42,11 @@
     document.addEventListener('DOMContentLoaded', function () {
         const deviceJson = @json($shop->device_json ?? null);
         const container = document.getElementById('device-container');
+        const template = container.firstElementChild;
 
-        if (deviceJson && deviceJson.devices && container) {
-            const template = container.firstElementChild;
-            container.innerHTML = ''; // Clear existing
+        container.innerHTML = ''; // Clear all
 
+        if (deviceJson && Array.isArray(deviceJson.devices) && deviceJson.devices.length > 0) {
             deviceJson.devices.forEach(device => {
                 const entry = template.cloneNode(true);
                 entry.querySelector('[name="device_name[]"]').value = device.name || '';
@@ -54,21 +54,15 @@
                 entry.querySelector('[name="device_pin[]"]').value = device.pin || '';
                 container.appendChild(entry);
             });
-
-            // Remove template if still empty entry exists at top
-            if (container.firstElementChild.querySelector('[name="device_name[]"]').value === '') {
-                container.firstElementChild.remove();
-            }
+        } else {
+            // Không có thiết bị nào => hiển thị 1 dòng trống
+            const emptyEntry = template.cloneNode(true);
+            emptyEntry.querySelectorAll('input').forEach(input => input.value = '');
+            emptyEntry.querySelector('select').value = ''; // nếu dùng <select>
+            container.appendChild(emptyEntry);
         }
-
-        const typeSelect = document.getElementById('share_rate_type');
-        const unitLabel = document.getElementById('share_rate_unit');
-        function updateUnit() {
-            unitLabel.innerText = typeSelect.value === 'fixed' ? 'VNĐ' : '%';
-        }
-        typeSelect.addEventListener('change', updateUnit);
-        updateUnit();
     });
+
 
     document.getElementById('add-device').addEventListener('click', function () {
         const container = document.getElementById('device-container');
