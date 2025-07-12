@@ -132,3 +132,30 @@ if (!function_exists('display_country_name')) {
         return $code;
     }
 }
+
+if (!function_exists('sendZaloZNS')) {
+    function sendZaloZNS($phone, $templateId, array $params)
+    {
+        $accessToken = env('OA_ACCESS_TOKEN') ?? '';
+        $response = \Illuminate\Support\Facades\Http::withHeaders([
+            'Content-Type'  => 'application/json',
+            'access_token'  => $accessToken,
+        ])->post('https://business.openapi.zalo.me/message/template', [
+            'phone'         => $phone,
+            'template_id'   => $templateId,
+            'tracking_id'   => uniqid('zns_'),
+            'template_data' => $params,
+        ]);
+
+        if ($response->successful()) {
+            return $response->json();
+        }
+
+        \Log::error('Zalo ZNS gửi thất bại', [
+            'status'   => $response->status(),
+            'response' => $response->body(),
+        ]);
+
+        return false;
+    }
+}
