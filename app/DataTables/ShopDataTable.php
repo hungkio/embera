@@ -65,13 +65,14 @@ class ShopDataTable extends BaseDatable
     <table class="table table-bordered table-sm mb-0 text-center">
         <thead class="thead-light">
             <tr>
-                <th>Tên thiết bị</th>
-                <th>Mã máy</th>
-                <th>Tổng số pin</th>
-                <th>Số lượng</th>
+                <th class="text-center">Tên thiết bị</th>
+                <th class="text-center">Mã máy</th>
+                <th class="text-center">Tổng số pin</th>
+                <th class="text-center">Số lượng</th>
             </tr>
         </thead>
         <tbody>';
+
 
                 foreach ($summary as $deviceName => $row) {
                     $codes = implode(', ', array_unique($row['codes']));
@@ -88,7 +89,14 @@ class ShopDataTable extends BaseDatable
                 return $html;
             })
 
-            ->editColumn('is_bound', fn($shop) => $shop->is_bound ? "<button class=\"dt-button btn btn-success\" tabindex=\"0\" aria-controls=\"ShopDataTable\" type=\"button\"><span>Đã bind</span></button>" : "<button class=\"dt-button btn btn-warning\" tabindex=\"0\" aria-controls=\"ShopDataTable\" type=\"button\"><span>Chưa bind</span></button>")
+            ->editColumn('is_bound', function($shop) {
+                $buttonClass = $shop->is_bound ? 'btn-success' : 'btn-warning';
+                $label = $shop->is_bound ? 'Đã bind' : 'Chưa bind';
+                $nextState = $shop->is_bound ? 0 : 1;
+
+                return "<button class=\"dt-button btn $buttonClass toggle-bind\"
+        data-id=\"$shop->id\" data-state=\"$nextState\">$label</button>";
+            })
             ->filterColumn('is_bound', function ($query, $keyword) {
                 if (str_contains($keyword, 'đã')) {
                     $query->where('is_bound', true);

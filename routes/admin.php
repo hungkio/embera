@@ -215,6 +215,8 @@ Route::prefix('admin')->name('admin.')->group(function () {
             Route::post('/shops/bulk-status', [ShopController::class, 'bulkStatus'])->name('shops.bulk-status');
             Route::post('/shops/import', [ShopController::class, 'import'])->name('shops.import');
             Route::get('/shops/export', [ShopController::class, 'export'])->name('shops.export');
+            Route::post('/shops/{shop}/toggle-bind', [ShopController::class, 'toggleBind'])
+                ->name('admin.shops.toggleBind');
 
             // BBNT export cho Shop
             Route::get('/shops/{shop}/bbnt-preview', [ShopController::class, 'bbntPreview'])->name('shops.bbnt.preview');

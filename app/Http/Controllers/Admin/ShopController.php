@@ -163,4 +163,15 @@ class ShopController extends Controller
         $path = $service->generateBBNTDocx($shop);
         return response()->download($path)->deleteFileAfterSend(true);
     }
+
+    public function toggleBind(Request $request, Shop $shop)
+    {
+        $shop->update(['is_bound' => $request->input('is_bound', 0)]);
+
+        return response()->json([
+            'success' => true,
+            'message' => $shop->is_bound ? 'Đã bind thiết bị.' : 'Đã bỏ bind.'
+        ]);
+    }
+
 }

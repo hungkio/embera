@@ -27,18 +27,16 @@
             const code = entry.querySelector('[name="device_code[]"]').value;
             const pin = entry.querySelector('[name="device_pin[]"]').value;
 
-            if (name && code && quantity && pin) {
+            if (name && code && pin) {
                 devices.push({
                     name,
                     code,
-                    quantity: parseInt(quantity),
                     pin: parseInt(pin)
                 });
             }
         });
         document.getElementById('device_json').value = JSON.stringify({ devices });
     }
-
 
     // Thêm mới thiết bị
     document.getElementById('add-device').addEventListener('click', function () {
