@@ -17,7 +17,6 @@ class ShopStoreRequest extends FormRequest
             'shop_name' => 'required|string|max:255',
             'address' => 'required|string|max:255',
             'shop_type' => 'required|string|max:100',
-            'contact_phone' => 'required|string|max:20',
             'strategy' => 'nullable|string|max:255',
             'area' => 'nullable|string|max:255',
             'city' => 'nullable|string|max:255',

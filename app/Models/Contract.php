@@ -47,6 +47,7 @@ class Contract extends Model
         self::SIGN => 'Đã ký',
     ];
 
+
     public function shops()
     {
         return $this->hasMany(Shop::class);

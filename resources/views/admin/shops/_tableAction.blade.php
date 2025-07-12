@@ -13,4 +13,11 @@
         <i class="fal fa-trash-alt"></i>
     </a>
 {{--    @endcan--}}
+
+    <a href="{{ route('admin.shops.bbnt.preview', $id) }}"
+       class="item-action btn-secondary"
+       title="Tạo BBNT">
+        <i class="fal fa-file-word"></i> BBNT
+    </a>
+    {{--    @endcan--}}
 </div>

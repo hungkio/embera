@@ -183,10 +183,8 @@ Route::prefix('admin')->name('admin.')->group(function () {
             Route::get('/contracts/{id}/send-email', [ContractController::class, 'sendEmail'])->name('contracts.sendEmail');
 
             Route::get('/contracts/{contract}/print', [ContractController::class, 'printContract'])->name('contracts.print');
-            Route::get('/contracts/print-multiple', [ContractController::class, 'printMultipleContracts'])->name('contracts.print.multiple');
-            Route::get('/contracts/{id}/print', [ContractController::class, 'printContract'])->name('contracts.print');
+            Route::get('/contracts/print-multiple', [ContractController::class, 'printMultipleContracts'])->name('contracts.print-multiple');        // merchants
 
-            // merchants
             Route::get('/merchants', [MerchantController::class, 'index'])->name('merchants.index');
             Route::get('/merchants/create', [MerchantController::class, 'create'])->name('merchants.create');
             Route::post('/merchants', [MerchantController::class, 'store'])->name('merchants.store');
@@ -217,6 +215,12 @@ Route::prefix('admin')->name('admin.')->group(function () {
             Route::post('/shops/bulk-status', [ShopController::class, 'bulkStatus'])->name('shops.bulk-status');
             Route::post('/shops/import', [ShopController::class, 'import'])->name('shops.import');
             Route::get('/shops/export', [ShopController::class, 'export'])->name('shops.export');
+
+            // BBNT export cho Shop
+            Route::get('/shops/{shop}/bbnt-preview', [ShopController::class, 'bbntPreview'])->name('shops.bbnt.preview');
+            Route::put('/shops/{shop}/bbnt', [ShopController::class, 'bbntUpdate'])->name('shops.bbnt.update');
+            Route::put('shops/{shop}/bbnt', [ShopController::class, 'bbntUpdate'])->name('shops.bbnt.update');
+            Route::get('shops/{shop}/bbnt/download', [ShopController::class, 'bbntDownload'])->name('shops.bbnt.download');
 
             // BANNER
             Route::group(['middleware' => ['banner']], function () {

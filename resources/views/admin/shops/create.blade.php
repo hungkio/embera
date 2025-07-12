@@ -25,7 +25,6 @@
         document.querySelectorAll('#device-container .device-entry').forEach(entry => {
             const name = entry.querySelector('[name="device_name[]"]').value;
             const code = entry.querySelector('[name="device_code[]"]').value;
-            const quantity = entry.querySelector('[name="device_quantity[]"]').value;
             const pin = entry.querySelector('[name="device_pin[]"]').value;
 
             if (name && code && quantity && pin) {

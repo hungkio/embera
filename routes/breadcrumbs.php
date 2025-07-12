@@ -246,6 +246,12 @@ Breadcrumbs::for('admin.shops.edit', function (BreadcrumbsGenerator $trail, \App
     $trail->push(__('Chỉnh sửa'), route('admin.shops.edit', $shop));
 });
 
+// BBNT Preview
+Breadcrumbs::for('admin.shops.bbnt.preview', function ($trail, $shop) {
+    $trail->parent('admin.shops.index');
+    $trail->push('BBNT', route('admin.shops.bbnt.preview', $shop));
+});
+
 // Home > Admins > [order] > Edit
 Breadcrumbs::for('admin.orders.edit', function (BreadcrumbsGenerator $trail, Order $order) {
     $trail->parent('admin.orders.index');
