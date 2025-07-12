@@ -86,7 +86,7 @@
                         @forelse ($productSummary as $index => $product)
                         <div class="product-entry d-flex mb-2">
                             <input type="text" name="product_name[]" class="form-control mr-2" value="{{ $product['name'] ?? '' }}" placeholder="Tên sản phẩm" required>
-                            <input type="text" name="product_code[]" class="form-control mr-2" value="{{ $product['code'] ?? '' }}" placeholder="Mã sản phẩm" required>
+                            <input type="text" name="product_code[]" class="form-control mr-2" value="{{ $product['code'] ?? '' }}" placeholder="Mã sản phẩm" >
                             <input type="text" name="product_unit[]" class="form-control mr-2" value="{{ $product['unit'] ?? '' }}" placeholder="Đơn vị">
                             <input type="number" name="product_quantity[]" class="form-control mr-2" value="{{ $product['quantity'] ?? 0 }}" placeholder="Số lượng">
                             <input type="text" name="product_note[]" class="form-control mr-2" value="{{ $product['note'] ?? '' }}" placeholder="Ghi chú">
@@ -95,7 +95,7 @@
                         @empty
                         <div class="product-entry d-flex mb-2">
                             <input type="text" name="product_name[]" class="form-control mr-2" placeholder="Tên sản phẩm" required>
-                            <input type="text" name="product_code[]" class="form-control mr-2" placeholder="Mã sản phẩm" required>
+                            <input type="text" name="product_code[]" class="form-control mr-2" placeholder="Mã sản phẩm" >
                             <input type="text" name="product_unit[]" class="form-control mr-2" value="Cái" placeholder="Đơn vị">
                             <input type="number" name="product_quantity[]" class="form-control mr-2" placeholder="Số lượng">
                             <input type="text" name="product_note[]" class="form-control mr-2" placeholder="Ghi chú">
@@ -132,12 +132,12 @@
         let products = [];
         document.querySelectorAll('#product-container .product-entry').forEach(entry => {
             const name = entry.querySelector('[name="product_name[]"]').value;
-            const code = entry.querySelector('[name="product_code[]"]').value;
+            const code = entry.querySelector('[name="product_code[]"]').value ?? '';
             const unit = entry.querySelector('[name="product_unit[]"]').value;
             const quantity = entry.querySelector('[name="product_quantity[]"]').value;
             const note = entry.querySelector('[name="product_note[]"]').value;
 
-            if (name && code) { // Chỉ kiểm tra name và code là bắt buộc
+            if (name) {
                 products.push({
                     name,
                     code,
@@ -173,7 +173,7 @@
 
     // Trước khi submit -> generate JSON
     document.getElementById('shop-form').addEventListener('submit', function (e) {
-        generateProductJSON();
+        generateProductJSON();1
     });
 </script>
 @endpush
