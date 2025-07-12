@@ -134,6 +134,23 @@ if (!function_exists('display_country_name')) {
 }
 
 if (!function_exists('sendZaloZNS')) {
+//    curl --location 'https://business.openapi.zalo.me/message/template' \
+//        --header 'Content-Type: application/json' \
+//        --header 'access_token: your_access_token' \
+//        --data '{
+//        "phone": "84987654321",
+//        "template_id": "466895", // number
+//        "template_id": "466893", // %
+//        "template_data": {
+//            "number_of_order": "1",
+//            "share_percent": "1",
+//            "date": "4/2020",
+//            "customer_name": "Nguyễn Thị Hoàng Anh",
+//            "share_money": "100",
+//            "total": "100000",
+//         },
+//        "tracking_id":"tracking_id"
+//    }'
     function sendZaloZNS($phone, $templateId, array $params)
     {
         $accessToken = env('OA_ACCESS_TOKEN') ?? '';
