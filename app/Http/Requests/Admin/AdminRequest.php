@@ -36,10 +36,12 @@ class AdminRequest extends FormRequest
 
     protected function passwordRule()
     {
-        $rule = ['nullable', 'min:8'];
+        $rule = ['min:8', 'confirmed'];
 
-        if ($this->filled('password')) {
-            $rule[] = 'confirmed';
+        if ($this->route()->getName() === 'admin.admins.update') {
+            array_unshift($rule, 'nullable');
+        } else {
+            array_unshift($rule, 'required');
         }
 
         return $rule;

@@ -218,9 +218,6 @@ Route::prefix('admin')->name('admin.')->group(function () {
             Route::post('/shops/{shop}/toggle-bind', [ShopController::class, 'toggleBind'])
                 ->name('admin.shops.toggleBind');
 
-            // BBNT import cho Shop
-            Route::post('shops/bbnt/import', [ShopController::class, 'importBBNTFromDocx'])->name('shops.bbnt.import');
-
             // BBNT export cho Shop
             Route::get('/shops/{shop}/bbnt-preview', [ShopController::class, 'bbntPreview'])->name('shops.bbnt.preview');
             Route::put('/shops/{shop}/bbnt', [ShopController::class, 'bbntUpdate'])->name('shops.bbnt.update');
