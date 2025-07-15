@@ -26,14 +26,12 @@ class ShopDataTable extends BaseDatable
                     ? number_format($shop->share_rate, 0) . ' VNĐ'
                     : number_format($shop->share_rate, 0) . ' %';
             })
-            ->editColumn('share_rate_type', fn(Shop $shop) =>
-            $shop->share_rate_type === 'fixed' ? 'Doanh thu (VNĐ)' : 'Phần trăm (%)'
+            ->editColumn('share_rate_type', fn(Shop $shop) => $shop->share_rate_type === 'fixed' ? 'Doanh thu (VNĐ)' : 'Phần trăm (%)'
             )
             ->editColumn('strategy', fn(Shop $shop) => $shop->strategy ?? '-')
             ->editColumn('area', fn(Shop $shop) => $shop->area ?? '-')
             ->editColumn('city', fn(Shop $shop) => $shop->city ?? '-')
             ->editColumn('region', fn(Shop $shop) => $shop->region ?? '-')
-
             ->editColumn('device_json', function (Shop $shop) {
                 if (!$shop->device_json) return '-';
 
@@ -45,7 +43,7 @@ class ShopDataTable extends BaseDatable
                 foreach ($devices as $device) {
                     $name = strtoupper(trim($device['name'] ?? ''));
                     $code = trim($device['code'] ?? '');
-                    $pin  = (int)($device['pin'] ?? 0);
+                    $pin = (int)($device['pin'] ?? 0);
 
                     if (!$name) continue;
 
@@ -89,8 +87,7 @@ class ShopDataTable extends BaseDatable
 
                 return $html;
             })
-
-            ->editColumn('is_bound', function($shop) {
+            ->editColumn('is_bound', function ($shop) {
                 $buttonClass = $shop->is_bound ? 'btn-success' : 'btn-warning';
                 $label = $shop->is_bound ? 'Đã bind' : 'Chưa bind';
                 $nextState = $shop->is_bound ? 0 : 1;
@@ -151,6 +148,9 @@ class ShopDataTable extends BaseDatable
             Button::make('export')->addClass('btn bg-blue')->text('<i class="fal fa-download mr-2"></i>Xuất'),
             Button::make('print')->addClass('btn bg-blue')->text('<i class="fal fa-print mr-2"></i>In'),
             Button::make('reset')->addClass('btn bg-blue')->text('<i class="fal fa-undo mr-2"></i>Thiết lập lại'),
+            Button::make('selected')->addClass('btn bg-teal-400 import')
+                ->text('<i class="icon-compose mr-2"></i>' . __('Import')
+                ),
         ];
     }
 

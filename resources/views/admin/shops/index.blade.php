@@ -15,7 +15,6 @@
 <x-card title="Cửa hàng">
     {{$dataTable->table()}}
 </x-card>
-
 @stop
 
 @push('js')

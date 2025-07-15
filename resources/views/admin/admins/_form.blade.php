@@ -72,7 +72,6 @@
                                     placeholder="********"
                                     :label="__('Nhập mật khẩu')"
                                     type="password"
-                                    required
                                 >
                                 </x-text-field>
 
@@ -81,7 +80,6 @@
                                     placeholder="********"
                                     :label="__('Nhập lại mật khẩu')"
                                     type="password"
-                                    required
                                 >
                                 </x-text-field>
                             </div>

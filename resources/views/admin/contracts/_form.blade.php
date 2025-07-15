@@ -144,6 +144,20 @@
                                 />
 
                                 <x-text-field
+                                    name="customer_cccd"
+                                    :label="__('CCCD khách hàng')"
+                                    :value="old('customer_cccd', $contract->customer_cccd)"
+                                    required
+                                />
+
+                                <x-text-field
+                                    name="customer_position"
+                                    :label="__('Chức vụ khách hàng')"
+                                    :value="old('customer_position', $contract->customer_position)"
+                                    required
+                                />
+
+                                <x-text-field
                                     name="ceo_sign"
                                     :label="__('Giám đốc ký')"
                                     :value="$contract->ceo_sign ?? App\Models\Contract::CURRENT_CEO"
@@ -160,7 +174,7 @@
                                 <x-textarea-field
                                     name="note"
                                     :label="__('Ghi chú')"
-                                    :value="$shop->note ?? ''"
+                                    :value="$contract->note ?? ''"
                                 />
 
                                 <div class="form-group row">

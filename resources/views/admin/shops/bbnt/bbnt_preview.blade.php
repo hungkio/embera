@@ -109,6 +109,34 @@
 
             {{-- Hidden JSON input chỉ cho sản phẩm --}}
             <input type="hidden" name="product_json" id="product_json">
+            <div class="form-group row mt-4">
+                <label for="bbnt_file" class="col-lg-2 col-form-label text-lg-right">
+                    <span class="text-danger">*</span> {{ __('File biên bản nghiệm thu') }}
+                </label>
+                <div class="col-lg-9">
+                    @if(!empty($shop->bbnt_file))
+                    <p>
+                        📎 <strong>File hiện tại:</strong>
+                        <a href="{{ asset('storage/' . $shop->bbnt_file) }}" target="_blank">
+                            {{ basename($shop->bbnt_file) }}
+                        </a>
+                    </p>
+                    @endif
+
+                    <input type="file" name="bbnt_file" id="bbnt_file"
+                           class="form-control inputfile"
+                           accept=".pdf,.docx">
+
+                    <small class="form-text text-muted">
+                        Chỉ chấp nhận file PDF hoặc DOCX. Nếu chọn file mới, file cũ sẽ bị thay thế.
+                    </small>
+
+                    @error('bbnt_file')
+                    <span class="form-text text-danger">{{ $message }}</span>
+                    @enderror
+                </div>
+            </div>
+
         </fieldset>
     </x-card>
 
@@ -119,7 +147,7 @@
 
         @if(isset($shop->id))
         <a href="{{ route('admin.shops.bbnt.download', $shop) }}" target="_blank" class="btn btn-secondary ml-2">
-            <i class="fal fa-print mr-1"></i> In hợp đồng
+            <i class="fal fa-print mr-1"></i> In BBNT
         </a>
         @endif
     </div>
@@ -141,7 +169,7 @@
                 products.push({
                     name,
                     code,
-                    unit: unit || 'Cái',
+                    unit: unit || '',
                     quantity: parseInt(quantity) || 0,
                     note: note || ''
                 });
@@ -156,13 +184,13 @@
         const container = document.getElementById('product-container');
         const entry = container.querySelector('.product-entry').cloneNode(true);
         entry.querySelectorAll('input').forEach(input => {
-            input.value = input.name === 'product_unit[]' ? 'Cái' : '';
+            input.value = input.name === 'product_unit[]' ? '' : '';
         });
         container.appendChild(entry);
         console.log('Added new product-entry'); // Debug
     });
 
-    // Xóa sản phẩm (cho phép xóa hết)
+    // Xóa sản phẩm
     document.addEventListener('click', function (e) {
         if (e.target.classList.contains('remove-product')) {
             const entry = e.target.closest('.product-entry');
@@ -171,9 +199,56 @@
         }
     });
 
-    // Trước khi submit -> generate JSON
+    // Handle form submission via AJAX
     document.getElementById('shop-form').addEventListener('submit', function (e) {
-        generateProductJSON();1
+        e.preventDefault(); // Prevent default form submission (page reload)
+        generateProductJSON(); // Generate product_json before submission
+
+        const form = this;
+        const formData = new FormData(form); // Collect form data, including files
+        formData.append('_method', form.querySelector('input[name="_method"]').value); // Add method override for PUT
+
+        fetch(form.action, {
+            method: 'POST', // Always use POST, as Laravel handles _method for PUT/PATCH
+            body: formData,
+            headers: {
+                'X-CSRF-TOKEN': document.querySelector('input[name="_token"]').value, // CS laravel-csrf-token
+                'Accept': 'application/json', // Ensure server returns JSON
+            },
+        })
+        .then(response => {
+            if (!response.ok) {
+                return response.json().then(errorData => {
+                    throw new Error(errorData.message || 'Server error');
+                });
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data.success) {
+                alert('Lưu BBNT thành công!'); // Success message
+                // Optionally reload form data or reset form
+                // form.reset(); // Uncomment to reset form
+                // Optionally reload the page content without full reload
+                window.location.reload(); // Soft reload to refresh form data
+            } else {
+                alert('Lưu BBNT thất bại: ' + (data.message || 'Lỗi không xác định'));
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Đã xảy ra lỗi: ' + error.message);
+        });
+    });
+    document.getElementById('shop-form').addEventListener('submit', function (e) {
+        e.preventDefault();
+        const submitButton = this.querySelector('button[type="submit"]');
+        submitButton.disabled = true;
+        submitButton.innerHTML = '<i class="fal fa-spinner fa-spin mr-1"></i> Đang lưu...';
+        // ... rest of the code ...
+        // In .then and .catch, re-enable button:
+        submitButton.disabled = false;
+        submitButton.innerHTML = '<i class="fal fa-save mr-1"></i> Lưu BBNT';
     });
 </script>
 @endpush

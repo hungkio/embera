@@ -12,7 +12,7 @@ class Contract extends Model
         'sign_date' => 'date',
         'expired_date' => 'date',
         'title' => 'string',
-        'is_deleted' => 'boolean', // Cast is_deleted to boolean
+        'is_deleted' => 'boolean',
     ];
     protected $fillable = [
         'contract_number',
@@ -25,6 +25,8 @@ class Contract extends Model
         'bank_account_name',
         'email',
         'customer_name',
+        'customer_cccd',
+        'customer_position',
         'phone',
         'shop_id',
         'merchant_id',
