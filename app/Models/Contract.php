@@ -40,9 +40,9 @@ class Contract extends Model
         'is_deleted',
     ];
 
-    CONST BBNT = 'Chỉ có BBNT';
-    CONST NOT_SIGN = 'Chưa Ký';
-    CONST SIGN = 'Đã ký';
+    CONST BBNT = '0';
+    CONST NOT_SIGN = '1';
+    CONST SIGN = '2';
     CONST STATUS = [
         self::BBNT => 'Chỉ có BBNT',
         self::NOT_SIGN => 'Chưa Ký',
