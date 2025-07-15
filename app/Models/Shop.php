@@ -23,6 +23,7 @@ class Shop extends Model
         'is_bound',
         'device_json',
         'product_json',
+        'bbnt_file',
     ];
 
     protected $casts = [

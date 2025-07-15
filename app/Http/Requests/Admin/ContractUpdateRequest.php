@@ -23,6 +23,8 @@ class ContractUpdateRequest extends FormRequest
             'bank_account_name' => 'required|string|max:100',
             'email' => 'nullable|email',
             'customer_name' => 'nullable|string|max:255',
+            'customer_cccd' => 'required|string|max:12',
+            'customer_position' => 'required|string',
             'merchant_id' => 'required|exists:merchants,id',
             'shop_ids' => 'nullable|array',
             'shop_ids.*' => 'exists:shops,id',
@@ -64,6 +66,12 @@ class ContractUpdateRequest extends FormRequest
 
             'customer_name.required' => 'Tên khách là trường bắt buộc.',
             'customer_name.string' => 'Tên khách hàng không hợp lệ.',
+
+            'customer_cccd.required' => 'CCCD khách hàng là trường bắt buộc.',
+            'customer_cccd.string' => 'CCCD khách hàng không hợp lệ.',
+            'customer_cccd.max' => 'CCCD khách hàng không được quá 12 ký tự.',
+
+            'customer_position.required' => 'Chức vụ khách hàng là trường bắt buộc.',
 
             'merchant_id.required' => 'Merchant là trường bắt buộc.',
             'merchant_id.exists' => 'Merchant không hợp lệ.',

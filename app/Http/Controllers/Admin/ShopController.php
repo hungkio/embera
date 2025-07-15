@@ -9,6 +9,7 @@ use App\Http\Requests\Admin\ShopUpdateRequest;
 use App\Models\Contract;
 use App\Models\Shop;
 use App\Services\BBNTExportService;
+use App\Services\BBNTImportService;
 use App\Services\BBNTService;
 use Illuminate\Http\Request;
 
@@ -138,25 +139,55 @@ class ShopController extends Controller
 
     public function bbntUpdate(Request $request, Shop $shop)
     {
-        $request->validate([
-            'product_json' => 'required|json',
-        ]);
-
-        $productJson = $request->input('product_json');
         try {
-            $decoded = json_decode($productJson, true);
-            if (!is_array($decoded) || empty($decoded['products'])) {
-                return redirect()->route('admin.shops.index')->with('error', 'Dữ liệu sản phẩm không hợp lệ.');
-            }
-            $shop->update([
-                'product_json' => $decoded,
+            $request->validate([
+                'product_json' => 'required|json',
+                'bbnt_file' => 'nullable|file|mimes:pdf,docx|max:10240', // 10MB
             ]);
-        } catch (\Exception $e) {
-            return redirect()->route('admin.shops.index')->with('error', 'Lỗi khi lưu dữ liệu sản phẩm: ' . $e->getMessage());
-        }
 
-        return redirect()->route('admin.shops.index')->with('success', 'Đã lưu BBNT thành công.');
+            $productJson = $request->input('product_json');
+            $decoded = json_decode($productJson, true);
+
+            if (!is_array($decoded) || empty($decoded['products'])) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Dữ liệu sản phẩm không hợp lệ.',
+                ], 422);
+            }
+
+            $updateData = [
+                'product_json' => $decoded,
+            ];
+
+            if ($request->hasFile('bbnt_file')) {
+                // Delete old file if exists
+                if ($shop->bbnt_file && \Storage::disk('public')->exists($shop->bbnt_file)) {
+                    \Storage::disk('public')->delete($shop->bbnt_file);
+                }
+                $path = $request->file('bbnt_file')->store('bbnt', 'public');
+                $updateData['bbnt_file'] = $path;
+            }
+
+            $shop->update($updateData);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Đã lưu BBNT thành công.',
+            ]);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Dữ liệu không hợp lệ: ' . implode(', ', $e->errors()[array_key_first($e->errors())]),
+            ], 422);
+        } catch (\Exception $e) {
+            \Log::error('BBNT Update Error: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Lỗi khi lưu dữ liệu: ' . $e->getMessage(),
+            ], 500);
+        }
     }
+
 
     public function bbntDownload(Shop $shop, BBNTExportService $service)
     {
@@ -173,5 +204,4 @@ class ShopController extends Controller
             'message' => $shop->is_bound ? 'Đã bind thiết bị.' : 'Đã bỏ bind.'
         ]);
     }
-
 }
