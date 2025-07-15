@@ -72,5 +72,8 @@
         typeSelect.addEventListener('change', updateUnit);
         updateUnit(); // chạy khi load form
     });
+    $('.select2').select2({
+        placeholder: "{{ __('-- Vui lòng chọn --') }}",
+    });
 </script>
 @endpush

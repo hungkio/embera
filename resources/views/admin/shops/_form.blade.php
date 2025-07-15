@@ -142,7 +142,7 @@
                             {{ __('Hợp đồng') }}
                         </label>
                         <div class="col-lg-9">
-                            <select name="contract_id" id="contract_id" class="form-control" required>
+                            <select name="contract_id" id="contract_id" class="form-control select2" required>
                                 <option value="">-- Chọn hợp đồng --</option>
                                 @foreach($contracts as $id => $label)
                                 <option value="{{ $id }}" {{ old('contract_id', $shop->contract_id ?? '') == $id ? 'selected' : '' }}>
