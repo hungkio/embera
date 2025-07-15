@@ -148,9 +148,6 @@ class ShopDataTable extends BaseDatable
             Button::make('export')->addClass('btn bg-blue')->text('<i class="fal fa-download mr-2"></i>Xuất'),
             Button::make('print')->addClass('btn bg-blue')->text('<i class="fal fa-print mr-2"></i>In'),
             Button::make('reset')->addClass('btn bg-blue')->text('<i class="fal fa-undo mr-2"></i>Thiết lập lại'),
-            Button::make('selected')->addClass('btn bg-teal-400 import')
-                ->text('<i class="icon-compose mr-2"></i>' . __('Import')
-                ),
         ];
     }
 

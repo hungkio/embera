@@ -6,10 +6,10 @@
         <div class="w-100 order-2 order-md-1 left-content">
             <div class="row">
                 <div class="col-md-12">
-                    <x-card>
-                        <fieldset>
-                            <legend class="font-weight-semibold text-uppercase font-size-sm">
-                                {{ __('Thông tin Merchant') }}
+                    <x-card class="shadow-sm">
+                        <fieldset class="p-4">
+                            <legend class="border-bottom pb-2 mb-4 font-weight-bold text-primary">
+                                {{ __('Thông tin merchant') }}
                             </legend>
 
                             <div class="form-group row">
@@ -90,3 +90,9 @@
         </div>
     </div>
 </form>
+@push('css')
+<style>
+    legend { font-size: 1.25rem; }
+    .form-group .col-form-label { font-weight: 500; }
+</style>
+@endpush
