@@ -22,7 +22,7 @@ class ContractStoreRequest extends FormRequest
             'bank_account_number' => 'required|string|max:100',
             'bank_account_name' => 'required|string|max:100',
             'email' => 'nullable|email',
-            'customer_name' => 'nullable|string|max:255',
+            'customer_name' => 'required|string|max:255',
             'customer_cccd' => 'required|string|max:12',
             'customer_position' => 'required|string',
             'merchant_id' => 'required|exists:merchants,id',
@@ -44,9 +44,9 @@ class ContractStoreRequest extends FormRequest
             'sign_date.required' => 'Ngày ký là trường bắt buộc.',
             'sign_date.date' => 'Ngày ký không hợp lệ.',
 
-            'expired_date.required' => 'Ngày hết hạn là trường bắt buộc.',
+/*            'expired_date.required' => 'Ngày hết hạn là trường bắt buộc.',
             'expired_date.date' => 'Ngày hết hạn không hợp lệ.',
-            'expired_date.after_or_equal' => 'Ngày hết hạn phải lớn hơn hoặc bằng ngày ký.',
+            'expired_date.after_or_equal' => 'Ngày hết hạn phải lớn hơn hoặc bằng ngày ký.',*/
 
             'status.required' => 'Trạng thái là trường bắt buộc.',
             'status.in' => 'Trạng thái không hợp lệ.',

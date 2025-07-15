@@ -42,54 +42,60 @@ class ContractController
     public function create(): View
     {
         $shops = Shop::with('merchant')->get();
-        $merchants = \App\Models\Merchant::pluck('username', 'id'); // ← Add this line
+        $merchants = \App\Models\Merchant::pluck('username', 'id');
 
-        return view('admin.contracts.create', compact('shops', 'merchants')); // ← Pass both
+        return view('admin.contracts.create', compact('shops', 'merchants'));
     }
-
 
     public function store(ContractStoreRequest $request)
     {
-        $data = $request->validated();
-        $data['merchant_id'] = $request->input('merchant_id');
+        try {
+            $data = $request->validated();
+            $data['merchant_id'] = $request->input('merchant_id');
 
-        // Lấy admin_id từ người dùng hiện tại
-        $adminId = auth()->id();
+            $adminId = auth()->id();
 
-        // Tính expired_time tự động
-        $signDate = Carbon::parse($data['sign_date']);
-        $expiredDate = Carbon::parse($data['expired_date']);
-        $data['expired_time'] = $signDate->diffInMonths($expiredDate) . ' tháng';
+            $signDate = Carbon::parse($data['sign_date']);
+            $expiredDate = Carbon::parse($data['expired_date']);
+            $data['expired_time'] = $signDate->diffInMonths($expiredDate) . ' tháng';
 
-        // Tạo bản ghi mới với admin_id
-        $data['admin_id'] = $adminId;
-        $data['contract_number'] = $data['contract_number'] ?? $this->generateUniqueContractNumber();
-        $data['status'] = $data['status'] ?? 'pending';
+            $data['admin_id'] = $adminId;
+            $data['contract_number'] = $data['contract_number'] ?? $this->generateUniqueContractNumber();
+            $data['status'] = $data['status'] ?? 'pending';
 
-        if ($request->hasFile('upload')) {
-            $file = $request->file('upload');
-            $uploadPath = $file->store('contracts', 'public');
-            $data['upload'] = $uploadPath;
+            if ($request->hasFile('upload')) {
+                $file = $request->file('upload');
+                $uploadPath = $file->store('contracts', 'public');
+                $data['upload'] = $uploadPath;
+            }
+
+            $contract = Contract::create($data);
+
+            if ($request->filled('shop_ids')) {
+                Shop::whereIn('id', $request->input('shop_ids'))->update(['contract_id' => $contract->id]);
+            }
+
+            if ($request->hasFile('upload')) {
+                $contract->addMedia($request->file('upload'))->toMediaCollection('contract');
+            }
+
+            \Log::info('Contract saved successfully', ['contract_id' => $contract->id]);
+
+            flash()->success(__('Hợp đồng đã được lưu thành công'));
+
+            return redirect()->route('admin.contracts.index');
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            \Log::error('Validation failed in contract store', ['errors' => $e->errors()]);
+            return back()->withErrors($e->errors())->withInput();
+        } catch (\Exception $e) {
+            \Log::error('Contract Store Error: ' . $e->getMessage(), ['exception' => $e->getTraceAsString()]);
+            return back()->with('error', 'Lỗi khi lưu dữ liệu: ' . $e->getMessage());
         }
-
-        $contract = Contract::create($data);
-
-        // Gán nhiều cửa hàng cho hợp đồng
-        if ($request->filled('shop_ids')) {
-            Shop::whereIn('id', $request->input('shop_ids'))->update(['contract_id' => $contract->id]);
-        }
-
-        if ($request->hasFile('upload')) {
-            $contract->addMedia($request->file('upload'))->toMediaCollection('contract');
-        }
-
-        return redirect()->route('admin.contracts.index')->with('success', 'Hợp đồng đã được lưu thành công');
     }
 
     public function edit(Contract $contract): View
     {
         $shops = Shop::with('merchant')->get();
-
         $merchants = \App\Models\Merchant::pluck('username', 'id');
 
         return view('admin.contracts.edit', compact('contract', 'shops', 'merchants'));
@@ -97,36 +103,66 @@ class ContractController
 
     public function update(ContractUpdateRequest $request, Contract $contract)
     {
-        $data = $request->except(['upload', 'merchant_id']);
+        try {
+            $data = $request->except(['upload', 'merchant_id']);
 
-        // Tự động tính expired_time
-        $signDate = Carbon::parse($data['sign_date']);
-        $expiredDate = Carbon::parse($data['expired_date']);
-        $data['expired_time'] = $signDate->diffInMonths($expiredDate) . ' tháng';
+            $signDate = Carbon::parse($data['sign_date']);
+            $expiredDate = Carbon::parse($data['expired_date']);
+            $data['expired_time'] = $signDate->diffInMonths($expiredDate) . ' tháng';
 
-        if ($request->hasFile('upload')) {
-            $file = $request->file('upload');
-            $uploadPath = $file->store('contracts', 'public');
-            $data['upload'] = $uploadPath;
+            if ($request->hasFile('upload')) {
+                if ($contract->upload) {
+                    Storage::disk('public')->delete($contract->upload);
+                }
+                $file = $request->file('upload');
+                $uploadPath = $file->store('contracts', 'public');
+                $data['upload'] = $uploadPath;
+            }
+
+            $contract->update($data);
+
+            if ($request->filled('shop_ids')) {
+                Shop::whereIn('id', $request->input('shop_ids'))->update(['contract_id' => $contract->id]);
+            }
+
+            \Log::info('Contract updated successfully', ['contract_id' => $contract->id]);
+
+            if ($request->ajax()) {
+                $redirect = $request->input('redirect_type') ?? route('admin.contracts.index');
+                return response()->json([
+                    'success' => true,
+                    'message' => __('Hợp đồng ":model" đã được cập nhật!', ['model' => $contract->contract_number]),
+                    'redirect' => $redirect,
+                ]);
+            }
+
+            flash()->success(__('Hợp đồng ":model" đã được cập nhật!', ['model' => $contract->contract_number]));
+            return redirect()->route('admin.contracts.index');
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            \Log::error('Validation failed in contract update', ['errors' => $e->errors()]);
+            if ($request->ajax()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Dữ liệu không hợp lệ: ' . implode(', ', $e->errors()[array_key_first($e->errors())]),
+                ], 422);
+            }
+            return back()->withErrors($e->errors())->withInput();
+        } catch (\Exception $e) {
+            \Log::error('Contract Update Error: ' . $e->getMessage(), ['exception' => $e->getTraceAsString()]);
+            if ($request->ajax()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Lỗi khi cập nhật dữ liệu: ' . $e->getMessage(),
+                ], 500);
+            }
+            return back()->with('error', 'Lỗi khi cập nhật dữ liệu: ' . $e->getMessage());
         }
-
-        $contract->update($data);
-
-        // Gỡ liên kết cũ và gán lại shop mới
-        Shop::where('contract_id', $contract->id)->update(['contract_id' => null]);
-
-        if ($request->filled('shop_ids')) {
-            Shop::whereIn('id', $request->input('shop_ids'))->update(['contract_id' => $contract->id]);
-        }
-
-        flash()->success(__('Hợp đồng ":model" đã được cập nhật!', ['model' => $contract->contract_number]));
-        return redirect()->route('admin.contracts.index');
     }
 
     public function destroy(Contract $contract)
     {
         if ($contract->upload) {
-            Storage::delete($contract->upload);
+            Storage::disk('public')->delete($contract->upload);
         }
         $contract->update(['is_deleted' => 1]);
 
@@ -145,7 +181,7 @@ class ContractController
 
         foreach ($contracts as $contract) {
             if ($contract->upload) {
-                Storage::delete($contract->upload);
+                Storage::disk('public')->delete($contract->upload);
             }
             $contract->update(['is_deleted' => 1]);
             $deleted++;
@@ -164,12 +200,18 @@ class ContractController
         $firstShopWithMerchant = $contract->shops->firstWhere('merchant');
 
         if (!$firstShopWithMerchant) {
-            return back()->with('error', 'Không thể gửi email vì thiếu thông tin.');
+            return response()->json([
+                'success' => false,
+                'message' => 'Không thể gửi email vì thiếu thông tin.',
+            ], 422);
         }
 
         $emailService->sendContract($contract);
 
-        return redirect()->back()->with('success', 'Đã gửi email cho: ' . $firstShopWithMerchant->merchant->email);
+        return response()->json([
+            'success' => true,
+            'message' => 'Đã gửi email cho: ' . $firstShopWithMerchant->merchant->email,
+        ]);
     }
 
     private function generateUniqueContractNumber(): string
@@ -194,7 +236,10 @@ class ContractController
             return $printService->printContractToWord($contract);
         } catch (\Exception $e) {
             \Log::error('Exception in printContract: ' . $e->getMessage() . ' at ' . $e->getFile() . ':' . $e->getLine());
-            return redirect()->back()->with('error', 'Lỗi khi in hợp đồng: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Lỗi khi in hợp đồng: ' . $e->getMessage(),
+            ], 500);
         }
     }
 
@@ -202,8 +247,21 @@ class ContractController
     {
         try {
             Excel::import(new ContractImport, $request->file);
+            if ($request->ajax()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => __('Đã import danh sách HĐ!'),
+                ]);
+            }
             flash()->success(__('Đã import danh sách HĐ!'));
         } catch (\Exception $exception) {
+            \Log::error('Contract Import Error: ' . $exception->getMessage());
+            if ($request->ajax()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => $exception->getMessage(),
+                ], 500);
+            }
             flash()->error($exception->getMessage());
         }
 

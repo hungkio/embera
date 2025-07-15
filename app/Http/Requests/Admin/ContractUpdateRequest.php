@@ -44,9 +44,9 @@ class ContractUpdateRequest extends FormRequest
             'sign_date.required' => 'Ngày ký là trường bắt buộc.',
             'sign_date.date' => 'Ngày ký không hợp lệ.',
 
-            'expired_date.required' => 'Ngày hết hạn là trường bắt buộc.',
+/*            'expired_date.required' => 'Ngày hết hạn là trường bắt buộc.',
             'expired_date.date' => 'Ngày hết hạn không hợp lệ.',
-            'expired_date.after_or_equal' => 'Ngày hết hạn phải lớn hơn hoặc bằng ngày ký.',
+            'expired_date.after_or_equal' => 'Ngày hết hạn phải lớn hơn hoặc bằng ngày ký.',*/
 
             'status.required' => 'Trạng thái là trường bắt buộc.',
             'status.in' => 'Trạng thái không hợp lệ.',

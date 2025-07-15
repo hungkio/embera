@@ -4,9 +4,9 @@
 
     <div class="row">
         <div class="col-md-12">
-            <x-card>
-                <fieldset>
-                    <legend class="font-weight-semibold text-uppercase font-size-sm">
+            <x-card class="shadow-sm">
+                <fieldset class="p-4">
+                    <legend class="border-bottom pb-2 mb-4 font-weight-bold text-primary">
                         {{ __('Thông tin cửa hàng') }}
                     </legend>
 
@@ -139,10 +139,10 @@
 
                     <div class="form-group row">
                         <label for="contract_id" class="col-lg-2 col-form-label text-lg-right">
-                            {{ __('Hợp đồng') }}
+                            <span class="text-danger">*</span> {{ __('Hợp đồng') }}
                         </label>
                         <div class="col-lg-9">
-                            <select name="contract_id" id="contract_id" class="form-control select2" required>
+                            <select name="contract_id" id="contract_id" class="form-control" required>
                                 <option value="">-- Chọn hợp đồng --</option>
                                 @foreach($contracts as $id => $label)
                                 <option value="{{ $id }}" {{ old('contract_id', $shop->contract_id ?? '') == $id ? 'selected' : '' }}>
@@ -155,6 +155,7 @@
                             @enderror
                         </div>
                     </div>
+
 
                     <div class="form-group row">
                         <label class="col-lg-2 col-form-label text-lg-right">
@@ -229,3 +230,38 @@
         </div>
     </div>
 </form>
+@push('css')
+<style>
+    legend { font-size: 1.25rem; }
+    .form-group .col-form-label { font-weight: 500; }
+    .device-entry { gap: 10px; }
+    .remove-device { width: 40px; height: 40px; }
+</style>
+<style>
+    .select2-container--default .select2-selection--single {
+        height: 38px !important;
+        padding: 6px 12px;
+        font-size: 1rem;
+        line-height: 1.5;
+    }
+
+    .select2-container--default .select2-selection--single .select2-selection__rendered {
+        line-height: 24px !important;
+        padding-left: 0 !important;
+    }
+</style>
+@endpush
+
+@push('js')
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<script>
+    $(document).ready(function () {
+        // Kích hoạt Select2 cho trường contract_id
+        $('#contract_id').select2({
+            placeholder: "-- Chọn hợp đồng --",
+            allowClear: true,
+            width: '100%'
+        });
+    });
+</script>
+@endpush
