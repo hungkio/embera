@@ -38,7 +38,7 @@ class AdminRequest extends FormRequest
     {
         $rule = ['min:8', 'confirmed'];
 
-        if ($this->route()->getName() === 'admin.admins.update') {
+        if ($this->route()->getName() === 'admin.admins.update' || $this->route()->getName() === 'admin.admins.edit') {
             array_unshift($rule, 'nullable');
         } else {
             array_unshift($rule, 'required');

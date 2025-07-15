@@ -10,7 +10,13 @@ return new class extends Migration {
         Schema::table('shops', function (Blueprint $table) {
             $table->string('bbnt_file')->nullable()->after('product_json');
         });
+    }
 
+    public function down(): void
+    {
+        Schema::table('shops', function (Blueprint $table) {
+            $table->dropColumn('bbnt_file');
+        });
     }
 };
 
