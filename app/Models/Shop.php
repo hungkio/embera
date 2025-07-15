@@ -34,10 +34,10 @@ class Shop extends Model
         'is_bound' => 'boolean',
     ];
 
-    public function merchant()
-    {
-        return $this->belongsTo(Merchant::class);
-    }
+//    public function merchant()
+//    {
+//        return $this->belongsTo(Merchant::class);
+//    }
 
     public function contract()
     {

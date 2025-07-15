@@ -84,7 +84,7 @@
                                         <span class="text-danger">*</span> {{ __('Chọn Merchant') }}
                                     </label>
                                     <div class="col-lg-9">
-                                        <select name="merchant_id" class="form-control" required>
+                                        <select name="merchant_id" class="form-control select2" required>
                                             <option value="">{{ __('-- Chọn merchant --') }}</option>
                                             @foreach($merchants as $id => $username)
                                             <option value="{{ $id }}" {{ old('merchant_id', $contract->merchant_id ?? '') == $id ? 'selected' : '' }}>
@@ -146,7 +146,7 @@
                                 <x-text-field
                                     name="ceo_sign"
                                     :label="__('Giám đốc ký')"
-                                    :value="$contract->ceo_sign"
+                                    :value="$contract->ceo_sign ?? App\Models\Contract::CURRENT_CEO"
                                     required
                                 />
 

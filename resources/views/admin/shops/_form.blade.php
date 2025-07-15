@@ -120,13 +120,16 @@
                             <select name="strategy" id="strategy" class="form-control">
                                 <option value="(VND-1h)5-0-0" {{ old(
                                 'strategy', $shop->strategy ?? '') === '(VND-1h)5-0-0' ? 'selected'
-                                : '' }}>(VND-1h)5-0-0</option>
+                                : '' }}>(VND-1h) 5-0-0</option>
                                 <option value="(VND-1h)1-5000-5000" {{ old(
                                 'strategy', $shop->strategy ?? '') === '(VND-1h)1-5000-5000' ?
-                                'selected' : '' }}>(VND-1h)1-5000-5000</option>
+                                'selected' : '' }}>(VND-1h) 1-5000-5000</option>
                                 <option value="(VND-1h)5-10000-52000" {{ old(
                                 'strategy', $shop->strategy ?? '') === '(VND-1h)5-10000-52000' ?
-                                'selected' : '' }}>(VND-1h)5-10000-52000</option>
+                                'selected' : '' }}>(VND-1h) 5-10000-52000</option>
+                                <option value="(VND-1h)20-10000-52000" {{ old(
+                                'strategy', $shop->strategy ?? '') === '(VND-1h)20-10000-52000' ?
+                                'selected' : '' }}>(VND-1h) 20-10000-52000</option>
                             </select>
                             @error('strategy')
                             <span class="form-text text-danger">{{ $message }}</span>

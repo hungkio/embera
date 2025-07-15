@@ -83,5 +83,17 @@
     document.getElementById('shop-form').addEventListener('submit', function () {
         generateDeviceJSON();
     });
+
+    document.addEventListener('DOMContentLoaded', function () {
+        const typeSelect = document.getElementById('share_rate_type');
+        const unitLabel = document.getElementById('share_rate_unit');
+
+        function updateUnit() {
+            unitLabel.innerText = typeSelect.value === 'fixed' ? 'VNĐ' : '%';
+        }
+
+        typeSelect.addEventListener('change', updateUnit);
+        updateUnit(); // chạy khi load form
+    });
 </script>
 @endpush

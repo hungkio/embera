@@ -47,6 +47,7 @@ class Contract extends Model
         self::SIGN => 'Đã ký',
     ];
 
+    CONST CURRENT_CEO = "Lê Thị Lý";
 
     public function shops()
     {

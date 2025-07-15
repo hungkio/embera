@@ -21,4 +21,9 @@
 
 @push('js')
 {!! JsValidator::formRequest('App\Http\Requests\Admin\ContractUpdateRequest', 'form'); !!}
+<script>
+    $('.select2').select2({
+        placeholder: "{{ __('-- Vui lòng chọn --') }}",
+    });
+</script>
 @endpush

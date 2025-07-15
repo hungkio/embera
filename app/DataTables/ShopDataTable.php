@@ -14,6 +14,7 @@ class ShopDataTable extends BaseDatable
         return datatables()
             ->eloquent($query)
             ->addIndexColumn()
+            ->addColumn('contract', fn(Shop $shop) => $shop->contract->contract_number ?? '')
             ->addColumn('action', function (Shop $shop) {
                 return view('admin.shops._tableAction', ['id' => $shop->id])->render();
             })
@@ -124,6 +125,7 @@ class ShopDataTable extends BaseDatable
             Column::make('shop_name')->title('Tên cửa hàng'),
             Column::make('address')->title('Địa chỉ'),
             Column::make('shop_type')->title('Loại cửa hàng'),
+            Column::make('contract')->title('Số hợp đồng'),
             Column::make('share_rate')->title('Lợi nhuận'),
             Column::make('share_rate_type')->title('Loại chia'),
             Column::make('strategy')->title('Chiến lược'),

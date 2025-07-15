@@ -73,8 +73,8 @@ class ContractDataTable extends BaseDatable
 
         if (!empty($filters['date_from']) && !empty($filters['date_to'])) {
             $query->whereBetween('sign_date', [
-                Carbon::parse($filters['date_from'])->startOfDay(),
-                Carbon::parse($filters['date_to'])->endOfDay(),
+                Carbon::parse($filters['date_from'])->format('Y-m-d'),
+                Carbon::parse($filters['date_to'])->format('Y-m-d'),
             ]);
         }
 
@@ -116,7 +116,7 @@ class ContractDataTable extends BaseDatable
     protected function getBuilderParameters(): array
     {
         return [
-            'order' => [1, 'desc'],
+            'order' => [11, 'desc'],
             'pageLength' => 25,
         ];
     }

@@ -109,7 +109,7 @@ class ContractImport implements ToCollection, WithCalculatedFormulas
                         'admin_id' => $admin->id,
                         'merchant_id' => $merchant->id,
                         'title' => $title,
-                        'ceo_sign' => $ceoSign,
+                        'ceo_sign' => $ceoSign ?? Contract::CURRENT_CEO,
                         'location' => $location,
                     ]
                 );
@@ -131,7 +131,7 @@ class ContractImport implements ToCollection, WithCalculatedFormulas
                         'shop_type' => $shopType,
                         'share_rate' => $shareRate ? $shareRate*100 : 0,
                         'contact_phone' => $merchantPhone,
-                        'strategy' => '(VND-1h)5-10000-52000',
+                        'strategy' => '(VND-1h)20-10000-52000',
                         'area' => trim($area),
                         'city' => trim($city),
                         'region' => trim($region),
