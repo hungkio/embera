@@ -134,29 +134,34 @@ if (!function_exists('display_country_name')) {
 }
 
 if (!function_exists('sendZaloZNS')) {
-//    curl --location 'https://business.openapi.zalo.me/message/template' \
-//        --header 'Content-Type: application/json' \
-//        --header 'access_token: your_access_token' \
-//        --data '{
-//        "phone": "84987654321",
-//        "template_id": "466895", // number
-//        "template_id": "466893", // %
-//        "template_data": {
-//            "number_of_order": "1",
-//            "share_percent": "1",
-//            "date": "4/2020",
-//            "customer_name": "Nguyễn Thị Hoàng Anh",
-//            "share_money": "100",
-//            "total": "100000",
-//         },
-//        "tracking_id":"tracking_id"
-//    }'
+    // để lấy refresh token, truy cập: https://oauth.zaloapp.com/v4/oa/permission?app_id=2138008220222428783&redirect_uri=https%3A%2F%2Fembera.tech%2Fadmin%2Fshops để lấy code, sau đó gọi function getZaloAccessToken($code = null) để lưu refresh_token vào cache
     function sendZaloZNS($phone, $templateId, array $params)
     {
-        $accessToken = env('OA_ACCESS_TOKEN') ?? '';
+        $res = getZaloAccessToken();
+
+        // chia sẻ theo số lượng giao dịch
+//        $send = sendZaloZNS("84345281681", 466895, [
+//            'number_of_order' => 100,
+//            'thang_giao_dich' => "07/2025",
+//            'ma_hop_dong' => "03/2025/HĐNT-EBR",
+//            'customer_name' => "Zoom Coffee (MB-HN-CG)",
+//            'share_money' => 300000,
+//            'share_percent' => "3000",
+//        ]);
+
+        // chia sẻ theo % doanh thu
+//        $send = sendZaloZNS("84345281681", 466893, [
+//            'total' => 300000,
+//            'thang_giao_dich' => "07/2025",
+//            'ma_hop_dong' => "03/2025/HĐNT-EBR",
+//            'customer_name' => "Zoom Coffee (MB-HN-CG)",
+//            'share_money' => 30000,
+//            'share_percent' => "10",
+//        ]);
+
         $response = \Illuminate\Support\Facades\Http::withHeaders([
             'Content-Type'  => 'application/json',
-            'access_token'  => $accessToken,
+            'access_token'  => $res['access_token'],
         ])->post('https://business.openapi.zalo.me/message/template', [
             'phone'         => $phone,
             'template_id'   => $templateId,
@@ -176,3 +181,33 @@ if (!function_exists('sendZaloZNS')) {
         return false;
     }
 }
+
+if (!function_exists('getZaloAccessToken')) {
+    function getZaloAccessToken($code = null) {
+        if ($code) {
+            $payload = [
+                'code' => $code,
+                'app_id' => env('OA_APP_ID'),
+                'grant_type' => 'authorization_code',
+                'code_verifier' => 'your_code_verifier',
+            ];
+        } else {
+            $refreshToken = \Illuminate\Support\Facades\Cache::get('OA_APP_REFRESH_TOKEN');
+            $payload = [
+                'refresh_token' => $refreshToken,
+                'app_id' => env('OA_APP_ID'),
+                'grant_type' => 'refresh_token',
+            ];
+        }
+
+        $response = Http::asForm()
+            ->withHeaders(['secret_key' => env('OA_APP_SECRET')])
+            ->post('https://oauth.zaloapp.com/v4/oa/access_token', $payload);
+
+        if ($response->json()) {
+            \Illuminate\Support\Facades\Cache::put('OA_APP_REFRESH_TOKEN', $response->json()['refresh_token'], now()->addDays(60));
+        }
+        return $response->json();
+    }
+}
+

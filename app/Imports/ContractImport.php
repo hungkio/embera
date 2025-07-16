@@ -16,7 +16,13 @@ class ContractImport implements ToCollection, WithCalculatedFormulas
 {
     public function collection(Collection $rows)
     {
-        DB::transaction(function () use ($rows) {
+        $statuses = [
+            'bbnt' => 0,
+            'notsign' => 1,
+            'signed' => 2,
+        ];
+
+        DB::transaction(function () use ($rows, $statuses) {
             // Gom theo contract_number
             $grouped = $rows->groupBy(fn($row) => trim($row[0]));
 
@@ -29,7 +35,7 @@ class ContractImport implements ToCollection, WithCalculatedFormulas
                 $contractNumber = trim($firstRow[0] ?? '');
                 $signDate = $this->parseDate($firstRow[1] ?? null);
                 $expiredDate = $this->parseDate($firstRow[2] ?? null);
-                $status = trim($firstRow[3] ?? 'chưa_ký');
+                $status = $firstRow[3] ? $statuses[$firstRow[3]] : 1;
                 $bankInfo = trim($firstRow[4] ?? '');
                 $bankNumber = trim($firstRow[5] ?? '');
                 $bankName = trim($firstRow[6] ?? '');
