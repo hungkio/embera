@@ -10,7 +10,9 @@
 @push('css')
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.css"/>
 @endpush
+
 @section('page-content')
+
     @can('contracts.create')
     @endcan
     <form method="GET" action="{{ route('admin.contracts.index') }}" class="row g-3 mb-4 align-items-end filters">
@@ -26,9 +28,14 @@
         </div>
     </form>
 
-    <x-card title="Hợp Đồng">
-        {{$dataTable->table()}}
-    </x-card>
+<x-card title="Hợp Đồng">
+    <div class="table-responsive">
+        {!! $dataTable->table([
+        'class' => 'table table-striped table-bordered nowrap',
+        'style' => 'width:100%',
+        ], true) !!}
+    </div>
+</x-card>
 
     <div class="modal fade" id="exampleModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel"
          aria-hidden="true">

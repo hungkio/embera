@@ -141,13 +141,23 @@
                         <span> {{ __("Hợp Đồng") }} </span>
                     </a>
                 </li>
+
                 <li class="nav-item">
                     <a href="{{ route('admin.merchants.index') }}"
-                       class="nav-link @if(request()->routeIs('admin.merchants*'))active @endif">
+                       class="nav-link @if(request()->routeIs('admin.merchants.index'))active @endif">
                         <i class="fal fa-user-tie"></i>
                         <span>{{ __("Merchant") }}</span>
                     </a>
                 </li>
+
+                <li class="nav-item">
+                    <a href="{{ route('admin.merchants-history.index') }}"
+                       class="nav-link @if(request()->routeIs('admin.merchants-history.index')) active @endif">
+                        <i class="fal fa-history"></i>
+                        <span>{{ __("Lịch sử chia sẻ") }}</span>
+                    </a>
+                </li>
+
                 <li class="nav-item">
                     <a href="{{ route('admin.shops.index') }}"
                        class="nav-link @if(request()->routeIs('admin.shops*'))active @endif">
