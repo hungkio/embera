@@ -17,7 +17,7 @@ class CreateMerchantShareLogsTable extends Migration
             $table->string('customer_name')->nullable();
             $table->date('date');
             $table->integer('number_of_order');
-            $table->decimal('share_percent', 5, 2);
+            $table->decimal('share_percent', 5, 0);
             $table->decimal('total',         15, 0)->default(0);
             $table->decimal('share_money',   15, 0)->default(0);
             $table->string('type',       20)->default('email');
