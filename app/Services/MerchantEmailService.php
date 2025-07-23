@@ -60,7 +60,7 @@ class MerchantEmailService
         $this->createShareLog($merchant, $data, $type);
     }
 
-    private function detectType($shops): string
+    public function detectType($shops): string
     {
         $unique = $shops->pluck('share_rate_type')->unique();
         return ($unique->count() === 1 && $unique->first() === 'fixed')
@@ -104,7 +104,7 @@ class MerchantEmailService
                 : 0;
         } else {
             $sharePercentValue = $totalRevenue > 0
-                ? round(($totalShareMoney / $totalRevenue) * 100, 2)
+                ? round(($totalShareMoney / $totalRevenue) * 100, 0)
                 : 0;
         }
 

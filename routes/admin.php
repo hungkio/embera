@@ -198,6 +198,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
             Route::get('/merchants/export', [MerchantController::class, 'export'])->name('merchants.export');
 
             Route::post('/merchants/send-email', [MerchantController::class, 'sendEmail'])->name('merchants.send-email');
+            Route::post('/merchants/send-zalo', [MerchantController::class, 'sendZalo'])->name('merchants.send-zalo');
 
             Route::get('/merchants/share-logs', [MerchantController::class, 'shareLogs'])->name('merchants-history.index');
             Route::get('/merchants/share-log/{id}', [MerchantController::class, 'shareLogDetail'])->name('merchants-history.detail');

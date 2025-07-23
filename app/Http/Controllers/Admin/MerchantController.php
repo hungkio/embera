@@ -10,6 +10,7 @@ use App\Http\Requests\Admin\MerchantUpdateRequest;
 use App\Models\Merchant;
 use App\Models\MerchantShareLog;
 use App\Services\MerchantEmailService;
+use App\Services\ZaloService;
 use Illuminate\Contracts\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -144,4 +145,89 @@ class MerchantController
         ]);
     }
 
+    public function sendZalo(Request $request, ZaloService $zaloService, MerchantEmailService $emailService)
+    {
+        $merchantIds = $request->input('ids', []);
+        if (empty($merchantIds) || !is_array($merchantIds)) {
+            return response()->json(['message' => 'Vui lòng chọn ít nhất một merchant để gửi Zalo.'], 422);
+        }
+
+        // Gọi ZaloService để gửi Zalo
+        $results = $zaloService->sendToMerchants(
+            $merchantIds,
+            'zalo.template_fixed',
+            'zalo.template_percentage',
+            $emailService
+        );
+
+        $successCount = 0;
+        $errors = [];
+
+        foreach ($results as $merchantId => $result) {
+            if ($result['success']) {
+                $successCount++;
+                $merchant = Merchant::find($merchantId);
+                if ($merchant) {
+                    $shops = $merchant->shops()->where('shops.is_deleted', false)->get();
+                    $data = $emailService->prepareData($merchant, $shops);
+                    $shareType = $emailService->detectType($shops);
+                    $this->logShare($merchant, $data, $shareType, 'zalo');
+                }
+            } else {
+                $errors[] = "Merchant ID {$merchantId}: " . ($result['error'] ?? 'Unknown error');
+            }
+        }
+
+        if ($successCount > 0 && empty($errors)) {
+            return response()->json(['message' => "Gửi Zalo thành công cho {$successCount} merchant."]);
+        } elseif ($successCount > 0) {
+            return response()->json([
+                'message' => "Gửi Zalo thành công cho {$successCount} merchant, nhưng có lỗi với một số merchant.",
+                'errors' => $errors
+            ], 207);
+        } else {
+            return response()->json([
+                'message' => 'Gửi Zalo thất bại.',
+                'errors' => $errors
+            ], 422);
+        }
+    }
+
+    public function logShare(Merchant $merchant, array $data, string $shareType, string $type): void
+    {
+        $shopsData = collect($data['shop_data'] ?? []);
+
+        // Parser để loại bỏ định dạng
+        $parse = function (string $s): float {
+            return (float) str_replace(['.', ' VNĐ', '%'], '', $s);
+        };
+
+        // Tính tổng doanh thu và tổng tiền chia
+        $totalRevenue = $shopsData->sum(fn($r) => $parse($r['doanh_thu']));
+        $totalShareMoney = $shopsData->sum(fn($r) => $parse($r['thanh_toan']));
+
+        // Tính số đơn hàng
+        $totalOrders = $shopsData->sum(fn($r) => $parse($r['doanh_thu']));
+
+        // Xác định share_percent
+        $sharePercentValue = $shareType === 'fixed'
+            ? $shopsData->map(fn($r) => $parse($r['chia_se']))->avg()
+            : ($totalRevenue > 0 ? round(($totalShareMoney / $totalRevenue) * 100, 0) : 0);
+
+        // Ghi log
+        MerchantShareLog::create([
+            'merchant_id' => $merchant->id,
+            'year' => $data['from_year'] ?? now()->year,
+            'month' => $data['from_month'] ?? now()->month,
+            'contract_no' => $data['hop_dong_so'] ?? null,
+            'customer_name' => $data['ben_b'] ?? null,
+            'date' => now()->toDateString(),
+            'number_of_order' => $totalOrders,
+            'share_percent' => $sharePercentValue,
+            'total' => $totalRevenue,
+            'share_money' => $totalShareMoney,
+            'type' => $type, // 'zalo' hoặc 'email'
+            'share_type' => $shareType,
+        ]);
+    }
 }
