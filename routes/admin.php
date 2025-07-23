@@ -199,6 +199,9 @@ Route::prefix('admin')->name('admin.')->group(function () {
 
             Route::post('/merchants/send-email', [MerchantController::class, 'sendEmail'])->name('merchants.send-email');
 
+            Route::get('/merchants/share-logs', [MerchantController::class, 'shareLogs'])->name('merchants-history.index');
+            Route::get('/merchants/share-log/{id}', [MerchantController::class, 'shareLogDetail'])->name('merchants-history.detail');
+
             // AJAX routes for merchants and shops
             Route::get('ajax/merchants', [MerchantController::class, 'search'])->name('admin.ajax.merchants');
             Route::get('ajax/shops', [ShopController::class, 'search'])->name('admin.ajax.shops');

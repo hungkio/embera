@@ -3,20 +3,18 @@
 namespace App\Http\Controllers\Admin;
 
 use App\DataTables\MerchantDataTable;
+use App\DataTables\MerchantShareLogDataTable;
 use App\Domain\Admin\Models\Admin;
 use App\Http\Requests\Admin\MerchantStoreRequest;
 use App\Http\Requests\Admin\MerchantUpdateRequest;
-use App\Models\Contract;
-use App\Models\Email;
 use App\Models\Merchant;
-use App\Services\ContractEmailService;
+use App\Models\MerchantShareLog;
 use App\Services\MerchantEmailService;
 use Illuminate\Contracts\Database\Eloquent\Builder;
-use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 use Illuminate\Support\Facades\Storage;
-use Maatwebsite\Excel\Facades\Excel;
+use Auth;
 
 class MerchantController
 {
@@ -98,10 +96,9 @@ class MerchantController
         ]);
     }
 
-
     public function sendEmail(Request $request, MerchantEmailService $emailService)
     {
-        $merchantIds = $request->input('ids');
+        $merchantIds = $request->input('ids', []);
         if (empty($merchantIds) || !is_array($merchantIds)) {
             return response()->json(['message' => 'Vui lòng chọn ít nhất một merchant để gửi mail.'], 422);
         }
@@ -109,15 +106,42 @@ class MerchantController
         $merchants = Merchant::with(['contract', 'shops'])->whereIn('id', $merchantIds)->get();
 
         foreach ($merchants as $merchant) {
+            // Bỏ qua nếu thiếu hợp đồng hoặc shop
             if (!$merchant->contract || $merchant->shops->isEmpty()) {
-                continue; // bỏ qua nếu thiếu dữ liệu
+                \Log::warning("Merchant ID {$merchant->id} skipped: Missing contract or shops.");
+                continue;
             }
 
-            $emailService->sendMail($merchant);
+            // 1. Chuẩn bị dữ liệu và gửi mail
+            $data = $emailService->prepareData($merchant, $merchant->shops);
+            $emailService->sendMail($merchant, $data);
+
         }
 
-        return response()->json(['message' => 'Đã gửi mail thành công.']);
+        return response()->json(['message' => 'Đã gửi mail và ghi log thành công.']);
     }
 
+
+    public function shareLogs(MerchantShareLogDataTable $dataTable)
+    {
+        \Log::info('Rendering share logs DataTable'); // Debug rendering
+        return $dataTable->render('admin.merchants.share-logs');
+    }
+
+    public function shareLogDetail($id, MerchantEmailService $emailService)
+    {
+        // 1) Lấy log kèm relation merchant
+        $log = MerchantShareLog::with('merchant')->findOrFail($id);
+
+        // 2) Tái tính shop_data & totals qua service
+        $shops = $log->merchant->shops()->where('shops.is_deleted', false)->get();
+        $data = $emailService->prepareData($log->merchant, $shops);
+
+        // 3) Trả về view với cả 2 biến
+        return view('admin.merchants.share-log-detail', [
+            'log' => $log,
+            'data' => $data,
+        ]);
+    }
 
 }
