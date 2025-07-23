@@ -82,11 +82,16 @@
                         </label>
 
                         <div class="col-lg-3">
-                            <select name="share_rate_type" id="share_rate_type" class="form-control" required>
-                                <option value="percentage" {{ old('share_rate_type', $shop->share_rate_type ?? 'percentage') === 'percentage' ? 'selected' : '' }}>
+                            <select name="share_rate_type" id="share_rate_type" class="form-control"
+                                    required>
+                                <option value="percentage" {{ old(
+                                'share_rate_type', $shop->share_rate_type ?? 'percentage') ===
+                                'percentage' ? 'selected' : '' }}>
                                 Phần trăm (%)
                                 </option>
-                                <option value="fixed" {{ old('share_rate_type', $shop->share_rate_type ?? '') === 'fixed' ? 'selected' : '' }}>
+                                <option value="fixed" {{ old(
+                                'share_rate_type', $shop->share_rate_type ?? '') === 'fixed' ?
+                                'selected' : '' }}>
                                 Doanh thu cố định (VNĐ)
                                 </option>
                             </select>
@@ -101,7 +106,8 @@
 
                                 <div class="input-group-append">
                 <span class="input-group-text" id="share_rate_unit">
-                    {{ old('share_rate_type', $shop->share_rate_type ?? 'percentage') === 'fixed' ? 'VNĐ' : '%' }}
+                    {{ old('share_rate_type', $shop->share_rate_type ?? 'percentage') === 'fixed'
+                        ? 'VNĐ' : '%' }}
                 </span>
                                 </div>
                             </div>
@@ -145,7 +151,9 @@
                             <select name="contract_id" id="contract_id" class="form-control" required>
                                 <option value="">-- Chọn hợp đồng --</option>
                                 @foreach($contracts as $id => $label)
-                                <option value="{{ $id }}" {{ old('contract_id', $shop->contract_id ?? '') == $id ? 'selected' : '' }}>
+                                <option value="{{ $id }}" {{ old(
+                                'contract_id', $shop->contract_id ?? '') == $id ? 'selected' : ''
+                                }}>
                                 {{ $label }}
                                 </option>
                                 @endforeach
@@ -163,15 +171,19 @@
                         </label>
                         <div class="col-lg-9">
                             <div class="form-check form-check-inline">
-                                <input class="form-check-input" type="radio" name="is_bound" id="bound_yes" value="1"
-                                       {{ old('is_bound', $shop->is_bound ?? null) === true ? 'checked' : '' }}>
-                                <label class="form-check-label" for="bound_yes">{{ __('Đã bind') }}</label>
+                                <input class="form-check-input" type="radio" name="is_bound"
+                                       id="bound_yes" value="1"
+                                       @checked(old('is_bound', $shop->is_bound ?? '') == '1')>
+                                <label class="form-check-label" for="bound_yes">{{ __('Đã bind')
+                                    }}</label>
                             </div>
 
                             <div class="form-check form-check-inline">
-                                <input class="form-check-input" type="radio" name="is_bound" id="bound_no" value="0"
-                                       {{ old('is_bound', $shop->is_bound ?? null) === false ? 'checked' : '' }}>
-                                <label class="form-check-label" for="bound_no">{{ __('Chưa bind') }}</label>
+                                <input class="form-check-input" type="radio" name="is_bound"
+                                       id="bound_no"  value="0"
+                                       @checked(old('is_bound', $shop->is_bound ?? '') == '0')>
+                                <label class="form-check-label" for="bound_no">{{ __('Chưa bind')
+                                    }}</label>
                             </div>
                         </div>
                     </div>
@@ -191,13 +203,18 @@
                                         <option value="CP32">CP32</option>
                                     </select>
 
-                                    <input type="text" name="device_code[]" class="form-control mr-2" placeholder="Mã máy" required>
+                                    <input type="text" name="device_code[]"
+                                           class="form-control mr-2" placeholder="Mã máy" required>
 
-{{--                                    <input type="number" name="device_quantity[]" class="form-control mr-2" placeholder="Số lượng" required>--}}
+                                    {{-- <input type="number" name="device_quantity[]"
+                                                class="form-control mr-2" placeholder="Số lượng"
+                                                required>--}}
 
-                                    <input type="number" name="device_pin[]" class="form-control mr-2" placeholder="Số pin" required>
+                                    <input type="number" name="device_pin[]"
+                                           class="form-control mr-2" placeholder="Số pin" required>
 
-                                    <button type="button" class="btn btn-danger remove-device">–</button>
+                                    <button type="button" class="btn btn-danger remove-device">–
+                                    </button>
                                 </div>
 
                             </div>
@@ -232,10 +249,22 @@
 </form>
 @push('css')
 <style>
-    legend { font-size: 1.25rem; }
-    .form-group .col-form-label { font-weight: 500; }
-    .device-entry { gap: 10px; }
-    .remove-device { width: 40px; height: 40px; }
+    legend {
+        font-size: 1.25rem;
+    }
+
+    .form-group .col-form-label {
+        font-weight: 500;
+    }
+
+    .device-entry {
+        gap: 10px;
+    }
+
+    .remove-device {
+        width: 40px;
+        height: 40px;
+    }
 </style>
 <style>
     .select2-container--default .select2-selection--single {

@@ -13,7 +13,12 @@
 @endcan
 
 <x-card title="Cửa hàng">
-    {{$dataTable->table()}}
+    <div class="table-responsive">
+        {!! $dataTable->table([
+        'class' => 'table table-striped table-bordered nowrap',
+        'style' => 'width:100%',
+        ], true) !!}
+    </div>
 </x-card>
 @stop
 
@@ -25,13 +30,15 @@
 @endpush
 @push('js')
 <script>
-    document.addEventListener('click', function(e) {
+    document.addEventListener('click', function (e) {
         if (e.target.classList.contains('toggle-bind')) {
             const btn = e.target;
             const shopId = btn.dataset.id;
             const newState = btn.dataset.state;
 
-            if (!confirm('Bạn có chắc muốn thay đổi trạng thái bind không?')) return;
+            if (!confirm('Bạn có chắc muốn thay đổi trạng thái bind không?')) {
+                return;
+            }
 
             fetch(`/admin/shops/${shopId}/toggle-bind`, {
                 method: 'POST',
@@ -39,7 +46,7 @@
                     'X-CSRF-TOKEN': '{{ csrf_token() }}',
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify({ is_bound: newState })
+                body: JSON.stringify({is_bound: newState})
             })
             .then(res => res.json())
             .then(data => {

@@ -12,6 +12,7 @@ use App\Domain\Page\Models\Page;
 use App\Domain\Post\Models\Post;
 use App\Domain\Taxonomy\Models\Taxon;
 use App\Domain\Taxonomy\Models\Taxonomy;
+use App\Models\MerchantShareLog;
 use DaveJamesMiller\Breadcrumbs\BreadcrumbsGenerator;
 use DaveJamesMiller\Breadcrumbs\Facades\Breadcrumbs;
 use Spatie\Activitylog\Models\Activity;
@@ -226,6 +227,17 @@ Breadcrumbs::for('admin.merchants.create', function (BreadcrumbsGenerator $trail
 Breadcrumbs::for('admin.merchants.edit', function (BreadcrumbsGenerator $trail, Merchant $merchant) {
     $trail->parent('admin.merchants.index');
     $trail->push(__('Chỉnh sửa'), route('admin.merchants.edit', $merchant));
+});
+
+// Home > Merchant Share Log
+Breadcrumbs::for('admin.merchants-history.index', function (BreadcrumbsGenerator $trail) {
+    $trail->parent('admin.dashboard');
+    $trail->push(__('Lịch sử chia sẻ'), route('admin.merchants-history.index'), ['icon' => 'fal fa-history']);
+});
+
+Breadcrumbs::for('admin.merchants-history.detail', function (BreadcrumbsGenerator $trail, MerchantShareLog $log) {
+    $trail->parent('admin.merchants-history.index');
+    $trail->push(__('Chi tiết'), route('admin.merchants-history.detail', $log));
 });
 
 // Home > Shops

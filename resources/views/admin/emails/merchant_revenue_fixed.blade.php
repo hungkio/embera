@@ -141,7 +141,7 @@
                 <th>STT</th>
                 <th>Tên điểm</th>
                 <th>Địa chỉ</th>
-                <th>Doanh thu (VNĐ)</th>
+                <th>Tổng số đơn</th>
                 <th>Tỷ lệ chia sẻ</th>
                 <th>Số tiền thanh toán (VNĐ)</th>
             </tr>
@@ -158,15 +158,12 @@
             </tr>
             @endforeach
             <tr class="total-row">
-                <td colspan="5" style="text-align: right; font-weight: bold;">Tổng số tiền thanh
-                    toán
-                </td>
-                <td style="font-weight: bold;">{{ $content['tong_thanh_toan_share'] ?? '' }}</td>
+                <td colspan="5" style="text-align: right;">Tổng số tiền thanh toán:</td>
+                <td>{{ $content['tong_thanh_toan_share'] ?? '' }}</td>
             </tr>
             </tbody>
         </table>
     </div>
-
 
     <div class="section">
         <strong>· Tổng số tiền chia sẻ doanh thu Bên A thanh toán cho Bên B:</strong>

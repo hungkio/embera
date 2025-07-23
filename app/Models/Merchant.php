@@ -32,9 +32,16 @@ class Merchant extends Model
         return $this->belongsTo(Admin::class, 'admin_id', 'id');
     }
 
+    // Define hasMany relationship for multiple contracts
+    public function contracts()
+    {
+        return $this->hasMany(Contract::class, 'merchant_id', 'id');
+    }
+
+    // Keep hasOne if you want a default/single contract (optional)
     public function contract()
     {
-        return $this->hasOne(Contract::class);
+        return $this->hasOne(Contract::class, 'merchant_id', 'id');
     }
 
     public function shops()
@@ -49,7 +56,6 @@ class Merchant extends Model
         );
     }
 
-
     public function scopeActive($query)
     {
         return $query->where('is_deleted', 0);
@@ -63,5 +69,12 @@ class Merchant extends Model
     public function hasPassword()
     {
         return !empty($this->password);
+    }
+
+    public function revenueShareHistories()
+    {
+        return $this->hasMany(MerchantRevenueShareHistory::class)
+            ->orderBy('year', 'desc')
+            ->orderBy('month', 'desc');
     }
 }
