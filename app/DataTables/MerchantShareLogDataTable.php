@@ -101,11 +101,11 @@ class MerchantShareLogDataTable extends BaseDatable
                 ->addClass('text-center'),
 
             Column::make('total')->title('Tổng thu nhập'),
-            Column::make('share_type')->title('Loại chia sẻ')->addClass('text-center'),
+            Column::make('number_of_order')->title('Số đơn')->addClass('text-center'),
             Column::make('share')->title('Share')->addClass('text-center'),
             Column::make('share_money')->title('Số tiền share'),
+            Column::make('share_type')->title('Loại chia sẻ')->addClass('text-center'),
             Column::make('date')->title('Ngày ghi log'),
-            Column::make('number_of_order')->title('Số đơn')->addClass('text-center'),
 
             Column::computed('action')
                 ->title('Tác vụ')

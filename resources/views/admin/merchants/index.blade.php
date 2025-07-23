@@ -49,5 +49,37 @@
             .catch(() => alert('Gửi mail thất bại'));
         });
     });
+
+    document.addEventListener('DOMContentLoaded', () => {
+        document.querySelector('.sendzalo')?.addEventListener('click', () => {
+            const rows = document.querySelectorAll('tr.selected');
+            if (!rows.length) {
+                alert('Vui lòng chọn ít nhất một merchant.');
+                return;
+            }
+            const ids = Array.from(rows).map(r => r.id.replace('merchant_', ''));
+            fetch("{{ route('admin.merchants.send-zalo') }}", {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                },
+                body: JSON.stringify({ ids }),
+            })
+            .then(response => response.json())
+            .then(json => {
+                if (json.success) {
+                    alert(json.message);
+                } else {
+                    alert(json.message || 'Gửi Zalo thất bại.');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Đã xảy ra lỗi khi gửi Zalo.');
+            });
+        });
+    });
+
 </script>
 @endpush
