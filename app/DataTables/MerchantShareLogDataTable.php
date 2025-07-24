@@ -60,7 +60,7 @@ class MerchantShareLogDataTable extends BaseDatable
             // Share money formatted for clarity
             ->editColumn('share_money', fn($log) => number_format($log->share_money, 0, ',', '.') . ' VNĐ'
             )
-
+            ->editColumn('status', fn($log) => ucfirst($log->status))
             // Log date (parse string to Carbon)
             ->editColumn('date', fn($log) =>
             optional($log->created_at)->format('d/m/Y H:i:s')
@@ -114,6 +114,7 @@ class MerchantShareLogDataTable extends BaseDatable
             Column::make('share_type')->title('Loại chia sẻ')->addClass('text-center'),
             Column::make('type')->title('Nguồn ghi')->addClass('text-center'),
             Column::make('date')->title('Ngày ghi log'),
+            Column::make('status')->title('Trạng thái')->addClass('text-center'),
 
             Column::computed('action')
                 ->title('Tác vụ')
@@ -169,6 +170,7 @@ class MerchantShareLogDataTable extends BaseDatable
                 'number_of_order',
                 'type',
                 'created_at',
+                'status',
             ]);
     }
 }

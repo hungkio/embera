@@ -71,7 +71,7 @@ class ZaloService
 
             try {
                 $response = sendZaloZNS($phone, $templateId, $templateData);
-                $results[$id] = ['success' => true, 'response' => $response];
+                $results[$id] = ['success' => true, 'response' => $response['message'] ?? ''];
                 Log::info("Zalo ZNS sent successfully for merchant {$id}", ['phone' => $phone, 'templateId' => $templateId, 'response' => $response]);
             } catch (\Throwable $e) {
                 Log::error("Zalo ZNS failed for merchant {$id}: {$e->getMessage()}");
