@@ -70,6 +70,12 @@ class MerchantShareLogDataTable extends BaseDatable
             ->editColumn('number_of_order', fn($log) => $log->number_of_order
             )
 
+            ->addColumn('type', function($log) {
+                return $log->type === 'email'
+                    ? 'Email'
+                    : 'Zalo';
+            })
+
             // Action button
             ->addColumn('action', fn($log) => '<a href="' . route('admin.merchants-history.detail', $log->id) . '" class="btn btn-sm btn-info"><i class="fal fa-eye"></i></a>'
             )
@@ -106,6 +112,7 @@ class MerchantShareLogDataTable extends BaseDatable
             Column::make('share')->title('Share')->addClass('text-center'),
             Column::make('share_money')->title('Số tiền share'),
             Column::make('share_type')->title('Loại chia sẻ')->addClass('text-center'),
+            Column::make('type')->title('Nguồn ghi')->addClass('text-center'),
             Column::make('date')->title('Ngày ghi log'),
 
             Column::computed('action')
@@ -160,6 +167,7 @@ class MerchantShareLogDataTable extends BaseDatable
                 'share_type',
                 'date',
                 'number_of_order',
+                'type',
                 'created_at',
             ]);
     }

@@ -61,7 +61,7 @@ class ContractEmailService
 
             'ben_b' => $shopName,
             'ma_diem' => $shopCode,
-            'hop_dong_so' => $contract->contract_number ?? '',
+            'hop_dong_so' => $contract->full_contract_number,
             'ky_tu_ngay' => optional($contract->sign_date)->format('d/m/Y'),
             'ky_den_ngay' => optional($contract->expired_date)->format('d/m/Y'),
             'tong_tien' => number_format($contract->total_revenue ?? 0) . ' VNĐ',

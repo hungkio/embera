@@ -61,6 +61,27 @@
                             />
 
                             <div class="form-group row">
+                                <label for="city" class="col-lg-2 col-form-label text-lg-right">
+                                    <span class="text-danger">*</span> {{ __('Tỉnh/TP') }}
+                                </label>
+                                <div class="col-lg-9">
+                                    <select name="city" id="city" class="form-control" required>
+                                        <option value="">-- {{ __('Chọn tỉnh/TP') }} --</option>
+                                        @foreach(\App\Models\Contract::provinces() as $code => $name)
+                                        <option value="{{ $code }}"
+                                                {{ old('city', $contract->city) == $code ? 'selected' : '' }}>
+                                        {{ $name }}
+                                        </option>
+                                        @endforeach
+                                    </select>
+                                    @error('city')
+                                    <span class="form-text text-danger">{{ $message }}</span>
+                                    @enderror
+                                </div>
+                            </div>
+
+
+                            <div class="form-group row">
                                 <label for="status" class="col-lg-2 col-form-label text-lg-right">
                                     <span class="text-danger">*</span> {{ __('Trạng thái') }}
                                 </label>
