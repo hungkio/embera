@@ -1,4 +1,8 @@
 <div class="list-icons">
+    <a href="{{ route('admin.contracts.show', ['contract' => $id]) }}"
+       class="item-action btn-info"
+       title="{{ __('Xem chi tiết') }}">
+        <i class="fal fa-eye"></i>
 {{--    @can('admins.update')--}}
     <a href="{{ route('admin.contracts.edit', ['contract' => $id]) }}"
        class="item-action btn-primary"

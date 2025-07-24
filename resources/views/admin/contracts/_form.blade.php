@@ -67,19 +67,13 @@
                                 <div class="col-lg-9">
                                     <select name="status" id="status" class="form-control" required>
                                         <option value="">-- {{ __('Trạng thái') }} --</option>
-                                        <option value="đã_ký" {{ old(
-                                        'status', $contract->status ?? '') ===
-                                        \App\Models\Contract::SIGN ? 'selected' : '' }}>
+                                        <option value="2" {{ old('status', $contract->status ?? '') == 2 ? 'selected' : '' }}>
                                         {{ __('Đã ký') }}
                                         </option>
-                                        <option value="chưa_ký" {{ old(
-                                        'status', $contract->status ?? '') ===
-                                        \App\Models\Contract::NOT_SIGN ? 'selected' : '' }}>
+                                        <option value="1" {{ old('status', $contract->status ?? '') == 1 ? 'selected' : '' }}>
                                         {{ __('Chưa ký') }}
                                         </option>
-                                        <option value="chỉ_có_BBNT" {{ old(
-                                        'status', $contract->status ?? '') ===
-                                        \App\Models\Contract::BBNT ? 'selected' : '' }}>
+                                        <option value="0" {{ old('status', $contract->status ?? '') == 0 ? 'selected' : '' }}>
                                         {{ __('Chỉ có BBNT') }}
                                         </option>
                                     </select>

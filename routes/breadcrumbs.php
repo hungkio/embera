@@ -211,6 +211,12 @@ Breadcrumbs::for('admin.contracts.edit', function (BreadcrumbsGenerator $trail, 
     $trail->push(__('Chỉnh sửa'), route('admin.contracts.edit', $contract));
 });
 
+// Home > Contracts > Show
+Breadcrumbs::for('admin.contracts.show', function (BreadcrumbsGenerator $trail, Contract $contract) {
+    $trail->parent('admin.contracts.index');
+    $trail->push($contract->contract_number, route('admin.contracts.show', $contract));
+});
+
 // Home > Merchants
 Breadcrumbs::for('admin.merchants.index', function (BreadcrumbsGenerator $trail) {
     $trail->parent('admin.dashboard');

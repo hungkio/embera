@@ -96,7 +96,8 @@
                                     <th>Shop</th>
                                     <th>Địa chỉ</th>
                                     <th>Doanh thu (VND)</th>
-                                    <th>Tỷ lệ chia sẻ (%)</th>
+                                    <th>Số đơn hàng</th>
+                                    <th>Tỷ lệ chia sẻ</th>
                                     <th>Số tiền thanh toán (VND)</th>
                                 </tr>
                                 </thead>
@@ -106,9 +107,10 @@
                                         <td>{{ $i + 1 }}</td>
                                         <td>{{ $shop['shop'] }}</td>
                                         <td>{{ $shop['address'] }}</td>
-                                        <td>{{ number_format($shop['revenue'], 0, '.', ',') }}</td>
+                                        <td>{{ number_format($shop['revenue'], 0, '.', ',') }} đ</td>
+                                        <td>{{ $shop['number_of_order'] }}</td>
                                         <td>{{ $shop['sharing_percent'] }}</td>
-                                        <td>{{ number_format($shop['revenue']*$shop['sharing_percent']/100, 0, '.', ',') }}</td>
+                                        <td>{{ number_format($shop['sharing_revenue'], 0, '.', ',') }}đ</td>
                                     </tr>
                                 @endforeach
                                 </tbody>
