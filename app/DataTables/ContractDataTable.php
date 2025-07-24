@@ -16,8 +16,25 @@ class ContractDataTable extends BaseDatable
             ->eloquent($query)
             ->addIndexColumn()
             ->addColumn('action', 'admin.contracts._tableAction')
+
+            // 1) Merchant có link vào form edit
+            ->addColumn('merchant', function(Contract $c) {
+                if (! $c->merchant) {
+                    return '-';
+                }
+                $url = route('admin.merchants.edit', ['merchant' => $c->merchant_id]);
+                return '<a href="'. $url .'" target="_blank">'. e($c->merchant->username) .'</a>';
+            })
+
+            // 2) Shop list có link vào từng Shop edit
             ->addColumn('shop_name', function (Contract $c) {
-                return $c->shops->pluck('shop_name')->join(', ') ?: '-';
+                if ($c->shops->isEmpty()) {
+                    return '-';
+                }
+                return $c->shops->map(function($shop) {
+                    $url = route('admin.shops.edit', ['shop' => $shop->id]);
+                    return '<a href="'. $url .'" target="_blank">'. e($shop->shop_name) .'</a>';
+                })->implode('<br>');
             })
             ->editColumn('contract_number', fn(Contract $c) => $c->contract_number)
             ->editColumn('sign_date', fn(Contract $c) => optional($c->sign_date)->format('d/m/Y'))
@@ -61,14 +78,14 @@ class ContractDataTable extends BaseDatable
                     ->orderBy('shops.shop_name', $direction);
             })
             ->filterColumn('expired_time', fn($query, $keyword) => $query->where('expired_time', 'like', "%$keyword%")) // Text search
-            ->rawColumns(['action']);
+            ->rawColumns(['merchant','shop_name','action']);  // cho phép output thẻ <a>
     }
 
     public function query(Contract $model)
     {
         $query = $model->newQuery()
-            ->with(['shops.merchant']);
-
+            ->with(['shops.merchant'])
+            ->where('contracts.is_deleted', 0);
         $filters = $this->request->all();
 
         if (!empty($filters['date_from']) && !empty($filters['date_to'])) {
@@ -91,6 +108,8 @@ class ContractDataTable extends BaseDatable
     {
         return [
             Column::checkbox(''),
+            Column::make('merchant')->title('Merchant')->addClass('text-center'),
+            Column::computed('shop_name')->title('Cửa hàng'),
             Column::make('customer_name')->title('Tên khách hàng'),
             Column::make('contract_number')->title('Mã hợp đồng'),
             Column::make('sign_date')->title('Ngày ký'),
@@ -112,7 +131,7 @@ class ContractDataTable extends BaseDatable
     protected function getBuilderParameters(): array
     {
         return [
-            'order' => [10, 'desc'],
+            'order' => [1, 'desc'],
             'pageLength' => 25,
         ];
     }

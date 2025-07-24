@@ -62,7 +62,8 @@ class MerchantShareLogDataTable extends BaseDatable
             )
 
             // Log date (parse string to Carbon)
-            ->editColumn('date', fn($log) => Carbon::parse($log->date)->format('d/m/Y')
+            ->editColumn('date', fn($log) =>
+            optional($log->created_at)->format('d/m/Y H:i:s')
             )
 
             // Number of orders
@@ -159,6 +160,7 @@ class MerchantShareLogDataTable extends BaseDatable
                 'share_type',
                 'date',
                 'number_of_order',
+                'created_at',
             ]);
     }
 }
