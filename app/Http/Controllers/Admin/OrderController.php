@@ -84,37 +84,32 @@ class OrderController
             }
         }
 
-        $orders = (clone $query)->orderByDesc('payment_time')->get();
-
+        $orders = (clone $query)->select('orders.*', 'shops.share_rate_type', 'shops.share_rate')->leftJoin('shops', 'shops.shop_name', '=', 'orders.rental_shop')
+            ->orderByDesc('payment_time')->get();
         $totalRevenue = $orders->sum('order_amount');
 
         $byShop = $orders->groupBy('rental_shop')->map(function ($group) {
             $shop = $group->first()->rental_shop;
             $address = $group->first()->rental_shop_address;
-            $merchant_share_ratio = $group->first()->merchant_share_ratio;
+            $merchant_share_rate = $group->first()->share_rate;
+            $merchant_share_rate_type = $group->first()->share_rate_type;
             $revenue = $group->sum('order_amount');
 
-//            $validRows = $group->filter(fn($o) => $o->order_amount > 0 && $o->agent_share_ratio !== null);
-//            $avg_ratio = $validRows->avg('agent_share_ratio');
-            $avg_ratio = $merchant_share_ratio;
-
-            $displayType = request()->get('share_display', 'percentage'); // default: percentage
-
-            if ($avg_ratio === null || in_array($avg_ratio, [0, 0.9])) {
-                $sharing = 0;
+            if ($merchant_share_rate_type === 'fixed') {
+                $sharing = number_format((float)$merchant_share_rate, 0) . 'đ';
+                $sharing_revenue = $merchant_share_rate * $group->count();
             } else {
-                if ($displayType === 'fixed') {
-                    $sharing = number_format($revenue * $avg_ratio, 0, ',', '.') . ' VND';
-                } else {
-                    $sharing = number_format($avg_ratio * 100, 2) . ' %';
-                }
+                $sharing = (number_format((float)$merchant_share_rate, 0) ?? 0) . '%';
+                $sharing_revenue = $merchant_share_rate/100 * $revenue;
             }
 
             return [
                 'shop' => $shop,
                 'revenue' => $revenue,
+                'number_of_order' => $group->count() ?? 0,
                 'address' => $address,
                 'sharing_percent' => $sharing,
+                'sharing_revenue' => $sharing_revenue,
             ];
         })->values();
 
