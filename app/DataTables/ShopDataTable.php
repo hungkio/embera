@@ -14,8 +14,14 @@ class ShopDataTable extends BaseDatable
         return datatables()
             ->eloquent($query)
             ->addIndexColumn()
-            ->addColumn('contract', fn(Shop $shop) => $shop->contract->contract_number ?? '')
-            ->addColumn('action', function (Shop $shop) {
+            ->addColumn('contract', function (Shop $shop) {
+                if (! $shop->contract) {
+                    return '';
+                }
+                $url   = route('admin.contracts.show', $shop->contract->id);
+                $num   = e($shop->contract->contract_number);
+                return "<a href=\"{$url}\" target=\"_blank\">{$num}</a>";
+            })            ->addColumn('action', function (Shop $shop) {
                 return view('admin.shops._tableAction', ['id' => $shop->id])->render();
             })
             ->editColumn('shop_name', fn(Shop $shop) => $shop->shop_name)
@@ -104,8 +110,12 @@ class ShopDataTable extends BaseDatable
             })
             ->addColumn('is_deleted', fn(Shop $shop) => $shop->is_deleted ? 'Đã xóa' : 'Hoạt động')
             ->filterColumn('is_deleted', fn($query, $keyword) => $query->where('is_deleted', $keyword === 'Đã xóa' ? 1 : 0))
-            ->rawColumns(['action', 'device_json', 'is_bound']);
-    }
+            ->rawColumns([
+                'action',
+                'device_json',
+                'is_bound',
+                'contract',
+            ]);    }
 
     public function query(Shop $model)
     {
@@ -119,10 +129,10 @@ class ShopDataTable extends BaseDatable
     {
         return [
             Column::checkbox(''),
+            Column::make('contract')->title('Số hợp đồng'),
             Column::make('shop_name')->title('Tên cửa hàng'),
             Column::make('address')->title('Địa chỉ'),
             Column::make('shop_type')->title('Loại cửa hàng'),
-            Column::make('contract')->title('Số hợp đồng'),
             Column::make('share_rate')->title('Lợi nhuận'),
             Column::make('share_rate_type')->title('Loại chia'),
             Column::make('strategy')->title('Chiến lược'),

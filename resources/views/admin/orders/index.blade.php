@@ -96,7 +96,7 @@
                                     <th>Shop</th>
                                     <th>Địa chỉ</th>
                                     <th>Doanh thu (VND)</th>
-                                    <th>Tỷ lệ chia sẻ (%)</th>
+                                    <th>Tỷ lệ chia sẻ</th>
                                     <th>Số tiền thanh toán (VND)</th>
                                 </tr>
                                 </thead>

@@ -98,7 +98,17 @@ class OrderController
 //            $avg_ratio = $validRows->avg('agent_share_ratio');
             $avg_ratio = $merchant_share_ratio;
 
-            $sharing = ($avg_ratio === null || in_array($avg_ratio, [0, 0.9])) ? 0 : $avg_ratio*100;
+            $displayType = request()->get('share_display', 'percentage'); // default: percentage
+
+            if ($avg_ratio === null || in_array($avg_ratio, [0, 0.9])) {
+                $sharing = 0;
+            } else {
+                if ($displayType === 'fixed') {
+                    $sharing = number_format($revenue * $avg_ratio, 0, ',', '.') . ' VND';
+                } else {
+                    $sharing = number_format($avg_ratio * 100, 2) . ' %';
+                }
+            }
 
             return [
                 'shop' => $shop,

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Admin;
 
 use App\DataTables\ContractDataTable;
+use App\Domain\Admin\Models\Admin;
 use App\Imports\ContractImport;
 use App\Models\Contract;
 use App\Http\Requests\Admin\ContractStoreRequest;
@@ -266,5 +267,17 @@ class ContractController
         }
 
         return back();
+    }
+
+    public function show(Contract $contract)
+    {
+        // nếu cần list merchants cho dropdown chỉ‐view (thường ko cần)
+        $merchants = Admin::whereHas('roles', fn($q) =>
+        $q->where('name', 'BD')
+        )
+            ->selectRaw("CONCAT(first_name, ' ', last_name) as full_name, id")
+            ->pluck('full_name', 'id');
+
+        return view('admin.contracts.show', compact('contract', 'merchants'));
     }
 }

@@ -22,21 +22,11 @@ class ContractDataTable extends BaseDatable
             ->editColumn('contract_number', fn(Contract $c) => $c->contract_number)
             ->editColumn('sign_date', fn(Contract $c) => optional($c->sign_date)->format('d/m/Y'))
             ->editColumn('expired_date', fn(Contract $c) => optional($c->expired_date)->format('d/m/Y'))
-            ->editColumn('status', function (Contract $c) {
-                return match ($c->status) {
-                    'đã_ký' => 'Đã ký',
-                    'chưa_ký' => 'Chưa ký',
-                    'chỉ_có_BBNT' => 'Chỉ có BBNT',
-                    default => ucfirst($c->status),
-                };
-            })
+            ->editColumn('status', fn (Contract $c) => ucfirst(Contract::STATUS[$c->status] ?? 'Chưa ký'))
             ->editColumn('download_count', fn(Contract $c) => $c->download_count . ' lượt')
             ->editColumn('admin_id', fn(Contract $c) => $c->admin->full_name ?? '')
             ->filterColumn('bank_account_number', fn($query, $keyword) => $query->where('bank_account_number', 'like', "%$keyword%"))
             ->filterColumn('bank_account_name', fn($query, $keyword) => $query->where('bank_account_name', 'like', "%$keyword%"))
-            ->editColumn('title', fn(Contract $c) => $c->title ?? '-')
-            ->editColumn('ceo_sign', fn(Contract $c) => $c->ceo_sign)
-            ->editColumn('note', fn(Contract $c) => $c->note)
             ->editColumn('expired_time', function (Contract $c) {
                 if ($c->sign_date && $c->expired_date) {
                     return $c->sign_date->diffInMonths($c->expired_date) . ' tháng';
@@ -44,12 +34,22 @@ class ContractDataTable extends BaseDatable
                 return '-';
             })
             ->editColumn('created_at', fn(Contract $c) => optional($c->created_at)->format('d/m/Y H:i'))
-            ->editColumn('updated_at', fn(Contract $c) => optional($c->updated_at)->format('d/m/Y H:i'))
             ->filterColumn('contract_number', fn($query, $keyword) => $query->where('contract_number', 'like', "%$keyword%"))
             ->filterColumn('email', fn($query, $keyword) => $query->where('email', 'like', "%$keyword%"))
             ->filterColumn('customer_name', fn($query, $keyword) => $query->where('customer_name', 'like', "%$keyword%"))
-            ->filterColumn('status', fn($query, $keyword) => $query->where('status', 'like', "%$keyword%"))
-            ->orderColumn('sign_date', 'sign_date $1')
+            ->filterColumn('status', function ($query, $keyword) {
+                $statusMap = [
+                    'Đã ký' => 2,
+                    'Chưa ký' => 1,
+                    'Chỉ có BBNT' => 0,
+                ];
+                $keyword = strtolower(trim($keyword));
+                if (isset($statusMap[$keyword])) {
+                    $query->where('status', $statusMap[$keyword]);
+                } else {
+                    $query->where('status', 'like', "%$keyword%");
+                }
+            })            ->orderColumn('sign_date', 'sign_date $1')
             ->filterColumn('shop_name', function ($query, $keyword) {
                 $query->whereHas('shops', function ($q) use ($keyword) {
                     $q->where('shop_name', 'like', "%$keyword%");
@@ -97,13 +97,9 @@ class ContractDataTable extends BaseDatable
             Column::make('expired_date')->title('Ngày hết hạn'),
             Column::make('expired_time')->title('Thời hạn'),
             Column::make('status')->title('Trạng thái'),
-            Column::make('title')->title('Tiêu đề'),
             Column::make('download_count')->title('Lượt tải'),
             Column::make('admin_id')->title('BD'),
-            Column::make('ceo_sign')->title('Giám đốc ký'),
-            Column::make('note')->title('Ghi chú'),
             Column::make('created_at')->title('Tạo lúc'),
-            Column::make('updated_at')->title('Cập nhật lúc'),
             Column::computed('action')
                 ->title(__('Tác vụ'))
                 ->exportable(false)
@@ -116,7 +112,7 @@ class ContractDataTable extends BaseDatable
     protected function getBuilderParameters(): array
     {
         return [
-            'order' => [11, 'desc'],
+            'order' => [10, 'desc'],
             'pageLength' => 25,
         ];
     }
