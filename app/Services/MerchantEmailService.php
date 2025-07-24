@@ -75,9 +75,14 @@ class MerchantEmailService
             ->where('shops.is_deleted', false)
             ->get();
 
-        $totalOrders = $shops->sum(function ($shop) {
+        $now = Carbon::today()->subMonth();
+        $totalOrders = $shops->sum(function ($shop) use ($now) {
             return Order::whereRaw('LOWER(rental_shop) = ?', [Str::lower($shop->shop_name)])
                 ->where('order_amount', '>', 0)
+                ->whereBetween('payment_time', [
+                    $now->clone()->startOfMonth()->startOfDay(),
+                    $now->clone()->endOfMonth()->endOfDay(),
+                ])
                 ->count();
         });
 
@@ -162,6 +167,7 @@ class MerchantEmailService
         $shops_data = [];
         $totalRevenue = 0;    // Tổng doanh thu
         $totalPayment = 0;    // Tổng tiền chia
+        $now = Carbon::today()->subMonth();
 
         foreach ($shops as $key => $shop) {
             if ($shop->share_rate_type == 'fixed') {
@@ -170,6 +176,10 @@ class MerchantEmailService
 
                 // Tính doanh thu tháng trước
                 $sumNumberOrder = Order::whereRaw('LOWER(rental_shop) = ?', [Str::lower($shop->shop_name)])->where('order_amount', '>', 0)
+                    ->whereBetween('payment_time', [
+                        $now->clone()->startOfMonth()->startOfDay(),
+                        $now->clone()->endOfMonth()->endOfDay(),
+                    ])
                     ->count();
                 $shareRate = $shop->share_rate ?? 0;
 
@@ -190,6 +200,10 @@ class MerchantEmailService
 
                 // Tính doanh thu tháng trước
                 $revenue = Order::whereRaw('LOWER(rental_shop) = ?', [Str::lower($shop->shop_name)])
+                    ->whereBetween('payment_time', [
+                        $now->clone()->startOfMonth()->startOfDay(),
+                        $now->clone()->endOfMonth()->endOfDay(),
+                    ])
                     ->sum('order_amount');
                 $shareRate = $shop->share_rate ?? 0;
                 $payment = $revenue * ($shareRate / 100);

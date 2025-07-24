@@ -14,6 +14,7 @@ use App\Domain\Admin\Actions\BulkDeleteAction;
 use App\Domain\Admin\DTO\AdminData;
 use App\Domain\Admin\Models\Admin;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
+use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\View\View;
@@ -101,5 +102,16 @@ class AdminController
             'status' => true,
             'message' => __('Đã xóa ":count" tài khoản', ['count' => $deletedRecord]),
         ]);
+    }
+
+    public function saveZNSToken(Request $request)
+    {
+        $this->authorize('view', Admin::class);
+        $code = $request->code;
+        if (!$code) {
+            return 'empty code';
+        }
+        getZaloAccessToken($code);
+        return 'saved';
     }
 }

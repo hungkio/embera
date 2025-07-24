@@ -134,7 +134,7 @@ if (!function_exists('display_country_name')) {
 }
 
 if (!function_exists('sendZaloZNS')) {
-    // để lấy refresh token, truy cập: https://oauth.zaloapp.com/v4/oa/permission?app_id=2138008220222428783&redirect_uri=https%3A%2F%2Fembera.tech%2Fadmin%2Fshops để lấy code, sau đó gọi function getZaloAccessToken($code = null) để lưu refresh_token vào cache
+    // để lấy refresh token, truy cập: https://oauth.zaloapp.com/v4/oa/permission?app_id=2138008220222428783&redirect_uri=https%3A%2F%2Fembera.tech%2Fadmin%2Fsave-zns-token để lấy code, sau đó gọi function getZaloAccessToken($code = null) để lưu refresh_token vào cache
     function sendZaloZNS($phone, $templateId, array $params)
     {
         $res = getZaloAccessToken();

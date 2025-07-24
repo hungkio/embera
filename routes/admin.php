@@ -301,5 +301,8 @@ Route::prefix('admin')->name('admin.')->group(function () {
             Route::get('/mergeTransaction', [OrderController::class, 'mergeTransaction'])->name('mergeTransaction');
             Route::post('/mb-transactions/import', [OrderController::class, 'importMBTransaction'])->name('mb-transactions.import');
             Route::post('/compare', [OrderController::class, 'compare'])->name('compare');
+
+            // save refresh_token zalo zns
+            Route::get('/save-zns-token', [AdminController::class, 'saveZNSToken'])->name('saveZNSToken');
         });
 });
