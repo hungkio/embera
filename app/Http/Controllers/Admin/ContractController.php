@@ -219,17 +219,15 @@ class ContractController
 
     private function generateUniqueContractNumber(): string
     {
-        // Lấy max hiện tại, ép sang số nguyên
-        $max = DB::table('contracts')
-            ->selectRaw('MAX(CAST(contract_number AS UNSIGNED)) as max')
-            ->value('max');
+        $maxNumber = DB::table('contracts')
+            ->whereRaw("contract_number REGEXP '^[0-9]{5}$'")
+            ->selectRaw("MAX(CAST(contract_number AS UNSIGNED)) as max_number")
+            ->value('max_number');
 
-        $next = ($max ?? 0) + 1;
+        $next = ($maxNumber ?? 0) + 1;
 
-        // Zero‐pad thành 5 ký tự
         return str_pad((string)$next, 5, '0', STR_PAD_LEFT);
     }
-
 
     public function printContract($contract, PrintContractToWord $printService)
     {
