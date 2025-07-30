@@ -59,7 +59,7 @@ class ContractController
             $signDate = Carbon::parse($data['sign_date']);
             $expiredDate = Carbon::parse($data['expired_date']);
             $data['expired_time'] = $signDate->diffInMonths($expiredDate) . ' tháng';
-
+            $data['city'] = $request->input('city');
             $data['admin_id'] = $adminId;
             $data['contract_number'] = $data['contract_number'] ?? $this->generateUniqueContractNumber();
             $data['status'] = $data['status'] ?? 'pending';
@@ -110,7 +110,7 @@ class ContractController
             $signDate = Carbon::parse($data['sign_date']);
             $expiredDate = Carbon::parse($data['expired_date']);
             $data['expired_time'] = $signDate->diffInMonths($expiredDate) . ' tháng';
-
+            $data['city'] = $request->input('city');
             if ($request->hasFile('upload')) {
                 if ($contract->upload) {
                     Storage::disk('public')->delete($contract->upload);
@@ -119,7 +119,9 @@ class ContractController
                 $uploadPath = $file->store('contracts', 'public');
                 $data['upload'] = $uploadPath;
             }
-
+            if (empty($contract->contract_number)) {
+                $data['contract_number'] = $this->generateUniqueContractNumber();
+            }
             $contract->update($data);
 
             if ($request->filled('shop_ids')) {
@@ -217,14 +219,14 @@ class ContractController
 
     private function generateUniqueContractNumber(): string
     {
-        $currentYear = now()->year;
+        $maxNumber = DB::table('contracts')
+            ->whereRaw("contract_number REGEXP '^[0-9]{5}$'")
+            ->selectRaw("MAX(CAST(contract_number AS UNSIGNED)) as max_number")
+            ->value('max_number');
 
-        $maxNumber = Contract::whereYear('created_at', $currentYear)
-            ->max(DB::raw('CAST(contract_number AS UNSIGNED)'));
+        $next = ($maxNumber ?? 0) + 1;
 
-        $nextNumber = $maxNumber ? $maxNumber + 1 : 1;
-
-        return (string)$nextNumber;
+        return str_pad((string)$next, 5, '0', STR_PAD_LEFT);
     }
 
     public function printContract($contract, PrintContractToWord $printService)

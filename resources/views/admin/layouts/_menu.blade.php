@@ -151,14 +151,6 @@
                 </li>
 
                 <li class="nav-item">
-                    <a href="{{ route('admin.merchants-history.index') }}"
-                       class="nav-link @if(request()->routeIs('admin.merchants-history.index')) active @endif">
-                        <i class="fal fa-history"></i>
-                        <span>{{ __("Lịch sử chia sẻ") }}</span>
-                    </a>
-                </li>
-
-                <li class="nav-item">
                     <a href="{{ route('admin.shops.index') }}"
                        class="nav-link @if(request()->routeIs('admin.shops*'))active @endif">
                         <i class="fal fa-store"></i>
@@ -241,10 +233,18 @@
                                                     class="nav-link @if(request()->routeIs('admin.roles*'))active @endif">{{ __('Vai trò') }}</a>
                             </li>
                         @endcan
-                            <li class="nav-item"><a href="{{ route('admin.mergeTransaction') }}"
-                                                    class="nav-link @if(request()->routeIs('admin.mergeTransaction*'))active @endif">{{ __('Dối soát MB') }}</a>
-                            </li>
                     </ul>
+                </li>
+                <li class="nav-item"><a href="{{ route('admin.mergeTransaction') }}"
+                                        class="nav-link @if(request()->routeIs('admin.mergeTransaction*'))active @endif">
+                        <i class="fal fa-money-bill"></i>{{ __('Dối soát MB') }}</a>
+                </li>
+                <li class="nav-item">
+                    <a href="{{ route('admin.merchants-history.index') }}"
+                       class="nav-link @if(request()->routeIs('admin.merchants-history.index')) active @endif">
+                        <i class="fal fa-history"></i>
+                        <span>{{ __("Lịch sử chia sẻ") }}</span>
+                    </a>
                 </li>
                 @endcan
 {{--                @canany(['admins.view', 'menus.index', 'log-activities.index'])--}}

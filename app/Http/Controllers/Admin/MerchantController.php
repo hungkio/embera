@@ -171,7 +171,7 @@ class MerchantController
                     $shops = $merchant->shops()->where('shops.is_deleted', false)->get();
                     $data = $emailService->prepareData($merchant, $shops);
                     $shareType = $emailService->detectType($shops);
-                    $this->logShare($merchant, $data, $shareType, 'zalo');
+                    $this->logShare($merchant, $data, $shareType, 'zalo', $result['response'] ?? '');
                 }
             } else {
                 $errors[] = "Merchant ID {$merchantId}: " . ($result['error'] ?? 'Unknown error');
@@ -193,7 +193,7 @@ class MerchantController
         }
     }
 
-    public function logShare(Merchant $merchant, array $data, string $shareType, string $type): void
+    public function logShare(Merchant $merchant, array $data, string $shareType, string $type ,string  $status = ''): void
     {
         $shopsData = collect($data['shop_data'] ?? []);
 
@@ -228,6 +228,7 @@ class MerchantController
             'share_money' => $totalShareMoney,
             'type' => $type, // 'zalo' hoặc 'email'
             'share_type' => $shareType,
+            'status' => $status,
         ]);
     }
 }

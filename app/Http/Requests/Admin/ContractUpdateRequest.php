@@ -32,6 +32,7 @@ class ContractUpdateRequest extends FormRequest
             'title' => 'required|string',
             'ceo_sign' => 'required|string',
             'location' => 'required|string',
+            'city' => 'nullable|string|max:100',
             'note' => 'nullable|string',
             'upload' => 'nullable|file|mimes:pdf',
             'download_count' => 'nullable|integer|min:0',

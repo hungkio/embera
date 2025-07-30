@@ -25,7 +25,7 @@ class PrintContractToWord
             'chu_tai_khoan' => $contract->bank_account_name ?? '',
             'so_tai_khoan' => $contract->bank_account_number ?? '',
             'ten_ngan_hang' => $contract->bank_info ?? '',
-            'contract_number' => $contract->contract_number ?? '',
+            'contract_number' => $contract->full_contract_number ?? '',
             'expired_date' => optional($contract->expired_date)->format('d/m/Y') ?? '',
             'expired_time' => preg_match('/\d+/', $contract->expired_time, $m)
                 ? str_pad($m[0], 2, '0', STR_PAD_LEFT)
