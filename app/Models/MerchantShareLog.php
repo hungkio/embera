@@ -20,6 +20,7 @@ class MerchantShareLog extends Model
         'share_percent',
         'total',
         'share_money',
+        'status',
         'type',
         'share_type',
     ];

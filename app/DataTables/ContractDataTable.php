@@ -16,15 +16,34 @@ class ContractDataTable extends BaseDatable
             ->eloquent($query)
             ->addIndexColumn()
             ->addColumn('action', 'admin.contracts._tableAction')
-            ->addColumn('shop_name', function (Contract $c) {
-                return $c->shops->pluck('shop_name')->join(', ') ?: '-';
+
+            // 1) Merchant có link vào form edit
+            ->addColumn('merchant', function(Contract $c) {
+                if (! $c->merchant) {
+                    return '-';
+                }
+                $url = route('admin.merchants.edit', ['merchant' => $c->merchant_id]);
+                return '<a href="'. $url .'" target="_blank">'. e($c->merchant->username) .'</a>';
             })
-            ->editColumn('contract_number', fn(Contract $c) => $c->contract_number)
+
+            // 2) Shop list có link vào từng Shop edit
+            ->addColumn('shop_name', function (Contract $c) {
+                if ($c->shops->isEmpty()) {
+                    return '-';
+                }
+                return $c->shops->map(function($shop) {
+                    $url = route('admin.shops.edit', ['shop' => $shop->id]);
+                    return '<a href="'. $url .'" target="_blank">'. e($shop->shop_name) .'</a>';
+                })->implode('<br>');
+            })
+            ->editColumn('contract_number', fn(Contract $c) => e($c->full_contract_number))
             ->editColumn('sign_date', fn(Contract $c) => optional($c->sign_date)->format('d/m/Y'))
             ->editColumn('expired_date', fn(Contract $c) => optional($c->expired_date)->format('d/m/Y'))
             ->editColumn('status', fn (Contract $c) => ucfirst(Contract::STATUS[$c->status] ?? 'Chưa ký'))
             ->editColumn('download_count', fn(Contract $c) => $c->download_count . ' lượt')
-            ->editColumn('admin_id', fn(Contract $c) => $c->admin->full_name ?? '')
+            ->addColumn('city', function(Contract $c) {
+                return Contract::provinces()[$c->city] ?? '-';
+            })            ->editColumn('admin_id', fn(Contract $c) => $c->admin->full_name ?? '')
             ->filterColumn('bank_account_number', fn($query, $keyword) => $query->where('bank_account_number', 'like', "%$keyword%"))
             ->filterColumn('bank_account_name', fn($query, $keyword) => $query->where('bank_account_name', 'like', "%$keyword%"))
             ->editColumn('expired_time', function (Contract $c) {
@@ -61,42 +80,37 @@ class ContractDataTable extends BaseDatable
                     ->orderBy('shops.shop_name', $direction);
             })
             ->filterColumn('expired_time', fn($query, $keyword) => $query->where('expired_time', 'like', "%$keyword%")) // Text search
-            ->rawColumns(['action']);
+            ->rawColumns(['merchant','shop_name','action']);  // cho phép output thẻ <a>
     }
 
     public function query(Contract $model)
     {
-        $query = $model->newQuery()
-            ->with(['shops.merchant']);
-
-        $filters = $this->request->all();
-
-        if (!empty($filters['date_from']) && !empty($filters['date_to'])) {
-            $query->whereBetween('sign_date', [
-                Carbon::parse($filters['date_from'])->format('Y-m-d'),
-                Carbon::parse($filters['date_to'])->format('Y-m-d'),
-            ]);
-        }
-
-        if ($this->request->get('show_deleted', 'no') === 'yes') {
-            $query->where('contracts.is_deleted', 1);
-        } else {
-            $query->where('contracts.is_deleted', 0);
-        }
-
-        return $query;
+        return $model->newQuery()
+            // load cả 2 quan hệ
+            ->with(['merchant', 'shops'])
+            ->where('contracts.is_deleted', 0)
+            ->when($this->request->filled('date_from') && $this->request->filled('date_to'), function($q) {
+                $q->whereBetween('sign_date', [
+                    Carbon::parse($this->request->date_from)->format('Y-m-d'),
+                    Carbon::parse($this->request->date_to)->format('Y-m-d'),
+                ]);
+            });
     }
+
 
     protected function getColumns(): array
     {
         return [
             Column::checkbox(''),
+            Column::make('merchant')->title('Merchant')->addClass('text-center'),
+            Column::computed('shop_name')->title('Cửa hàng'),
             Column::make('customer_name')->title('Tên khách hàng'),
             Column::make('contract_number')->title('Mã hợp đồng'),
             Column::make('sign_date')->title('Ngày ký'),
             Column::make('expired_date')->title('Ngày hết hạn'),
             Column::make('expired_time')->title('Thời hạn'),
             Column::make('status')->title('Trạng thái'),
+            Column::make('city')->title('Tỉnh/TP'),
             Column::make('download_count')->title('Lượt tải'),
             Column::make('admin_id')->title('BD'),
             Column::make('created_at')->title('Tạo lúc'),
@@ -112,7 +126,7 @@ class ContractDataTable extends BaseDatable
     protected function getBuilderParameters(): array
     {
         return [
-            'order' => [10, 'desc'],
+            'order' => [1, 'desc'],
             'pageLength' => 25,
         ];
     }
