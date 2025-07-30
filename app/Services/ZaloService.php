@@ -11,8 +11,8 @@ class ZaloService
     {
         $results = [];
         // Lấy giá trị trực tiếp từ file .env
-        $templateFixedId = env('ZALO_TEMPLATE_FIXED', 466895);
-        $templatePercentageId = env('ZALO_TEMPLATE_PERCENTAGE', 466893);
+        $templateFixedId = env('OA_TEMPLATE_COUNT', 466895);
+        $templatePercentageId = env('OA_TEMPLATE_PERCENT', 466893);
 
         // Tải merchants với điều kiện rõ ràng cho shops
         $merchants = Merchant::with([

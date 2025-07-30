@@ -48,7 +48,7 @@ class OrderController
             ->whereBetween('payment_time', [
                 Carbon::parse($date_from)->startOfDay(),
                 Carbon::parse($date_to)->endOfDay(),
-            ]);
+            ])->leftJoin('shops', 'shops.shop_name', '=', 'orders.rental_shop');
 
         if ($request->filled('staff')) {
             $query->where('employee_name', $request->staff);
@@ -63,13 +63,13 @@ class OrderController
         }
 
         if ($request->filled('region')) {
-            $query->where('region', $request->region);
+            $query->where('shops.region', $request->region);
         }
         if ($request->filled('city')) {
-            $query->where('city', $request->city);
+            $query->where('shops.city', $request->city);
         }
         if ($request->filled('area')) {
-            $query->where('area', $request->area);
+            $query->where('shops.area', $request->area);
         }
         if ($request->filled('payment_channel')) {
             $query->where('payment_channels', $request->payment_channel);
@@ -84,7 +84,7 @@ class OrderController
             }
         }
 
-        $orders = (clone $query)->select('orders.*', 'shops.share_rate_type', 'shops.share_rate')->leftJoin('shops', 'shops.shop_name', '=', 'orders.rental_shop')
+        $orders = (clone $query)->select('orders.*', 'shops.share_rate_type', 'shops.share_rate')
             ->orderByDesc('payment_time')->get();
         $totalRevenue = $orders->sum('order_amount');
 
