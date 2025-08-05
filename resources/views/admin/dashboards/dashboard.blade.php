@@ -74,7 +74,7 @@
         if (merchantChartElement) {
             var merchantChart = echarts.init(merchantChartElement);
             var merchantOption = {
-                title: { text: 'Số lượng Merchant Theo Tháng', left: 'center', textStyle: { fontSize: 18, fontWeight: '500', fontFamily: 'Noto Sans', color: '#333' } },
+                title: { text: 'Số lượng Merchant Theo Tháng', left: 'center', textStyle: { fontSize: 22, fontWeight: '500', fontFamily: 'Noto Sans', color: '#333' } },
                 tooltip: {
                     trigger: 'axis',
                     axisPointer: { type: 'line', lineStyle: { color: '#6dd5ed' } },
@@ -140,7 +140,7 @@
         if (userChartElement) {
             var userChart = echarts.init(userChartElement);
             var userOption = {
-                title: { text: 'Tăng trưởng người dùng', left: 'center', textStyle: { fontSize: 18, fontWeight: '500', fontFamily: 'Noto Sans', color: '#333' } },
+                title: { text: 'Tăng trưởng người dùng', left: 'center', textStyle: { fontSize: 22, fontWeight: '500', fontFamily: 'Noto Sans', color: '#333' } },
                 tooltip: {
                     trigger: 'axis',
                     axisPointer: { type: 'line', lineStyle: { color: '#f7971e' } },
@@ -334,7 +334,7 @@
         if (orderPerHourChartElement) {
             var orderPerHourChart = echarts.init(orderPerHourChartElement);
             var orderPerHourOption = {
-                title: { text: 'Đơn hàng trong 24h ngày hôm qua', left: 'center', textStyle: { fontSize: 18, fontWeight: '500', fontFamily: 'Noto Sans', color: '#333' } },
+                title: { text: 'Đơn hàng trong 24h ngày hôm qua', left: 'center', textStyle: { fontSize: 22, fontWeight: '500', fontFamily: 'Noto Sans', color: '#333' } },
                 tooltip: {
                     trigger: 'axis',
                     textStyle: { fontFamily: 'Noto Sans', fontSize: 12 }
@@ -390,7 +390,7 @@
                 title: {
                     text: 'Top 5 Merchant Doanh Thu Theo Tháng',
                     left: 'center',
-                    textStyle: { fontSize: 18, fontWeight: '500', fontFamily: 'Noto Sans', color: '#333' }
+                    textStyle: { fontSize: 22, fontWeight: '500', fontFamily: 'Noto Sans', color: '#333' }
                 },
                 tooltip: {
                     trigger: 'axis',
@@ -492,7 +492,7 @@
         if (revenueByShopTypeChartElement) {
             var revenueByShopTypeChart = echarts.init(revenueByShopTypeChartElement);
             var revenueByShopTypeOption = {
-                title: { text: 'Phân bố Doanh thu theo Shop Type', left: 'center', textStyle: { fontSize: 18, fontWeight: '500', fontFamily: 'Noto Sans', color: '#333' } },
+                title: { text: 'Phân bố Doanh thu theo Shop Type', left: 'center', textStyle: { fontSize: 22, fontWeight: '500', fontFamily: 'Noto Sans', color: '#333' } },
                 tooltip: {
                     trigger: 'item',
                     textStyle: { fontFamily: 'Noto Sans', fontSize: 12 },
@@ -644,7 +644,7 @@
 </div>
 
 <!-- Fifth row: User Growth, Revenue by Shop Type -->
-<div class="row mb-4" style="margin-top: 100px;">
+<div class="row mb-4" style="margin-top: 200px;">
     <div class="col-md-6 hourly-chart-container">
         <div id="orderPerHourChart" style="width: 100%; height: 570px;"></div>
     </div>
