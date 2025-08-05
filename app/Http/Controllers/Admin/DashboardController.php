@@ -4,17 +4,10 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Admin;
 
-use App\Domain\Banner\Models\Banner;
-use App\Domain\Contact\Models\Contact;
-use App\Domain\LogSearch\Models\LogSearch;
 use App\Domain\Page\Models\Page;
 use App\Domain\Post\Models\Post;
-use App\Domain\SubscribeEmail\Models\SubscribeEmail;
-use App\Domain\Taxonomy\Models\Taxonomy;
 use App\Models\Merchant;
 use App\Models\Order;
-use App\Models\User;
-use Illuminate\Support\Facades\DB;
 
 class DashboardController
 {
@@ -126,22 +119,38 @@ class DashboardController
         \Log::info('Top Merchants Last Month:', ['data' => $topMerchantsLastMonth]);
 
         // Number of merchants per month (last 12 months)
-        $merchantGrowth = Merchant::selectRaw('DATE_FORMAT(created_at, "%Y-%m") as month, COUNT(*) as merchant_count')
-            ->where('created_at', '>=', now()->subMonths(12)->startOfMonth())
-            ->groupBy('month')
-            ->orderBy('month', 'asc')
-            ->get()
-            ->map(function ($item) {
-                return [
-                    'month' => $item->month,
-                    'merchant_count' => $item->merchant_count,
-                ];
-            })
-            ->toArray();
+        $startDate = now()->subMonths(11)->startOfMonth(); // Bắt đầu từ 09/2024
+        $endDate = now()->endOfMonth(); // Kết thúc 08/2025
 
-        \Log::info('Merchant Growth Data:', ['data' => $merchantGrowth]);
+        $merchantGrowthData = [];
+        $cumulativeMerchantIds = []; // Lưu trữ tập hợp merchant_id tích lũy
+        $allMonths = [];
+        $currentMonth = clone $startDate;
+        while ($currentMonth <= $endDate) {
+            $allMonths[] = $currentMonth->format('Y-m');
+            $currentMonth->addMonth();
+        }
 
-        // Number of users per month (last 12 months)
+        foreach ($allMonths as $month) {
+            // Lấy merchant_id mới trong tháng hiện tại
+            $newMerchantsInMonth = Merchant::whereRaw("DATE_FORMAT(created_at, '%Y-%m') = ?", [$month])
+                ->whereNotNull('id') // Đảm bảo có merchant_id
+                ->distinct()
+                ->pluck('id')
+                ->toArray();
+
+            // Thêm merchant_id mới vào tập hợp tích lũy
+            $cumulativeMerchantIds = array_unique(array_merge($cumulativeMerchantIds, $newMerchantsInMonth));
+            $merchantGrowthData[] = [
+                'month' => $month,
+                'merchant_count' => count($cumulativeMerchantIds),
+            ];
+        }
+
+        $merchantGrowth = $merchantGrowthData;
+
+        \Log::info('Merchant Growth Data (cumulative):', ['data' => $merchantGrowth]);
+
         // Number of users per month (last 12 months) based on cumulative unique user_id from orders
         $startDate = now()->subMonths(11)->startOfMonth(); // Bắt đầu từ 09/2024
         $endDate = now()->endOfMonth(); // Kết thúc 08/2025
@@ -250,7 +259,7 @@ class DashboardController
         // Format for ECharts as a single pie slice
         $avgRevenuePerOrder = [
             [
-                'name' => 'Bình quân Doanh thu/Đơn hàng',
+                'name' => '',
                 'value' => $avgRevenuePerOrder,
             ]
         ];
