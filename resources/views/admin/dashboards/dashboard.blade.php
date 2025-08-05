@@ -653,14 +653,6 @@
     </div>
 </div>
 
-<!-- Sixth row: Shop Type, Average Revenue Per Order -->
-<div class="row mb-4">
-<!--    <div class="col-md-6 chart-container">
-        <div id="shopTypeChart" style="width: 100%; height: 400px;"></div>
-    </div>-->
-
-</div>
-
 @if(setting('analytics', 0) == \App\Enums\AnalyticsState::SHOW)
 <div class="row">
     <div class="col-md-12">
