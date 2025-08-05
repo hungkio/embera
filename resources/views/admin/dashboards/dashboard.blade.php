@@ -16,25 +16,6 @@
         padding: 1.750rem 1rem;
     }
 
-    .card-body .font-size-theme {
-        font-size: 0.7875rem;
-    }
-
-    .jvectormap-zoomin,
-    .jvectormap-zoomout {
-        display: none;
-    }
-
-    .has-bg-image {
-        box-shadow: rgba(0, 0, 0, 0.1) 0px 0px 20px;
-        border-radius: 10px;
-    }
-
-    .card-box-analytics {
-        box-shadow: 0px 0px 1px 1px #0c213a1a;
-        border-radius: 10px;
-    }
-
     .chart-container {
         width: 100%;
         height: 400px;
@@ -53,7 +34,6 @@
         margin-bottom: 30px;
     }
 
-    /* Áp dụng font Noto Sans cho toàn bộ trang */
     body, h4, .card-title, .table {
         font-family: 'Noto Sans', sans-serif !important;
     }
