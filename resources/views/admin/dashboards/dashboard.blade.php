@@ -540,6 +540,24 @@
 
 @section('page-content')
 <!-- First row: Top 5 Merchants This Month (highlighted) -->
+<!-- Existing dashboard cards -->
+<div class="row">
+    <div class="col-sm-6 col-xl-3">
+        <div class="card card-body has-bg-image" style="background: #ff6a00; background: -webkit-linear-gradient(to right, #ff9e40, #ff6a00); background: linear-gradient(to right, #ff9e40, #ff6a00);">
+            <div class="media">
+                <div class="media-body">
+                    <h3 class="mb-0"><a href="{{ route('admin.merchants.index') }}" class="text-white">{{ formatNumber($totalMerchants) }}</a></h3>
+                    <span class="text-uppercase font-size-theme"><a href="{{ route('admin.merchants.index') }}" class="text-white">{{ __('Merchants') }}</a></span>
+                </div>
+                <div class="ml-3 align-self-center">
+                    <a href="{{ route('admin.merchants.index') }}">
+                        <i class="fal fa-2x fa-users text-white"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 <div class="row mb-4">
     <div class="col-md-12 hourly-chart-container">
         <div id="topMerchantsThisMonthChart" style="width: 100%; height: 500px;"></div>
@@ -588,155 +606,6 @@
         <div id="shopTypeChart" style="width: 100%; height: 400px;"></div>
     </div>-->
 
-</div>
-
-<!-- Existing dashboard cards -->
-<div class="row">
-    <div class="col-sm-6 col-xl-3">
-        <div class="card card-body has-bg-image" style="background: #0052D4; background: -webkit-linear-gradient(to right, #6FB1FC, #4364F7, #0052D4); background: linear-gradient(to right, #6FB1FC, #4364F7, #0052D4);">
-            <div class="media">
-                <div class="media-body">
-                    <h3 class="mb-0"><a href="{{ route('admin.taxonomies.index') }}" class="text-white">{{ formatNumber($totalTaxonomy) }}</a></h3>
-                    <span class="text-uppercase font-size-theme"><a href="{{ route('admin.taxonomies.index') }}" class="text-white">{{ __('Loại danh mục') }}</a></span>
-                </div>
-                <div class="ml-3 align-self-center">
-                    <a href="{{ route('admin.taxonomies.index') }}">
-                        <i class="fal fa-2x fa-file-alt text-white"></i>
-                    </a>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="col-sm-6 col-xl-3">
-        <div class="card card-body has-bg-image" style="background: #2193b0; background: -webkit-linear-gradient(to right, #6dd5ed, #2193b0); background: linear-gradient(to right, #6dd5ed, #2193b0);">
-            <div class="media">
-                <div class="media-body">
-                    <h3 class="mb-0"><a href="{{ route('admin.pages.index') }}" class="text-white">{{ formatNumber($totalPages) }}</a></h3>
-                    <span class="text-uppercase font-size-theme"><a href="{{ route('admin.pages.index') }}" class="text-white">{{ __('Trang') }}</a></span>
-                </div>
-                <div class="ml-3 align-self-center">
-                    <a href="{{ route('admin.pages.create') }}">
-                        <i class="fal fa-2x fa-file-alt text-white"></i>
-                    </a>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="col-sm-6 col-xl-3">
-        <div class="card card-body has-bg-image" style="background: #FF512F; background: -webkit-linear-gradient(to right, #F09819, #FF512F); background: linear-gradient(to right, #F09819, #FF512F);">
-            <div class="media">
-                <div class="media-body">
-                    <h3 class="mb-0"><a href="{{ route('admin.posts.index') }}" class="text-white">{{ formatNumber($totalPosts) }}</a></h3>
-                    <span class="text-uppercase font-size-theme"><a href="{{ route('admin.posts.index') }}" class="text-white">{{ __('Bài viết') }}</a></span>
-                </div>
-                <div class="ml-3 align-self-center">
-                    <a href="{{ route('admin.posts.create') }}">
-                        <i class="fal fa-2x fa-edit text-white"></i>
-                    </a>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    @if (setting('store_banner', \App\Domain\Banner\Models\Banner::SHOW) == \App\Domain\Banner\Models\Banner::SHOW)
-    <div class="col-sm-6 col-xl-3">
-        <div class="card card-body has-bg-image" style="background: #36d1dc; background: -webkit-linear-gradient(to right, #36d1dc, #5b86e5); background: linear-gradient(to right, #36d1dc, #5b86e5);">
-            <div class="media">
-                <div class="media-body">
-                    <h3 class="mb-0"><a href="{{ route('admin.banners.index') }}" class="text-white">{{ formatNumber($totalBanners) }}</a></h3>
-                    <span class="text-uppercase font-size-theme"><a href="{{ route('admin.banners.index') }}" class="text-white">{{ __('Banner') }}</a></span>
-                </div>
-                <div class="ml-3 align-self-center">
-                    <a href="{{ route('admin.banners.create') }}">
-                        <i class="fal fa-2x fa-image text-white"></i>
-                    </a>
-                </div>
-            </div>
-        </div>
-    </div>
-    @endif
-
-    <div class="col-sm-6 col-xl-3">
-        <div class="card card-body has-bg-image" style="background: #4776E6; background: -webkit-linear-gradient(to right, #4776E6, #8E54E9); background: linear-gradient(to right, #4776E6, #8E54E9);">
-            <div class="media">
-                <div class="media-body">
-                    <h3 class="mb-0"><a href="{{ route('admin.contacts.index') }}" class="text-white">{{ formatNumber($totalContacts) }}</a></h3>
-                    <span class="text-uppercase font-size-theme"><a href="{{ route('admin.contacts.index') }}" class="text-white">{{ __('Liên hệ') }}</a></span>
-                </div>
-                <div class="ml-3 align-self-center">
-                    <a href="{{ route('admin.contacts.index') }}">
-                        <i class="fal fa-2x fa-phone text-white"></i>
-                    </a>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="col-sm-6 col-xl-3">
-        <div class="card card-body has-bg-image" style="background: #FF512F; background: -webkit-linear-gradient(to right, #FF512F, #DD2476); background: linear-gradient(to right, #FF512F, #DD2476);">
-            <div class="media">
-                <div class="media-body">
-                    <h3 class="mb-0"><a href="{{ route('admin.contacts.search') }}" class="text-white">{{ formatNumber($totalSearchs) }}</a></h3>
-                    <span class="text-uppercase font-size-theme"><a href="{{ route('admin.contacts.search') }}" class="text-white">{{ __('Lượt tìm kiếm') }}</a></span>
-                </div>
-                <div class="ml-3 align-self-center">
-                    <a href="{{ route('admin.contacts.search') }}">
-                        <i class="fal fa-2x fa-search text-white"></i>
-                    </a>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="col-sm-6 col-xl-3">
-        <div class="card card-body has-bg-image" style="background: #56ab2f; background: -webkit-linear-gradient(to right, #a8e063, #56ab2f); background: linear-gradient(to right, #a8e063, #56ab2f);">
-            <div class="media">
-                <div class="media-body">
-                    <h3 class="mb-0"><a href="{{ route('admin.contacts.subscribe_email') }}" class="text-white">{{ formatNumber($totalSubscribeEmails) }}</a></h3>
-                    <span class="text-uppercase font-size-theme"><a href="{{ route('admin.contacts.subscribe_email') }}" class="text-white">{{ __('Email đăng ký') }}</a></span>
-                </div>
-                <div class="ml-3 align-self-center">
-                    <a href="{{ route('admin.contacts.subscribe_email') }}">
-                        <i class="fal fa-2x fa-envelope text-white"></i>
-                    </a>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="col-sm-6 col-xl-3">
-        <div class="card card-body has-bg-image" style="background: #ff6a00; background: -webkit-linear-gradient(to right, #ff9e40, #ff6a00); background: linear-gradient(to right, #ff9e40, #ff6a00);">
-            <div class="media">
-                <div class="media-body">
-                    <h3 class="mb-0"><a href="{{ route('admin.merchants.index') }}" class="text-white">{{ formatNumber($totalMerchants) }}</a></h3>
-                    <span class="text-uppercase font-size-theme"><a href="{{ route('admin.merchants.index') }}" class="text-white">{{ __('Merchants') }}</a></span>
-                </div>
-                <div class="ml-3 align-self-center">
-                    <a href="{{ route('admin.merchants.index') }}">
-                        <i class="fal fa-2x fa-users text-white"></i>
-                    </a>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="col-sm-6 col-xl-3">
-        <div class="card card-body has-bg-image" style="background: #fc00ff; background: -webkit-linear-gradient(to right, #00dbde, #fc00ff); background: linear-gradient(to right, #00dbde, #fc00ff);">
-            <div class="media">
-                <div class="media-body">
-                    <h3 class="mb-0"><a href="{{ route('admin.mail-settings.index') }}" class="text-white">{{ formatNumber($totalSubscribeEmails) }}</a></h3>
-                    <span class="text-uppercase font-size-theme"><a href="{{ route('admin.mail-settings.index') }}" class="text-white">{{ __('Chiến dịch gửi mail') }}</a></span>
-                </div>
-                <div class="ml-3 align-self-center">
-                    <a href="{{ route('admin.mail-settings.index') }}">
-                        <i class="fal fa-2x fa-mail-bulk text-white"></i>
-                    </a>
-                </div>
-            </div>
-        </div>
-    </div>
 </div>
 
 @if(setting('analytics', 0) == \App\Enums\AnalyticsState::SHOW)

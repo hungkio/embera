@@ -20,13 +20,6 @@ class DashboardController
 {
     public function index()
     {
-        $totalTaxonomy = Taxonomy::count();
-        $totalPages = Page::count();
-        $totalPosts = Post::count();
-        $totalContacts = Contact::count();
-        $totalBanners = Banner::count();
-        $totalSearchs = LogSearch::count();
-        $totalSubscribeEmails = SubscribeEmail::count();
         $totalMerchants = Merchant::count();
 
         // Define today and yesterday
@@ -46,7 +39,7 @@ class DashboardController
         // Orders per hour in the last 24 hours
         $yesterday = now()->subDay()->startOfDay();
         $startTime = $yesterday;
-        $endTime = $yesterday->copy()->endOfDay();
+        $endTime = $yesterday->clone()->endOfDay();
 
         $ordersPerHour = Order::whereBetween('rental_time', [$startTime, $endTime])
             ->selectRaw('HOUR(rental_time) as hour, COUNT(*) as order_count')
@@ -62,9 +55,10 @@ class DashboardController
         }
 
         // Top 5 merchants by revenue this month and last month
-        $startOfMonth = now()->startOfMonth(); // Bắt đầu tháng hiện tại (04/08/2025 00:00:00)
-        $startOfLastMonth = now()->subMonth()->startOfMonth(); // Bắt đầu tháng trước (01/07/2025 00:00:00)
-        $endOfLastMonth = now()->subMonth()->endOfMonth(); // Kết thúc tháng trước (31/07/2025 23:59:59)
+        $now = now()->subMonth();
+        $startOfMonth = $now->clone()->startOfMonth(); // Bắt đầu tháng hiện tại (04/08/2025 00:00:00)
+        $startOfLastMonth = $now->clone()->subMonth()->startOfMonth(); // Bắt đầu tháng trước (01/07/2025 00:00:00)
+        $endOfLastMonth = $now->clone()->subMonth()->endOfMonth(); // Kết thúc tháng trước (31/07/2025 23:59:59)
 
 // Fetch top 5 merchants for this month
         $topMerchantsThisMonth = Order::where('rental_time', '>=', $startOfMonth)
@@ -272,13 +266,6 @@ class DashboardController
 
 
         return view('admin.dashboards.dashboard', compact(
-            'totalTaxonomy',
-            'totalPages',
-            'totalPosts',
-            'totalContacts',
-            'totalBanners',
-            'totalSearchs',
-            'totalSubscribeEmails',
             'totalMerchants',
             'totalIncomeToday',
             'totalIncomeYesterday',
