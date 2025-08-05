@@ -251,9 +251,12 @@ class DashboardController
 
         \Log::info('Revenue by Shop Type:', ['data' => $revenueByShopType]);
 
-        // Average revenue per order for all orders (tính toàn bộ)
-        $totalOrders = Order::where('order_status', 'complete')->count();
-        $totalRevenue = Order::where('order_status', 'complete')->sum('order_amount');
+        // Average revenue per order for completed orders with positive amount
+        $validOrders = Order::where('order_status', 'complete')
+            ->where('order_amount', '>', 0) // Chỉ lấy đơn hàng có order_amount > 0
+            ->get();
+        $totalOrders = $validOrders->count();
+        $totalRevenue = $validOrders->sum('order_amount');
         $avgRevenuePerOrder = $totalOrders > 0 ? round((float) ($totalRevenue / $totalOrders), 2) : 0.0;
 
         // Format for ECharts as a single pie slice
@@ -264,7 +267,7 @@ class DashboardController
             ]
         ];
 
-        \Log::info('Average Revenue Per Order (All Time):', [
+        \Log::info('Average Revenue Per Order (Completed with Positive Amount):', [
             'data' => $avgRevenuePerOrder,
             'total_orders' => $totalOrders,
             'total_revenue' => $totalRevenue
@@ -272,7 +275,6 @@ class DashboardController
 
         $pageTops = Page::orderBy('view', 'desc')->take(5)->get();
         $postTops = Post::orderBy('view', 'desc')->take(5)->get();
-
 
         return view('admin.dashboards.dashboard', compact(
             'totalMerchants',
@@ -282,7 +284,7 @@ class DashboardController
             'topMerchantsThisMonth',
             'topMerchantsLastMonth',
             'merchantGrowth',
-            'userGrowth', // Added
+            'userGrowth',
             'revenueByShopType',
             'avgRevenuePerOrder',
             'pageTops',
