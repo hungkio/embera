@@ -1,92 +1,319 @@
 @extends('admin.layouts.master')
 @section('title', __('Trang chủ'))
 @section('page-header')
-    <x-page-header>
-        <x-slot name='title'>
-            <h4><i class="icon-cube mr-2"></i> <span class="font-weight-semibold">{{ __('Trang chủ') }}</span></h4>
-        </x-slot>
-        {{ Breadcrumbs::render() }}
-    </x-page-header>
+<x-page-header>
+    <x-slot name='title'>
+        <h4><i class="icon-cube mr-2"></i> <span class="font-weight-semibold">{{ __('Trang chủ') }}</span></h4>
+    </x-slot>
+    {{ Breadcrumbs::render() }}
+</x-page-header>
 @stop
 @push('css')
-    <link rel="stylesheet" href="/backend/global_assets/js/vendors/vector-map/jquery-jvectormap-2.0.5.css">
-    <style>
-        .card-body {
-            padding: 1.750rem 1rem;
-        }
+<link rel="stylesheet" href="/backend/global_assets/js/vendors/vector-map/jquery-jvectormap-2.0.5.css">
+<style>
+    .card-body {
+        padding: 1.750rem 1rem;
+    }
 
-        .card-body .font-size-theme {
-            font-size: 0.7875rem;
-        }
+    .card-body .font-size-theme {
+        font-size: 0.7875rem;
+    }
 
-        .jvectormap-zoomin {
-            display: none;
-        }
+    .jvectormap-zoomin,
+    .jvectormap-zoomout {
+        display: none;
+    }
 
-        .jvectormap-zoomout {
-            display: none;
-        }
+    .has-bg-image {
+        box-shadow: rgba(0, 0, 0, 0.1) 0px 0px 20px;
+        border-radius: 10px;
+    }
 
-        .has-bg-image {
-            box-shadow: rgba(0, 0, 0, 0.1) 0px 0px 20px;
-            border-radius: 10px;
-        }
+    .card-box-analytics {
+        box-shadow: 0px 0px 1px 1px #0c213a1a;
+        border-radius: 10px;
+    }
 
-        .card-box-analytics {
-            box-shadow: 0px 0px 1px 1px #0c213a1a;
-            border-radius: 10px;
-        }
-    </style>
+    .chart-container {
+        width: 100%;
+        /* Loại bỏ max-width: 400px để biểu đồ mở rộng theo cột */
+        height: 400px; /* Tăng chiều cao từ 300px lên 400px */
+        margin: 0 auto;
+        padding: 15px; /* Tăng padding để giao diện đẹp hơn */
+    }
+
+    .hourly-chart-container {
+        width: 100%;
+        /* Loại bỏ max-width: 1000px để mở rộng hết chiều rộng */
+        height: 500px; /* Tăng chiều cao từ 400px lên 500px */
+        margin: 0 auto;
+        padding: 15px;
+    }
+
+    .row {
+        margin-bottom: 30px; /* Tăng khoảng cách giữa các hàng */
+    }
+</style>
 @endpush
 
 @push('js')
-    <script src="/backend/global_assets/js/vendors/vector-map/jquery-jvectormap-2.0.5.min.js"></script>
-    <script src="/backend/global_assets/js/vendors/vector-map/jquery-jvectormap-world-mill.js"></script>
-    <script src="/backend/global_assets/js/vendors/echarts/echarts.min.js"></script>
-    {{--    <script src="https://cdn.jsdelivr.net/npm/echarts@5/dist/echarts.min.js"></script>--}}
-    <script !src="">
-        $(function () {
-            var merchantChart = echarts.init(document.getElementById('merchantChart'));
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="/backend/global_assets/js/vendors/vector-map/jquery-jvectormap-2.0.5.min.js"></script>
+<script src="/backend/global_assets/js/vendors/echarts/echarts.min.js"></script>
+<script>
+    $(function () {
+        console.log('jQuery loaded:', typeof $ !== 'undefined');
+        console.log('ECharts loaded:', typeof echarts !== 'undefined');
 
-            const data = [["2000-06-05", 116], ["2000-06-06", 129], ["2000-06-07", 135], ["2000-06-08", 86], ["2000-06-09", 73], ["2000-06-10", 85], ["2000-06-11", 73], ["2000-06-12", 68], ["2000-06-13", 92], ["2000-06-14", 130], ["2000-06-15", 245], ["2000-06-16", 139], ["2000-06-17", 115], ["2000-06-18", 111], ["2000-06-19", 309], ["2000-06-20", 206], ["2000-06-21", 137], ["2000-06-22", 128], ["2000-06-23", 85], ["2000-06-24", 94], ["2000-06-25", 71], ["2000-06-26", 106], ["2000-06-27", 84], ["2000-06-28", 93], ["2000-06-29", 85], ["2000-06-30", 73], ["2000-07-01", 83], ["2000-07-02", 125], ["2000-07-03", 107], ["2000-07-04", 82], ["2000-07-05", 44], ["2000-07-06", 72], ["2000-07-07", 106], ["2000-07-08", 107], ["2000-07-09", 66], ["2000-07-10", 91], ["2000-07-11", 92], ["2000-07-12", 113], ["2000-07-13", 107], ["2000-07-14", 131], ["2000-07-15", 111], ["2000-07-16", 64], ["2000-07-17", 69], ["2000-07-18", 88], ["2000-07-19", 77], ["2000-07-20", 83], ["2000-07-21", 111], ["2000-07-22", 57], ["2000-07-23", 55], ["2000-07-24", 60]];
-            const dateList = data.map(function (item) {
-                return item[0];
-            });
-            const valueList = data.map(function (item) {
-                return item[1];
-            });
+        // Merchant Chart (Merchant Growth by Month)
+        var merchantChartElement = document.getElementById('merchantChart');
+        if (merchantChartElement) {
+            var merchantChart = echarts.init(merchantChartElement);
             var merchantOption = {
-                title: {
-                    text: 'Số lượng Merchant (tháng)',
-                    left: 'center'
-                },
+                title: { text: 'Số lượng Merchant Theo Tháng', left: 'center', textStyle: { fontSize: 16 } },
                 tooltip: {
-                    trigger: 'axis'
+                    trigger: 'axis',
+                    axisPointer: { type: 'shadow' },
+                    formatter: function(params) {
+                        return params[0].name + '<br/>' + params[0].value + ' Merchants';
+                    }
                 },
+                grid: { left: '5%', right: '5%', bottom: '20%', containLabel: true },
                 xAxis: {
                     type: 'category',
-                    data: ['T1', 'T2', 'T3', 'T4', 'T5', 'T6'],
-                    boundaryGap: false
+                    data: @json(array_column($merchantGrowth, 'month')),
+                    axisLabel: { interval: 0, rotate: 45, fontSize: 10 }
                 },
                 yAxis: {
-                    type: 'value'
+                    type: 'value',
+                    name: 'Số Merchant'
                 },
                 series: [{
-                    name: 'Doanh số',
+                    name: 'Số Merchant',
+                    type: 'bar',
+                    data: @json(array_column($merchantGrowth, 'merchant_count')),
+                    barWidth: '30%',
+                    itemStyle: {
+                        borderRadius: [6, 6, 0, 0],
+                        color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                            {offset: 0, color: '#6dd5ed'},
+                            {offset: 1, color: '#2193b0'}
+                        ])
+                    },
+                    label: {
+                        show: true,
+                        position: 'top',
+                        fontWeight: 'bold',
+                        fontSize: 10,
+                        formatter: '{c}'
+                    }
+                }]
+            };
+            merchantChart.setOption(merchantOption);
+            console.log('Merchant Growth chart initialized with data:', @json($merchantGrowth));
+        } else {
+            console.error('Merchant chart container not found');
+        }
+
+        // User Chart
+        var userChartElement = document.getElementById('userChart');
+        if (userChartElement) {
+            var userChart = echarts.init(userChartElement);
+            var userOption = {
+                title: { text: 'Tăng trưởng người dùng', left: 'center', textStyle: { fontSize: 16 } },
+                tooltip: {
+                    trigger: 'axis',
+                    axisPointer: { type: 'shadow' },
+                    formatter: function(params) {
+                        return params[0].name + '<br/>' + (params[0].value || 0) + ' Người dùng';
+                    }
+                },
+                grid: { left: '5%', right: '5%', bottom: '20%', containLabel: true },
+                xAxis: {
+                    type: 'category',
+                    data: @json(array_column($userGrowth, 'month') ?: []),
+                    axisLabel: { interval: 0, rotate: 45, fontSize: 10 }
+                },
+                yAxis: {
+                    type: 'value',
+                    name: 'Số người dùng'
+                },
+                series: [{
+                    name: 'Số người dùng',
+                    type: 'bar',
+                    data: @json(array_column($userGrowth, 'user_count') ?: []),
+                    barWidth: '30%',
+                    itemStyle: {
+                        borderRadius: [6, 6, 0, 0],
+                        color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                            {offset: 0, color: '#f7971e'},
+                            {offset: 1, color: '#ffd200'}
+                        ])
+                    },
+                    label: {
+                        show: true,
+                        position: 'top',
+                        fontWeight: 'bold',
+                        fontSize: 10,
+                        formatter: '{c}'
+                    }
+                }]
+            };
+            userChart.setOption(userOption);
+            console.log('User Growth chart initialized with data:', @json($userGrowth));
+        } else {
+            console.error('User chart container not found');
+        }
+
+        // Total Merchant Pie Chart
+        var totalMerchantChartElement = document.getElementById('totalMerchantChart');
+        if (totalMerchantChartElement) {
+            var totalMerchantChart = echarts.init(totalMerchantChartElement);
+            var totalMerchantOption = {
+                title: { text: 'Tổng số lượng Merchant', left: 'center', top: 20, textStyle: { fontSize: 16, fontWeight: 'bold' } },
+                tooltip: { trigger: 'item', formatter: '{a} <br/>{b}: {c}' },
+                series: [{
+                    name: 'Merchants',
+                    type: 'pie',
+                    radius: ['50%', '70%'],
+                    center: ['50%', '60%'],
+                    avoidLabelOverlap: false,
+                    label: {
+                        show: true,
+                        position: 'center',
+                        formatter: '{b}\n{c}',
+                        fontSize: 18,
+                        fontWeight: 'bold'
+                    },
+                    emphasis: { label: { show: true, fontSize: 20, fontWeight: 'bold' } },
+                    data: [{ value: {{ $totalMerchants ?? 0 }}, name: 'Tổng Merchant' }],
+            itemStyle: {
+                color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                    {offset: 0, color: '#39f3f3'},
+                    {offset: 1, color: '#40ffcc'}
+                ])
+            }
+        }]
+        };
+            totalMerchantChart.setOption(totalMerchantOption);
+        } else {
+            console.error('Total merchant chart container not found');
+        }
+
+        // Total Income Today Chart
+        var totalIncomeTodayChartElement = document.getElementById('totalIncomeTodayChart');
+        if (totalIncomeTodayChartElement) {
+            var totalIncomeTodayChart = echarts.init(totalIncomeTodayChartElement);
+            var totalIncomeTodayOption = {
+                title: { text: 'Tổng thu nhập hôm nay', left: 'center', top: 20, textStyle: { fontSize: 16, fontWeight: 'bold' } },
+                tooltip: {
+                    trigger: 'item',
+                    formatter: function(params) {
+                        return params.name + '<br/>' + params.value.toLocaleString('vi-VN', { style: 'currency', currency: 'VND' });
+                    }
+                },
+                series: [{
+                    name: 'Thu nhập',
+                    type: 'pie',
+                    radius: ['50%', '70%'],
+                    center: ['50%', '60%'],
+                    avoidLabelOverlap: false,
+                    label: {
+                        show: true,
+                        position: 'center',
+                        formatter: function(params) {
+                            return params.name + '\n' + params.value.toLocaleString('vi-VN', { style: 'currency', currency: 'VND' });
+                        },
+                        fontSize: 18,
+                        fontWeight: 'bold'
+                    },
+                    emphasis: { label: { show: true, fontSize: 20, fontWeight: 'bold' } },
+                    data: [{ value: {{ $totalIncomeToday ?? 0 }}, name: 'Hôm nay' }],
+            itemStyle: {
+                color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                    {offset: 0, color: '#00c6ff'},
+                    {offset: 1, color: '#0072ff'}
+                ])
+            }
+        }]
+        };
+            totalIncomeTodayChart.setOption(totalIncomeTodayOption);
+        } else {
+            console.error('Total income today chart container not found');
+        }
+
+        // Total Income Yesterday Chart
+        var totalIncomeYesterdayChartElement = document.getElementById('totalIncomeYesterdayChart');
+        if (totalIncomeYesterdayChartElement) {
+            var totalIncomeYesterdayChart = echarts.init(totalIncomeYesterdayChartElement);
+            var totalIncomeYesterdayOption = {
+                title: { text: 'Tổng thu nhập hôm qua', left: 'center', top: 20, textStyle: { fontSize: 16, fontWeight: 'bold' } },
+                tooltip: {
+                    trigger: 'item',
+                    formatter: function(params) {
+                        return params.name + '<br/>' + params.value.toLocaleString('vi-VN', { style: 'currency', currency: 'VND' });
+                    }
+                },
+                series: [{
+                    name: 'Thu nhập',
+                    type: 'pie',
+                    radius: ['50%', '70%'],
+                    center: ['50%', '60%'],
+                    avoidLabelOverlap: false,
+                    label: {
+                        show: true,
+                        position: 'center',
+                        formatter: function(params) {
+                            return params.name + '\n' + params.value.toLocaleString('vi-VN', { style: 'currency', currency: 'VND' });
+                        },
+                        fontSize: 18,
+                        fontWeight: 'bold'
+                    },
+                    emphasis: { label: { show: true, fontSize: 20, fontWeight: 'bold' } },
+                    data: [{ value: {{ $totalIncomeYesterday ?? 0 }}, name: 'Hôm qua' }],
+            itemStyle: {
+                color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                    {offset: 0, color: '#f7971e'},
+                    {offset: 1, color: '#ffd200'}
+                ])
+            }
+        }]
+        };
+            totalIncomeYesterdayChart.setOption(totalIncomeYesterdayOption);
+        } else {
+            console.error('Total income yesterday chart container not found');
+        }
+
+        // Orders Per Hour Chart
+        var orderPerHourChartElement = document.getElementById('orderPerHourChart');
+        if (orderPerHourChartElement) {
+            var orderPerHourChart = echarts.init(orderPerHourChartElement);
+            var orderPerHourOption = {
+                title: { text: 'Đơn hàng trong 24h ngày hôm qua)', left: 'center', textStyle: { fontSize: 16 } },
+                tooltip: { trigger: 'axis' },
+                xAxis: {
+                    type: 'category',
+                    data: ['0h', '1h', '2h', '3h', '4h', '5h', '6h', '7h', '8h', '9h', '10h', '11h', '12h', '13h', '14h', '15h', '16h', '17h', '18h', '19h', '20h', '21h', '22h', '23h'],
+                    boundaryGap: false,
+                    axisLabel: { interval: 0, rotate: 45 }
+                },
+                yAxis: { type: 'value', name: 'Số đơn hàng' },
+                series: [{
+                    name: 'Số đơn hàng',
                     type: 'line',
                     smooth: true,
-                    data: [10, 22, 28, 43, 35, 50],
+                    data: @json($hourlyOrderData),
                     lineStyle: {
                         width: 3,
                         color: new echarts.graphic.LinearGradient(0, 0, 1, 0, [
-                            {offset: 0, color: '#6dd5ed'},
-                            {offset: 1, color: '#2193b0'}
+                            {offset: 0, color: '#ff6a00'},
+                            {offset: 1, color: '#ff9e40'}
                         ])
                     },
                     areaStyle: {
                         opacity: 0.4,
                         color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-                            {offset: 0, color: '#6dd5ed'},
+                            {offset: 0, color: '#ff6a00'},
                             {offset: 1, color: '#ffffff'}
                         ])
                     },
@@ -94,414 +321,524 @@
                     symbolSize: 8
                 }]
             };
+            orderPerHourChart.setOption(orderPerHourOption);
+            console.log('Order per hour chart initialized with data:', @json($hourlyOrderData));
+        } else {
+            console.error('Order per hour chart container not found');
+        }
 
-            // Gán cấu hình vào biểu đồ
-            merchantChart.setOption(merchantOption);
-
-            var userChart = echarts.init(document.getElementById('userChart'));
-
-            var userOption = {
+        // Top 5 Merchants This Month Chart
+        var topMerchantsThisMonthChartElement = document.getElementById('topMerchantsThisMonthChart');
+        if (topMerchantsThisMonthChartElement) {
+            var topMerchantsThisMonthChart = echarts.init(topMerchantsThisMonthChartElement);
+            var topMerchantsThisMonthOption = {
                 title: {
-                    text: 'Tăng trưởng người dùng',
-                    left: 'center'
+                    text: 'Top 5 Merchant Doanh Thu Theo Tháng',
+                    left: 'center',
+                    textStyle: { fontSize: 16 }
                 },
                 tooltip: {
                     trigger: 'axis',
-                    axisPointer: {
-                        type: 'shadow'
+                    axisPointer: { type: 'shadow' },
+                    formatter: function(params) {
+                        var result = params[0].name + '<br/>';
+                        params.forEach(function(item) {
+                            result += item.seriesName + ': ' + item.value.toLocaleString('vi-VN', { style: 'currency', currency: 'VND' }) + '<br/>';
+                        });
+                        return result;
                     }
                 },
-                grid: {
-                    left: '5%',
-                    right: '5%',
-                    bottom: '5%',
-                    containLabel: true
+                legend: {
+                    data: ['Tháng này', 'Tháng trước'],
+                    top: 'bottom'
                 },
+                grid: { left: '5%', right: '5%', bottom: '20%', containLabel: true },
                 xAxis: {
-                    type: 'value'
+                    type: 'value',
+                    name: 'Doanh Thu (VND)',
+                    nameLocation: 'center',
+                    nameGap: 35,
+                    axisLabel: {
+                        formatter: function(value) {
+                            return value.toLocaleString('vi-VN', { style: 'currency', currency: 'VND' });
+                        }
+                    }
                 },
                 yAxis: {
                     type: 'category',
-                    data: ['Sản phẩm A', 'Sản phẩm B', 'Sản phẩm C', 'Sản phẩm D']
+                    inverse: true,
+                    data: @json(array_column($topMerchantsThisMonth, 'name')),
+                    axisLabel: { interval: 0, rotate: 0 }
+                },
+                series: [
+                    {
+                        name: 'Tháng này',
+                        type: 'bar',
+                        data: @json(array_column($topMerchantsThisMonth, 'value')),
+                        barWidth: '20%',
+                        itemStyle: {
+                            borderRadius: 6,
+                            color: new echarts.graphic.LinearGradient(1, 0, 0, 0, [
+                                {offset: 0, color: '#00c6ff'},
+                                {offset: 1, color: '#0072ff'}
+                            ])
+                        },
+                        label: {
+                            show: true,
+                            position: 'right',
+                            fontWeight: 'bold',
+                            formatter: function(params) {
+                                return params.value.toLocaleString('vi-VN', { style: 'currency', currency: 'VND' });
+                            }
+                        }
+                    },
+                    {
+                        name: 'Tháng trước',
+                        type: 'bar',
+                        data: @json($topMerchantsLastMonth),
+                        barWidth: '20%',
+                        itemStyle: {
+                            borderRadius: 6,
+                            color: new echarts.graphic.LinearGradient(1, 0, 0, 0, [
+                                {offset: 0, color: '#f7971e'},
+                                {offset: 1, color: '#ffd200'}
+                            ])
+                        },
+                        label: {
+                            show: true,
+                            position: 'right',
+                            fontWeight: 'bold',
+                            formatter: function(params) {
+                                return params.value.toLocaleString('vi-VN', { style: 'currency', currency: 'VND' });
+                            }
+                        }
+                    }
+                ]
+            };
+            topMerchantsThisMonthChart.setOption(topMerchantsThisMonthOption);
+            console.log('Top Merchants This Month chart initialized with data:', @json($topMerchantsThisMonth));
+            console.log('Top Merchants Last Month chart initialized with data:', @json($topMerchantsLastMonth));
+        } else {
+            console.error('Top Merchants This Month chart container not found');
+        }
+
+        // Revenue by Shop Type Chart
+        var revenueByShopTypeChartElement = document.getElementById('revenueByShopTypeChart');
+        if (revenueByShopTypeChartElement) {
+            var revenueByShopTypeChart = echarts.init(revenueByShopTypeChartElement);
+            var revenueByShopTypeOption = {
+                title: { text: 'Phân bố Doanh thu theo Shop Type', left: 'center', textStyle: { fontSize: 16 } },
+                tooltip: {
+                    trigger: 'item',
+                    formatter: function(params) {
+                        return params.name + '<br/>' + params.value.toLocaleString('vi-VN', { style: 'currency', currency: 'VND' });
+                    }
                 },
                 series: [{
-                    name: 'Doanh số',
-                    type: 'bar',
-                    data: [120, 200, 150, 80],
-                    barWidth: '40%',
-                    itemStyle: {
-                        borderRadius: 6,
-                        color: new echarts.graphic.LinearGradient(1, 0, 0, 0, [
-                            {offset: 0, color: '#f7971e'},
-                            {offset: 1, color: '#ffd200'}
-                        ])
-                    },
+                    name: 'Doanh thu',
+                    type: 'pie',
+                    radius: ['40%', '70%'],
+                    center: ['50%', '60%'],
+                    avoidLabelOverlap: true,
                     label: {
                         show: true,
-                        position: 'right',
+                        formatter: '{b}: {d}%',
+                        fontSize: 12,
                         fontWeight: 'bold'
+                    },
+                    emphasis: {
+                        label: { show: true, fontSize: 14, fontWeight: 'bold' }
+                    },
+                    data: @json($revenueByShopType),
+                    itemStyle: {
+                        color: function(params) {
+                            var colorList = [
+                                ['#00c6ff', '#0072ff'],
+                                ['#f7971e', '#ffd200'],
+                                ['#ff6a00', '#ff9e40'],
+                                ['#6dd5ed', '#2193b0'],
+                                ['#36d1dc', '#5b86e5'],
+                                ['#4776E6', '#8E54E9'],
+                                ['#FF512F', '#DD2476'],
+                                ['#56ab2f', '#a8e063'],
+                                ['#fc00ff', '#00dbde'],
+                                ['#0052D4', '#6FB1FC']
+                            ];
+                            var gradient = colorList[params.dataIndex % colorList.length];
+                            return new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                                {offset: 0, color: gradient[0]},
+                                {offset: 1, color: gradient[1]}
+                            ]);
+                        }
                     }
                 }]
             };
+            revenueByShopTypeChart.setOption(revenueByShopTypeOption);
+            console.log('Revenue by Shop Type chart initialized with data:', @json($revenueByShopType));
+        } else {
+            console.error('Revenue by Shop Type chart container not found');
+        }
 
-            userChart.setOption(userOption);
-
-            var shopTypeChart = echarts.init(document.getElementById('shopTypeChart'));
-
-            var shopType = {
-                title: {
-                    text: 'Top 5 shop type',
-                    left: 'center'
-                },
+        // Average Revenue Per Order Chart (Pie Chart for overall average)
+        var avgRevenuePerOrderChartElement = document.getElementById('avgRevenuePerOrderChart');
+        if (avgRevenuePerOrderChartElement) {
+            var avgRevenuePerOrderChart = echarts.init(avgRevenuePerOrderChartElement);
+            var avgRevenuePerOrderOption = {
+                title: { text: 'Bình quân doanh thu từng đơn hàng', left: 'center', top: 20, textStyle: { fontSize: 16, fontWeight: 'bold' } },
                 tooltip: {
-                    trigger: 'axis',
-                    axisPointer: {
-                        type: 'shadow'
+                    trigger: 'item',
+                    formatter: function(params) {
+                        return params.name + '<br/>' + params.value.toLocaleString('vi-VN', { style: 'currency', currency: 'VND' });
                     }
-                },
-                grid: {
-                    left: '5%',
-                    right: '5%',
-                    bottom: '10%',
-                    containLabel: true
-                },
-                xAxis: {
-                    type: 'category',
-                    data: ['Thứ 2', 'Thứ 3', 'Thứ 4', 'Thứ 5', 'Thứ 6'],
-                    axisTick: {
-                        alignWithLabel: true
-                    }
-                },
-                yAxis: {
-                    type: 'value'
                 },
                 series: [{
-                    name: 'Số lượng',
-                    type: 'bar',
-                    data: [35, 70, 95, 60, 80],
-                    barWidth: '50%',
+                    name: 'Bình quân Doanh thu',
+                    type: 'pie',
+                    radius: ['50%', '70%'],
+                    center: ['50%', '60%'],
+                    avoidLabelOverlap: false,
+                    label: {
+                        show: true,
+                        position: 'center',
+                        formatter: function(params) {
+                            return params.name + '\n' + params.value.toLocaleString('vi-VN', { style: 'currency', currency: 'VND' });
+                        },
+                        fontSize: 18,
+                        fontWeight: 'bold'
+                    },
+                    emphasis: { label: { show: true, fontSize: 20, fontWeight: 'bold' } },
+                    data: @json($avgRevenuePerOrder),
                     itemStyle: {
-                        borderRadius: [6, 6, 0, 0],
                         color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-                            {offset: 0, color: '#00c6ff'},
-                            {offset: 1, color: '#0072ff'}
+                            {offset: 0, color: '#ff6a00'},
+                            {offset: 1, color: '#ff9e40'}
                         ])
-                    },
-                    label: {
-                        show: true,
-                        position: 'top',
-                        fontWeight: 'bold'
                     }
                 }]
             };
+            avgRevenuePerOrderChart.setOption(avgRevenuePerOrderOption);
+            console.log('Average Revenue Per Order chart initialized with data:', @json($avgRevenuePerOrder));
+        } else {
+            console.error('Average Revenue Per Order chart container not found');
+        }
 
-            shopTypeChart.setOption(shopType);
+        // Make charts responsive
+        window.addEventListener('resize', function() {
+            if (merchantChartElement) merchantChart.resize();
+            if (userChartElement) userChart.resize();
+            if (totalMerchantChartElement) totalMerchantChart.resize();
+            if (totalIncomeTodayChartElement) totalIncomeTodayChart.resize();
+            if (totalIncomeYesterdayChartElement) totalIncomeYesterdayChart.resize();
+            if (orderPerHourChartElement) orderPerHourChart.resize();
+            if (topMerchantsThisMonthChartElement) topMerchantsThisMonthChart.resize();
+            if (revenueByShopTypeChartElement) revenueByShopTypeChart.resize();
+            if (avgRevenuePerOrderChartElement) avgRevenuePerOrderChart.resize();
         });
-    </script>
+    });
+</script>
 @endpush
 
 @section('page-content')
-    <div class="row">
-        <div class="col" id="merchantChart" style="width: 600px; height: 400px;"></div>
-        <div class="col" id="userChart" style="width: 600px; height: 400px;"></div>
-        <div class="col" id="shopTypeChart" style="width: 600px; height: 400px;"></div>
+<!-- First row: Top 5 Merchants This Month (highlighted) -->
+<div class="row mb-4">
+    <div class="col-md-12 hourly-chart-container">
+        <div id="topMerchantsThisMonthChart" style="width: 100%; height: 500px;"></div>
     </div>
-    <div class="row">
-        <div class="col-sm-6 col-xl-3">
-            <div class="card card-body has-bg-image" style="background: #0052D4;  /* fallback for old browsers */
-background: -webkit-linear-gradient(to right, #6FB1FC, #4364F7, #0052D4);  /* Chrome 10-25, Safari 5.1-6 */
-background: linear-gradient(to right, #6FB1FC, #4364F7, #0052D4); /* W3C, IE 10+/ Edge, Firefox 16+, Chrome 26+, Opera 12+, Safari 7+ */
-">
-                <div class="media">
-                    <div class="media-body">
-                        <h3 class="mb-0"><a href="{{ route('admin.taxonomies.index') }}"
-                                            class="text-white">{{ formatNumber($totalTaxonomy) }}</a></h3>
-                        <span class="text-uppercase font-size-theme"><a href="{{ route('admin.taxonomies.index') }}"
-                                                                        class="text-white">{{ __('Loại danh mục') }}</a></span>
-                    </div>
+</div>
 
-                    <div class="ml-3 align-self-center">
-                        <a href="{{ route('admin.taxonomies.index') }}">
-                            <i class="fal fa-2x fa-file-alt text-white"></i>
-                        </a>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-sm-6 col-xl-3">
-            <div class="card card-body has-bg-image" style="background: #2193b0;  /* fallback for old browsers */
-background: -webkit-linear-gradient(to right, #6dd5ed, #2193b0);  /* Chrome 10-25, Safari 5.1-6 */
-background: linear-gradient(to right, #6dd5ed, #2193b0); /* W3C, IE 10+/ Edge, Firefox 16+, Chrome 26+, Opera 12+, Safari 7+ */
-">
-                <div class="media">
-                    <div class="media-body">
-                        <h3 class="mb-0"><a href="{{ route('admin.pages.index') }}"
-                                            class="text-white">{{ formatNumber($totalPages) }}</a></h3>
-                        <span class="text-uppercase font-size-theme"><a href="{{ route('admin.pages.index') }}"
-                                                                        class="text-white">{{ __('Trang') }}</a></span>
-                    </div>
-
-                    <div class="ml-3 align-self-center">
-                        <a href="{{ route('admin.pages.create') }}">
-                            <i class="fal fa-2x fa-file-alt text-white"></i>
-                        </a>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-sm-6 col-xl-3">
-            <div class="card card-body has-bg-image" style="background: #FF512F;  /* fallback for old browsers */
-background: -webkit-linear-gradient(to right, #F09819, #FF512F);  /* Chrome 10-25, Safari 5.1-6 */
-background: linear-gradient(to right, #F09819, #FF512F); /* W3C, IE 10+/ Edge, Firefox 16+, Chrome 26+, Opera 12+, Safari 7+ */
-">
-                <div class="media">
-                    <div class="media-body">
-                        <h3 class="mb-0"><a href="{{ route('admin.posts.index') }}"
-                                            class="text-white">{{ formatNumber($totalPosts) }}</a></h3>
-                        <span class="text-uppercase font-size-theme"><a href="{{ route('admin.posts.index') }}"
-                                                                        class="text-white">{{ __('Bài viết') }}</a></span>
-                    </div>
-
-                    <div class="ml-3 align-self-center">
-                        <a href="{{ route('admin.posts.create') }}">
-                            <i class="fal fa-2x fa-edit text-white"></i>
-                        </a>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        @if (setting('store_banner', \App\Domain\Banner\Models\Banner::SHOW) == \App\Domain\Banner\Models\Banner::SHOW)
-            <div class="col-sm-6 col-xl-3">
-                <div class="card card-body has-bg-image" style="background: #36d1dc;
-                background: -webkit-linear-gradient(to right, #36d1dc, #5b86e5);
-                background: linear-gradient(to right, #36d1dc, #5b86e5);">
-                    <div class="media">
-                        <div class="media-body">
-                            <h3 class="mb-0"><a href="{{ route('admin.banners.index') }}"
-                                                class="text-white">{{ formatNumber($totalBanners) }}</a></h3>
-                            <span class="text-uppercase font-size-theme"><a href="{{ route('admin.banners.index') }}"
-                                                                            class="text-white">{{ __('Banner') }}</a></span>
-                        </div>
-
-                        <div class="ml-3 align-self-center">
-                            <a href="{{ route('admin.banners.create') }}">
-                                <i class="fal fa-2x fa-image text-white"></i>
-                            </a>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        @endif
-
-        <div class="col-sm-6 col-xl-3">
-            <div class="card card-body has-bg-image" style="background: #4776E6;  /* fallback for old browsers */
-background: -webkit-linear-gradient(to right, #4776E6, #8E54E9);  /* Chrome 10-25, Safari 5.1-6 */
-background: linear-gradient(to right, #4776E6, #8E54E9); /* W3C, IE 10+/ Edge, Firefox 16+, Chrome 26+, Opera 12+, Safari 7+ */
-">
-                <div class="media">
-                    <div class="media-body">
-                        <h3 class="mb-0"><a href="{{ route('admin.contacts.index') }}"
-                                            class="text-white">{{ formatNumber($totalContacts) }}</a></h3>
-                        <span class="text-uppercase font-size-theme"><a href="{{ route('admin.contacts.index') }}"
-                                                                        class="text-white">{{ __('Liên hệ') }}</a></span>
-                    </div>
-
-                    <div class="ml-3 align-self-center">
-                        <a href="{{ route('admin.contacts.index') }}">
-                            <i class="fal fa-2x fal fa-phone text-white"></i>
-                        </a>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-sm-6 col-xl-3">
-            <div class="card card-body has-bg-image" style="background: #FF512F;
-background: -webkit-linear-gradient(to right, #FF512F, #DD2476);
-background: linear-gradient(to right, #FF512F, #DD2476);
-">
-                <div class="media">
-                    <div class="media-body">
-                        <h3 class="mb-0"><a href="{{ route('admin.contacts.search') }}"
-                                            class="text-white">{{ formatNumber($totalSearchs) }}</a></h3>
-                        <span class="text-uppercase font-size-theme"><a href="{{ route('admin.contacts.search') }}"
-                                                                        class="text-white">{{ __('Lượt tìm kiếm') }}</a></span>
-                    </div>
-
-                    <div class="ml-3 align-self-center">
-                        <a href="{{ route('admin.contacts.search') }}">
-                            <i class="fal fa-2x fa-search text-white"></i>
-                        </a>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-sm-6 col-xl-3">
-            <div class="card card-body has-bg-image" style="background: #56ab2f;  /* fallback for old browsers */
-background: -webkit-linear-gradient(to right, #a8e063, #56ab2f);  /* Chrome 10-25, Safari 5.1-6 */
-background: linear-gradient(to right, #a8e063, #56ab2f); /* W3C, IE 10+/ Edge, Firefox 16+, Chrome 26+, Opera 12+, Safari 7+ */
-">
-                <div class="media">
-                    <div class="media-body">
-                        <h3 class="mb-0"><a href="{{ route('admin.contacts.subscribe_email') }}"
-                                            class="text-white">{{ formatNumber($totalSubscribeEmails) }}</a></h3>
-                        <span class="text-uppercase font-size-theme"><a
-                                href="{{ route('admin.contacts.subscribe_email') }}"
-                                class="text-white">{{ __('Email đăng ký') }}</a></span>
-                    </div>
-
-                    <div class="ml-3 align-self-center">
-                        <a href="{{ route('admin.contacts.subscribe_email') }}">
-                            <i class="fal fa-2x fa-envelope text-white"></i>
-                        </a>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-sm-6 col-xl-3">
-            <div class="card card-body has-bg-image" style="background: #fc00ff;  /* fallback for old browsers */
-background: -webkit-linear-gradient(to right, #00dbde, #fc00ff);  /* Chrome 10-25, Safari 5.1-6 */
-background: linear-gradient(to right, #00dbde, #fc00ff); /* W3C, IE 10+/ Edge, Firefox 16+, Chrome 26+, Opera 12+, Safari 7+ */
-">
-                <div class="media">
-                    <div class="media-body">
-                        <h3 class="mb-0"><a href="{{ route('admin.mail-settings.index') }}"
-                                            class="text-white">{{ formatNumber($totalSubscribeEmails) }}</a></h3>
-                        <span class="text-uppercase font-size-theme"><a href="{{ route('admin.mail-settings.index') }}"
-                                                                        class="text-white">{{ __('Chiến dịch gửi mail') }}</a></span>
-                    </div>
-
-                    <div class="ml-3 align-self-center">
-                        <a href="{{ route('admin.mail-settings.index') }}">
-                            <i class="fal fa-2x fa-mail-bulk text-white"></i>
-                        </a>
-                    </div>
-                </div>
-            </div>
-        </div>
-
+<!-- Second row: Total Income Today, Total Income Yesterday -->
+<div class="row mb-4">
+    <div class="col-md-3 chart-container">
+        <div id="totalIncomeTodayChart" style="width: 100%; height: 300px;"></div>
     </div>
-    @if(setting('analytics', 0) == \App\Enums\AnalyticsState::SHOW)
-        <div class="row">
-            <div class="col-md-12">
-                <div class="card ajax-card" data-url="{{ route('admin.analytics') }}">
-                    <div class="card-header header-elements-inline">
-                        <h6 class="card-title"><i class="fal fa-chart-bar mr-2"></i> {{ __('Phân tích') }}</h6>
-                    </div>
+    <div class="col-md-3 chart-container">
+        <div id="totalIncomeYesterdayChart" style="width: 100%; height: 300px;"></div>
+    </div>
+    <div class="col-md-3 chart-container">
+        <div id="avgRevenuePerOrderChart" style="width: 100%; height: 300px;"></div>
+    </div>
+    <div class="col-md-3 chart-container">
+        <div id="totalMerchantChart" style="width: 100%; height: 300px;"></div>
+    </div>
+</div>
 
-                    <div class="card-body">
-                    </div>
+<!-- Fourth row: Merchant Growth, Orders Per Hour -->
+<div class="row mb-4">
+    <div class="col-md-6 chart-container">
+        <div id="merchantChart" style="width: 100%; height: 600px;"></div>
+    </div>
+    <div class="col-md-6 hourly-chart-container">
+        <div id="orderPerHourChart" style="width: 100%; height: 500px;"></div>
+    </div>
+</div>
+
+<!-- Fifth row: User Growth, Revenue by Shop Type -->
+<div class="row mb-4">
+    <div class="col-md-6 chart-container">
+        <div id="userChart" style="width: 100%; height: 500px;"></div>
+    </div>
+    <div class="col-md-6 hourly-chart-container">
+        <div id="revenueByShopTypeChart" style="width: 100%; height: 500px;"></div>
+    </div>
+</div>
+
+<!-- Sixth row: Shop Type, Average Revenue Per Order -->
+<div class="row mb-4">
+<!--    <div class="col-md-6 chart-container">
+        <div id="shopTypeChart" style="width: 100%; height: 400px;"></div>
+    </div>-->
+
+</div>
+
+<!-- Existing dashboard cards -->
+<div class="row">
+    <div class="col-sm-6 col-xl-3">
+        <div class="card card-body has-bg-image" style="background: #0052D4; background: -webkit-linear-gradient(to right, #6FB1FC, #4364F7, #0052D4); background: linear-gradient(to right, #6FB1FC, #4364F7, #0052D4);">
+            <div class="media">
+                <div class="media-body">
+                    <h3 class="mb-0"><a href="{{ route('admin.taxonomies.index') }}" class="text-white">{{ formatNumber($totalTaxonomy) }}</a></h3>
+                    <span class="text-uppercase font-size-theme"><a href="{{ route('admin.taxonomies.index') }}" class="text-white">{{ __('Loại danh mục') }}</a></span>
+                </div>
+                <div class="ml-3 align-self-center">
+                    <a href="{{ route('admin.taxonomies.index') }}">
+                        <i class="fal fa-2x fa-file-alt text-white"></i>
+                    </a>
                 </div>
             </div>
         </div>
-        <div class="row">
-            <div class="col-md-6">
-                <div class="card ajax-card" data-url="{{ route('admin.top-referrers') }}">
-                    <div class="card-header header-elements-inline">
-                        <h6 class="card-title"><i class="far fa-bullseye-pointer"></i> {{ __('Tìm kiếm hàng đầu') }}
-                        </h6>
-                    </div>
+    </div>
 
-                    <div class="card-body">
-
-                    </div>
-
+    <div class="col-sm-6 col-xl-3">
+        <div class="card card-body has-bg-image" style="background: #2193b0; background: -webkit-linear-gradient(to right, #6dd5ed, #2193b0); background: linear-gradient(to right, #6dd5ed, #2193b0);">
+            <div class="media">
+                <div class="media-body">
+                    <h3 class="mb-0"><a href="{{ route('admin.pages.index') }}" class="text-white">{{ formatNumber($totalPages) }}</a></h3>
+                    <span class="text-uppercase font-size-theme"><a href="{{ route('admin.pages.index') }}" class="text-white">{{ __('Trang') }}</a></span>
                 </div>
-            </div>
-
-            <div class="col-md-6">
-                <div class="card ajax-card" data-url="{{ route('admin.most-visited-pages') }}">
-                    <div class="card-header header-elements-inline">
-                        <h6 class="card-title"><i
-                                class="far fa-bullseye-pointer"></i> {{ __('Trang truy cập nhiều nhất') }}</h6>
-                    </div>
-
-                    <div class="card-body">
-
-                    </div>
-
+                <div class="ml-3 align-self-center">
+                    <a href="{{ route('admin.pages.create') }}">
+                        <i class="fal fa-2x fa-file-alt text-white"></i>
+                    </a>
                 </div>
             </div>
         </div>
+    </div>
+
+    <div class="col-sm-6 col-xl-3">
+        <div class="card card-body has-bg-image" style="background: #FF512F; background: -webkit-linear-gradient(to right, #F09819, #FF512F); background: linear-gradient(to right, #F09819, #FF512F);">
+            <div class="media">
+                <div class="media-body">
+                    <h3 class="mb-0"><a href="{{ route('admin.posts.index') }}" class="text-white">{{ formatNumber($totalPosts) }}</a></h3>
+                    <span class="text-uppercase font-size-theme"><a href="{{ route('admin.posts.index') }}" class="text-white">{{ __('Bài viết') }}</a></span>
+                </div>
+                <div class="ml-3 align-self-center">
+                    <a href="{{ route('admin.posts.create') }}">
+                        <i class="fal fa-2x fa-edit text-white"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @if (setting('store_banner', \App\Domain\Banner\Models\Banner::SHOW) == \App\Domain\Banner\Models\Banner::SHOW)
+    <div class="col-sm-6 col-xl-3">
+        <div class="card card-body has-bg-image" style="background: #36d1dc; background: -webkit-linear-gradient(to right, #36d1dc, #5b86e5); background: linear-gradient(to right, #36d1dc, #5b86e5);">
+            <div class="media">
+                <div class="media-body">
+                    <h3 class="mb-0"><a href="{{ route('admin.banners.index') }}" class="text-white">{{ formatNumber($totalBanners) }}</a></h3>
+                    <span class="text-uppercase font-size-theme"><a href="{{ route('admin.banners.index') }}" class="text-white">{{ __('Banner') }}</a></span>
+                </div>
+                <div class="ml-3 align-self-center">
+                    <a href="{{ route('admin.banners.create') }}">
+                        <i class="fal fa-2x fa-image text-white"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
     @endif
-    <div class="row">
-        @if($pageTops->count() > 0)
-            <div class="col-md-6">
-                <div class="card" data-url="{{ route('admin.pages.index') }}">
-                    <div class="card-header header-elements-inline">
-                        <h6 class="card-title"><i class="fal fa-file-alt"></i> {{ __('Trang được xem nhiều nhất') }}
-                        </h6>
-                    </div>
 
-                    <div class="card-body">
-                        <div class="table-responsive">
-                            <table class="table">
-                                <thead>
-                                <tr>
-                                    <th class="w-100">{{ __('Tên trang') }}</th>
-                                    <th>{{ __('Lượt xem') }}</th>
-                                </tr>
-                                </thead>
-                                <tbody>
-                                @foreach($pageTops as $pageTop)
-                                    <tr>
-                                        <td>
-                                            <a target="_blank" href="{{ $pageTop->url() }}"
-                                               class="text-default font-weight-semibold letter-icon-title">{{ $pageTop->title }}</a>
-                                        </td>
-                                        <td>
-                                            <span class="text-muted font-size-sm">{{ $pageTop->view }}</span>
-                                        </td>
-                                    </tr>
-                                @endforeach
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
+    <div class="col-sm-6 col-xl-3">
+        <div class="card card-body has-bg-image" style="background: #4776E6; background: -webkit-linear-gradient(to right, #4776E6, #8E54E9); background: linear-gradient(to right, #4776E6, #8E54E9);">
+            <div class="media">
+                <div class="media-body">
+                    <h3 class="mb-0"><a href="{{ route('admin.contacts.index') }}" class="text-white">{{ formatNumber($totalContacts) }}</a></h3>
+                    <span class="text-uppercase font-size-theme"><a href="{{ route('admin.contacts.index') }}" class="text-white">{{ __('Liên hệ') }}</a></span>
+                </div>
+                <div class="ml-3 align-self-center">
+                    <a href="{{ route('admin.contacts.index') }}">
+                        <i class="fal fa-2x fa-phone text-white"></i>
+                    </a>
                 </div>
             </div>
-        @endif
-
-        @if($postTops->count() > 0)
-            <div class="col-md-6">
-                <div class="card" data-url="{{ route('admin.posts.index') }}">
-                    <div class="card-header header-elements-inline">
-                        <h6 class="card-title"><i class="fal fa-edit"></i> {{ __('Bài viết được xem nhiều nhất') }}</h6>
-                    </div>
-
-                    <div class="card-body">
-                        <div class="table-responsive">
-                            <table class="table">
-                                <thead>
-                                <tr>
-                                    <th class="w-100">{{ __('Tên bài viết') }}</th>
-                                    <th>{{ __('Lượt xem') }}</th>
-                                </tr>
-                                </thead>
-                                <tbody>
-                                @foreach($postTops as $postTop)
-                                    <tr>
-                                        <td>
-                                            <a target="_blank" href="{{ $postTop->url() }}"
-                                               class="text-default font-weight-semibold letter-icon-title">{{ $postTop->title }}</a>
-                                        </td>
-                                        <td>
-                                            <span class="text-muted font-size-sm">{{ $postTop->view }}</span>
-                                        </td>
-                                    </tr>
-                                @endforeach
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-
-                </div>
-            </div>
-        @endif
+        </div>
     </div>
+
+    <div class="col-sm-6 col-xl-3">
+        <div class="card card-body has-bg-image" style="background: #FF512F; background: -webkit-linear-gradient(to right, #FF512F, #DD2476); background: linear-gradient(to right, #FF512F, #DD2476);">
+            <div class="media">
+                <div class="media-body">
+                    <h3 class="mb-0"><a href="{{ route('admin.contacts.search') }}" class="text-white">{{ formatNumber($totalSearchs) }}</a></h3>
+                    <span class="text-uppercase font-size-theme"><a href="{{ route('admin.contacts.search') }}" class="text-white">{{ __('Lượt tìm kiếm') }}</a></span>
+                </div>
+                <div class="ml-3 align-self-center">
+                    <a href="{{ route('admin.contacts.search') }}">
+                        <i class="fal fa-2x fa-search text-white"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-sm-6 col-xl-3">
+        <div class="card card-body has-bg-image" style="background: #56ab2f; background: -webkit-linear-gradient(to right, #a8e063, #56ab2f); background: linear-gradient(to right, #a8e063, #56ab2f);">
+            <div class="media">
+                <div class="media-body">
+                    <h3 class="mb-0"><a href="{{ route('admin.contacts.subscribe_email') }}" class="text-white">{{ formatNumber($totalSubscribeEmails) }}</a></h3>
+                    <span class="text-uppercase font-size-theme"><a href="{{ route('admin.contacts.subscribe_email') }}" class="text-white">{{ __('Email đăng ký') }}</a></span>
+                </div>
+                <div class="ml-3 align-self-center">
+                    <a href="{{ route('admin.contacts.subscribe_email') }}">
+                        <i class="fal fa-2x fa-envelope text-white"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-sm-6 col-xl-3">
+        <div class="card card-body has-bg-image" style="background: #ff6a00; background: -webkit-linear-gradient(to right, #ff9e40, #ff6a00); background: linear-gradient(to right, #ff9e40, #ff6a00);">
+            <div class="media">
+                <div class="media-body">
+                    <h3 class="mb-0"><a href="{{ route('admin.merchants.index') }}" class="text-white">{{ formatNumber($totalMerchants) }}</a></h3>
+                    <span class="text-uppercase font-size-theme"><a href="{{ route('admin.merchants.index') }}" class="text-white">{{ __('Merchants') }}</a></span>
+                </div>
+                <div class="ml-3 align-self-center">
+                    <a href="{{ route('admin.merchants.index') }}">
+                        <i class="fal fa-2x fa-users text-white"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-sm-6 col-xl-3">
+        <div class="card card-body has-bg-image" style="background: #fc00ff; background: -webkit-linear-gradient(to right, #00dbde, #fc00ff); background: linear-gradient(to right, #00dbde, #fc00ff);">
+            <div class="media">
+                <div class="media-body">
+                    <h3 class="mb-0"><a href="{{ route('admin.mail-settings.index') }}" class="text-white">{{ formatNumber($totalSubscribeEmails) }}</a></h3>
+                    <span class="text-uppercase font-size-theme"><a href="{{ route('admin.mail-settings.index') }}" class="text-white">{{ __('Chiến dịch gửi mail') }}</a></span>
+                </div>
+                <div class="ml-3 align-self-center">
+                    <a href="{{ route('admin.mail-settings.index') }}">
+                        <i class="fal fa-2x fa-mail-bulk text-white"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@if(setting('analytics', 0) == \App\Enums\AnalyticsState::SHOW)
+<div class="row">
+    <div class="col-md-12">
+        <div class="card ajax-card" data-url="{{ route('admin.analytics') }}">
+            <div class="card-header header-elements-inline">
+                <h6 class="card-title"><i class="fal fa-chart-bar mr-2"></i> {{ __('Phân tích') }}</h6>
+            </div>
+            <div class="card-body"></div>
+        </div>
+    </div>
+</div>
+<div class="row">
+    <div class="col-md-6">
+        <div class="card ajax-card" data-url="{{ route('admin.top-referrers') }}">
+            <div class="card-header header-elements-inline">
+                <h6 class="card-title"><i class="far fa-bullseye-pointer"></i> {{ __('Tìm kiếm hàng đầu') }}</h6>
+            </div>
+            <div class="card-body"></div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card ajax-card" data-url="{{ route('admin.most-visited-pages') }}">
+            <div class="card-header header-elements-inline">
+                <h6 class="card-title"><i class="far fa-bullseye-pointer"></i> {{ __('Trang truy cập nhiều nhất') }}</h6>
+            </div>
+            <div class="card-body"></div>
+        </div>
+    </div>
+</div>
+@endif
+
+<div class="row">
+    @if($pageTops->count() > 0)
+    <div class="col-md-6">
+        <div class="card" data-url="{{ route('admin.pages.index') }}">
+            <div class="card-header header-elements-inline">
+                <h6 class="card-title"><i class="fal fa-file-alt"></i> {{ __('Trang được xem nhiều nhất') }}</h6>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                        <tr>
+                            <th class="w-100">{{ __('Tên trang') }}</th>
+                            <th>{{ __('Lượt xem') }}</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        @foreach($pageTops as $pageTop)
+                        <tr>
+                            <td>
+                                <a target="_blank" href="{{ $pageTop->url() }}"
+                                   class="text-default font-weight-semibold letter-icon-title">{{ $pageTop->title }}</a>
+                            </td>
+                            <td>
+                                <span class="text-muted font-size-sm">{{ $pageTop->view }}</span>
+                            </td>
+                        </tr>
+                        @endforeach
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    @endif
+
+    @if($postTops->count() > 0)
+    <div class="col-md-6">
+        <div class="card" data-url="{{ route('admin.posts.index') }}">
+            <div class="card-header header-elements-inline">
+                <h6 class="card-title"><i class="fal fa-edit"></i> {{ __('Bài viết được xem nhiều nhất') }}</h6>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                        <tr>
+                            <th class="w-100">{{ __('Tên bài viết') }}</th>
+                            <th>{{ __('Lượt xem') }}</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        @foreach($postTops as $postTop)
+                        <tr>
+                            <td>
+                                <a target="_blank" href="{{ $postTop->url() }}"
+                                   class="text-default font-weight-semibold letter-icon-title">{{ $postTop->title }}</a>
+                            </td>
+                            <td>
+                                <span class="text-muted font-size-sm">{{ $postTop->view }}</span>
+                            </td>
+                        </tr>
+                        @endforeach
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    @endif
+</div>
 @stop

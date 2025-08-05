@@ -15,7 +15,6 @@ class Shop extends Model
         'area',
         'city',
         'region',
-        'merchant_id',
         'contract_id',
         'is_deleted',
         'share_rate',
