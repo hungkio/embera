@@ -10,6 +10,7 @@
 @stop
 @push('css')
 <link rel="stylesheet" href="/backend/global_assets/js/vendors/vector-map/jquery-jvectormap-2.0.5.css">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;500;700&display=swap" rel="stylesheet">
 <style>
     .card-body {
         padding: 1.750rem 1rem;
@@ -588,7 +589,8 @@
 @endpush
 
 @section('page-content')
-<!-- First row: Top 5 Merchants This Month (highlighted) -->
+<div class="row">
+</div>
 <div class="row mb-4">
     <div class="col-md-12 hourly-chart-container">
         <div id="topMerchantsThisMonthChart" style="width: 100%; height: 500px;"></div>
