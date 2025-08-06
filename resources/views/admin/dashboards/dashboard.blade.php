@@ -10,28 +10,10 @@
 @stop
 @push('css')
 <link rel="stylesheet" href="/backend/global_assets/js/vendors/vector-map/jquery-jvectormap-2.0.5.css">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;500;700&display=swap" rel="stylesheet">
 <style>
     .card-body {
         padding: 1.750rem 1rem;
-    }
-
-    .card-body .font-size-theme {
-        font-size: 0.7875rem;
-    }
-
-    .jvectormap-zoomin,
-    .jvectormap-zoomout {
-        display: none;
-    }
-
-    .has-bg-image {
-        box-shadow: rgba(0, 0, 0, 0.1) 0px 0px 20px;
-        border-radius: 10px;
-    }
-
-    .card-box-analytics {
-        box-shadow: 0px 0px 1px 1px #0c213a1a;
-        border-radius: 10px;
     }
 
     .chart-container {
@@ -52,7 +34,6 @@
         margin-bottom: 30px;
     }
 
-    /* Áp dụng font Noto Sans cho toàn bộ trang */
     body, h4, .card-title, .table {
         font-family: 'Noto Sans', sans-serif !important;
     }
@@ -608,7 +589,8 @@
 @endpush
 
 @section('page-content')
-<!-- First row: Top 5 Merchants This Month (highlighted) -->
+<div class="row">
+</div>
 <div class="row mb-4">
     <div class="col-md-12 hourly-chart-container">
         <div id="topMerchantsThisMonthChart" style="width: 100%; height: 500px;"></div>
