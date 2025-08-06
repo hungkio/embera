@@ -6,8 +6,11 @@ namespace App\Http\Controllers\Admin;
 
 use App\Domain\Page\Models\Page;
 use App\Domain\Post\Models\Post;
+use App\Models\Contract;
 use App\Models\Merchant;
 use App\Models\Order;
+use App\Models\Shop;
+use Carbon\Carbon;
 
 class DashboardController
 {
@@ -53,10 +56,10 @@ class DashboardController
         $startOfLastMonth = $now->clone()->subMonth()->startOfMonth(); // Bắt đầu tháng trước (01/07/2025 00:00:00)
         $endOfLastMonth = $now->clone()->subMonth()->endOfMonth(); // Kết thúc tháng trước (31/07/2025 23:59:59)
 
-// Fetch top 5 merchants for this month
+        // Fetch top 5 merchants for this month
         $topMerchantsThisMonth = Order::where('rental_time', '>=', $startOfMonth)
             ->whereNotNull('return_time') // Chỉ lấy đơn hàng đã trả
-            ->where('return_time', '<=', now()) // Đảm bảo return_time không vượt quá hiện tại (03:45 PM +07, 04/08/2025)
+            ->where('return_time', '<=', now()) // Đảm bảo return_time không vượt quá hiện tại (10:43 AM +07, 06/08/2025)
             ->whereRaw('LOWER(order_status) = ?', ['complete'])
             ->leftJoin('shops', 'orders.rental_shop', '=', 'shops.shop_name')
             ->leftJoin('contracts', 'shops.contract_id', '=', 'contracts.id')
@@ -78,7 +81,7 @@ class DashboardController
             })
             ->toArray();
 
-// Fetch revenue for the same merchants last month
+        // Fetch revenue for the same merchants last month
         $merchantIds = array_column($topMerchantsThisMonth, 'id');
         $topMerchantsLastMonth = [];
         if (!empty($merchantIds)) {
@@ -105,7 +108,7 @@ class DashboardController
                 ->toArray();
         }
 
-// Align last month's data with this month's merchants
+        // Align last month's data with this month's merchants
         $lastMonthData = array_fill_keys(array_column($topMerchantsThisMonth, 'id'), 0.0);
         foreach ($topMerchantsLastMonth as $merchant) {
             $key = array_search($merchant['id'], array_column($topMerchantsThisMonth, 'id'));
@@ -155,7 +158,6 @@ class DashboardController
         $startDate = now()->subMonths(11)->startOfMonth(); // Bắt đầu từ 09/2024
         $endDate = now()->endOfMonth(); // Kết thúc 08/2025
 
-// Lấy tất cả user_id duy nhất từ 12 tháng qua
         $allUserIds = Order::where('rental_time', '>=', $startDate)
             ->where('rental_time', '<=', $endDate)
             ->whereNotNull('user_id')
@@ -192,7 +194,7 @@ class DashboardController
 
         \Log::info('User Growth Data (cumulative based on orders):', ['data' => $userGrowth]);
 
-// Kiểm tra dữ liệu thô để debug
+        // Kiểm tra dữ liệu thô để debug
         $rawOrders = Order::where('rental_time', '>=', $startDate)
             ->where('rental_time', '<=', $endDate)
             ->whereNotNull('rental_time')
@@ -273,6 +275,96 @@ class DashboardController
             'total_revenue' => $totalRevenue
         ]);
 
+        // Contract Growth by Day (from first contract to today, only days with contracts)
+        $startDateRaw = Contract::active()->min('sign_date');
+        $startDate = $startDateRaw ? Carbon::parse($startDateRaw)->startOfDay() : now()->startOfDay();
+        $endDate = now()->endOfDay(); // 06/08/2025 10:43 AM +07
+
+        $contracts = Contract::active()
+            ->whereBetween('sign_date', [$startDate, $endDate])
+            ->select('sign_date', 'status')
+            ->get()
+            ->groupBy(function ($contract) {
+                return $contract->sign_date->format('Y-m-d');
+            });
+
+        $contractGrowth = [];
+        $cumulativeBbnt = 0;
+        $cumulativeNotSigned = 0;
+        $cumulativeSigned = 0;
+
+        foreach ($contracts as $date => $dayContracts) {
+            $bbntCount = $dayContracts->where('status', Contract::BBNT)->count();
+            $notSignedCount = $dayContracts->where('status', Contract::NOT_SIGN)->count();
+            $signedCount = $dayContracts->where('status', Contract::SIGN)->count();
+
+            $cumulativeBbnt += $bbntCount;
+            $cumulativeNotSigned += $notSignedCount;
+            $cumulativeSigned += $signedCount;
+
+            $contractGrowth[] = [
+                'date' => $date,
+                'bbnt_count' => $cumulativeBbnt,
+                'not_signed_count' => $cumulativeNotSigned,
+                'signed_count' => $cumulativeSigned,
+            ];
+        }
+
+        \Log::info('Contract Growth Data (only days with contracts):', ['data' => $contractGrowth]);
+
+        // Average transactions per day this month
+        $startOfMonth = now()->startOfMonth(); // 01/08/2025 00:00:00
+        $endOfMonth = now()->endOfDay(); // 06/08/2025 10:59 AM +07
+        $totalDays = $startOfMonth->diffInDays($endOfMonth) + 1; // Số ngày từ 1/8 đến 6/8
+
+        $dailyTransactions = Order::whereBetween('created_at', [$startOfMonth, $endOfMonth])
+            ->selectRaw('DATE(created_at) as date, COUNT(*) as transaction_count')
+            ->groupBy('date')
+            ->get()
+            ->pluck('transaction_count', 'date')
+            ->toArray();
+
+        $totalTransactions = array_sum($dailyTransactions);
+        $avgTransactionsPerDay = $totalDays > 0 ? round((float) $totalTransactions / $totalDays, 2) : 0.0;
+
+        $avgDailyTransactionsData = [
+            'dates' => array_keys($dailyTransactions),
+            'counts' => array_values($dailyTransactions),
+            'average' => $avgTransactionsPerDay
+        ];
+
+        \Log::info('Average Daily Transactions Data:', ['data' => $avgDailyTransactionsData]);
+
+        // Number of shops by shop type
+        $shopTypesCount = Shop::select('shop_type')
+            ->selectRaw('COUNT(*) as shop_count')
+            ->groupBy('shop_type')
+            ->get()
+            ->pluck('shop_count', 'shop_type')
+            ->toArray();
+
+        // Initialize shop counts for all shop types with zero
+        $shopsByShopType = array_fill_keys($shopTypes, 0);
+        // Merge actual counts, mapping null to 'Others(其它)'
+        foreach ($shopTypesCount as $shopType => $count) {
+            $key = $shopType ?? 'Others(其它)';
+            if (in_array($key, $shopTypes)) {
+                $shopsByShopType[$key] = (int) $count;
+            } else {
+                $shopsByShopType['Others(其它)'] += (int) $count;
+            }
+        }
+
+        // Format for ECharts
+        $shopsByShopType = array_map(function ($shopType, $count) {
+            return [
+                'name' => $shopType,
+                'value' => $count,
+            ];
+        }, array_keys($shopsByShopType), $shopsByShopType);
+
+        \Log::info('Shops by Shop Type:', ['data' => $shopsByShopType]);
+
         $pageTops = Page::orderBy('view', 'desc')->take(5)->get();
         $postTops = Post::orderBy('view', 'desc')->take(5)->get();
 
@@ -288,7 +380,10 @@ class DashboardController
             'revenueByShopType',
             'avgRevenuePerOrder',
             'pageTops',
-            'postTops'
+            'postTops',
+            'contractGrowth',
+            'avgDailyTransactionsData',
+            'shopsByShopType'
         ));
     }
 

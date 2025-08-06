@@ -43,7 +43,11 @@ class ContractDataTable extends BaseDatable
             ->editColumn('download_count', fn(Contract $c) => $c->download_count . ' lượt')
             ->addColumn('city', function(Contract $c) {
                 return Contract::provinces()[$c->city] ?? '-';
-            })            ->editColumn('admin_id', fn(Contract $c) => $c->admin->full_name ?? '')
+            })
+            ->editColumn('admin_id', fn(Contract $c) => $c->admin->full_name ?? '')
+            ->filterColumn('admin_id', function ($query, $keyword) {
+                $query->whereRaw("LOWER(CONCAT(admins.last_name, ' ', admins.first_name)) like ?", ["%" . strtolower($keyword) . "%"]);
+            })
             ->filterColumn('bank_account_number', fn($query, $keyword) => $query->where('bank_account_number', 'like', "%$keyword%"))
             ->filterColumn('bank_account_name', fn($query, $keyword) => $query->where('bank_account_name', 'like', "%$keyword%"))
             ->editColumn('expired_time', function (Contract $c) {
@@ -86,8 +90,9 @@ class ContractDataTable extends BaseDatable
     public function query(Contract $model)
     {
         return $model->newQuery()
-            // load cả 2 quan hệ
-            ->with(['merchant', 'shops'])
+            ->with(['merchant', 'shops', 'admin']) // đảm bảo load quan hệ
+            ->leftJoin('admins', 'contracts.admin_id', '=', 'admins.id')
+            ->select('contracts.*') // tránh lỗi select lại
             ->where('contracts.is_deleted', 0)
             ->when($this->request->filled('date_from') && $this->request->filled('date_to'), function($q) {
                 $q->whereBetween('sign_date', [
@@ -95,6 +100,7 @@ class ContractDataTable extends BaseDatable
                     Carbon::parse($this->request->date_to)->format('Y-m-d'),
                 ]);
             });
+
     }
 
 
@@ -112,7 +118,7 @@ class ContractDataTable extends BaseDatable
             Column::make('status')->title('Trạng thái'),
             Column::make('city')->title('Tỉnh/TP'),
             Column::make('download_count')->title('Lượt tải'),
-            Column::make('admin_id')->title('BD'),
+            Column::make('admin_id')->title('BD')->data('admin_id'),
             Column::make('created_at')->title('Tạo lúc'),
             Column::computed('action')
                 ->title(__('Tác vụ'))

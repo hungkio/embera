@@ -24,6 +24,11 @@ class ShopDataTable extends BaseDatable
             })            ->addColumn('action', function (Shop $shop) {
                 return view('admin.shops._tableAction', ['id' => $shop->id])->render();
             })
+            ->filterColumn('contract', function ($query, $keyword) {
+                $query->whereHas('contract', function ($q) use ($keyword) {
+                    $q->where('contract_number', 'like', "%$keyword%");
+                });
+            })
             ->editColumn('shop_name', fn(Shop $shop) => $shop->shop_name)
             ->editColumn('address', fn(Shop $shop) => $shop->address)
             ->editColumn('shop_type', fn(Shop $shop) => $shop->shop_type)
