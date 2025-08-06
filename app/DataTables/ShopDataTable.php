@@ -15,13 +15,13 @@ class ShopDataTable extends BaseDatable
             ->eloquent($query)
             ->addIndexColumn()
             ->addColumn('contract', function (Shop $shop) {
-                if (! $shop->contract) {
+                if (!$shop->contract) {
                     return '';
                 }
-                $url   = route('admin.contracts.show', $shop->contract->id);
-                $num   = e($shop->contract->contract_number);
+                $url = route('admin.contracts.show', $shop->contract->id);
+                $num = e($shop->contract->contract_number);
                 return "<a href=\"{$url}\" target=\"_blank\">{$num}</a>";
-            })            ->addColumn('action', function (Shop $shop) {
+            })->addColumn('action', function (Shop $shop) {
                 return view('admin.shops._tableAction', ['id' => $shop->id])->render();
             })
             ->filterColumn('contract', function ($query, $keyword) {
@@ -120,7 +120,8 @@ class ShopDataTable extends BaseDatable
                 'device_json',
                 'is_bound',
                 'contract',
-            ]);    }
+            ]);
+    }
 
     public function query(Shop $model)
     {

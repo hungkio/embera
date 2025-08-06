@@ -76,7 +76,7 @@ class DashboardController
                 return [
                     'id' => $item->merchant_id,
                     'name' => ucwords(strtolower($merchantName)),
-                    'value' => (float) $item->total_revenue,
+                    'value' => (float)$item->total_revenue,
                 ];
             })
             ->toArray();
@@ -102,7 +102,7 @@ class DashboardController
                     return [
                         'id' => $item->merchant_id,
                         'name' => ucwords(strtolower($merchantName)),
-                        'value' => (float) $item->total_revenue,
+                        'value' => (float)$item->total_revenue,
                     ];
                 })
                 ->toArray();
@@ -237,9 +237,9 @@ class DashboardController
         foreach ($revenueByShopTypeRaw as $shopType => $revenue) {
             $key = $shopType ?? 'Others(其它)';
             if (in_array($key, $shopTypes)) {
-                $revenueByShopType[$key] = (float) $revenue;
+                $revenueByShopType[$key] = (float)$revenue;
             } else {
-                $revenueByShopType['Others(其它)'] += (float) $revenue;
+                $revenueByShopType['Others(其它)'] += (float)$revenue;
             }
         }
 
@@ -247,7 +247,7 @@ class DashboardController
         $revenueByShopType = array_map(function ($shopType, $revenue) {
             return [
                 'name' => $shopType,
-                'value' => round((float) $revenue, 2),
+                'value' => round((float)$revenue, 2),
             ];
         }, array_keys($revenueByShopType), $revenueByShopType);
 
@@ -259,7 +259,7 @@ class DashboardController
             ->get();
         $totalOrders = $validOrders->count();
         $totalRevenue = $validOrders->sum('order_amount');
-        $avgRevenuePerOrder = $totalOrders > 0 ? round((float) ($totalRevenue / $totalOrders), 2) : 0.0;
+        $avgRevenuePerOrder = $totalOrders > 0 ? round((float)($totalRevenue / $totalOrders), 2) : 0.0;
 
         // Format for ECharts as a single pie slice
         $avgRevenuePerOrder = [
@@ -325,7 +325,7 @@ class DashboardController
             ->toArray();
 
         $totalTransactions = array_sum($dailyTransactions);
-        $avgTransactionsPerDay = $totalDays > 0 ? round((float) $totalTransactions / $totalDays, 2) : 0.0;
+        $avgTransactionsPerDay = $totalDays > 0 ? round((float)$totalTransactions / $totalDays, 2) : 0.0;
 
         $avgDailyTransactionsData = [
             'dates' => array_keys($dailyTransactions),
@@ -349,9 +349,9 @@ class DashboardController
         foreach ($shopTypesCount as $shopType => $count) {
             $key = $shopType ?? 'Others(其它)';
             if (in_array($key, $shopTypes)) {
-                $shopsByShopType[$key] = (int) $count;
+                $shopsByShopType[$key] = (int)$count;
             } else {
-                $shopsByShopType['Others(其它)'] += (int) $count;
+                $shopsByShopType['Others(其它)'] += (int)$count;
             }
         }
 
@@ -417,7 +417,7 @@ class DashboardController
     {
         $file = [];
         $chunkCount = 0;
-        $model::chunk(100, function($countries) use (&$chunkCount, $suffix, $filename, &$file) {
+        $model::chunk(100, function ($countries) use (&$chunkCount, $suffix, $filename, &$file) {
             $chunkCount++;
             $sitemap = '<?xml version="1.0" encoding="UTF-8"?>';
             $sitemap .= '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">';

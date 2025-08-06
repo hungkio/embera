@@ -18,12 +18,12 @@ class ContractDataTable extends BaseDatable
             ->addColumn('action', 'admin.contracts._tableAction')
 
             // 1) Merchant có link vào form edit
-            ->addColumn('merchant', function(Contract $c) {
-                if (! $c->merchant) {
+            ->addColumn('merchant', function (Contract $c) {
+                if (!$c->merchant) {
                     return '-';
                 }
                 $url = route('admin.merchants.edit', ['merchant' => $c->merchant_id]);
-                return '<a href="'. $url .'" target="_blank">'. e($c->merchant->username) .'</a>';
+                return '<a href="' . $url . '" target="_blank">' . e($c->merchant->username) . '</a>';
             })
 
             // 2) Shop list có link vào từng Shop edit
@@ -31,17 +31,17 @@ class ContractDataTable extends BaseDatable
                 if ($c->shops->isEmpty()) {
                     return '-';
                 }
-                return $c->shops->map(function($shop) {
+                return $c->shops->map(function ($shop) {
                     $url = route('admin.shops.edit', ['shop' => $shop->id]);
-                    return '<a href="'. $url .'" target="_blank">'. e($shop->shop_name) .'</a>';
+                    return '<a href="' . $url . '" target="_blank">' . e($shop->shop_name) . '</a>';
                 })->implode('<br>');
             })
             ->editColumn('contract_number', fn(Contract $c) => e($c->full_contract_number))
             ->editColumn('sign_date', fn(Contract $c) => optional($c->sign_date)->format('d/m/Y'))
             ->editColumn('expired_date', fn(Contract $c) => optional($c->expired_date)->format('d/m/Y'))
-            ->editColumn('status', fn (Contract $c) => ucfirst(Contract::STATUS[$c->status] ?? 'Chưa ký'))
+            ->editColumn('status', fn(Contract $c) => ucfirst(Contract::STATUS[$c->status] ?? 'Chưa ký'))
             ->editColumn('download_count', fn(Contract $c) => $c->download_count . ' lượt')
-            ->addColumn('city', function(Contract $c) {
+            ->addColumn('city', function (Contract $c) {
                 return Contract::provinces()[$c->city] ?? '-';
             })
             ->editColumn('admin_id', fn(Contract $c) => $c->admin->full_name ?? '')
@@ -72,7 +72,7 @@ class ContractDataTable extends BaseDatable
                 } else {
                     $query->where('status', 'like', "%$keyword%");
                 }
-            })            ->orderColumn('sign_date', 'sign_date $1')
+            })->orderColumn('sign_date', 'sign_date $1')
             ->filterColumn('shop_name', function ($query, $keyword) {
                 $query->whereHas('shops', function ($q) use ($keyword) {
                     $q->where('shop_name', 'like', "%$keyword%");
@@ -84,7 +84,7 @@ class ContractDataTable extends BaseDatable
                     ->orderBy('shops.shop_name', $direction);
             })
             ->filterColumn('expired_time', fn($query, $keyword) => $query->where('expired_time', 'like', "%$keyword%")) // Text search
-            ->rawColumns(['merchant','shop_name','action']);  // cho phép output thẻ <a>
+            ->rawColumns(['merchant', 'shop_name', 'action']);  // cho phép output thẻ <a>
     }
 
     public function query(Contract $model)
@@ -94,7 +94,7 @@ class ContractDataTable extends BaseDatable
             ->leftJoin('admins', 'contracts.admin_id', '=', 'admins.id')
             ->select('contracts.*') // tránh lỗi select lại
             ->where('contracts.is_deleted', 0)
-            ->when($this->request->filled('date_from') && $this->request->filled('date_to'), function($q) {
+            ->when($this->request->filled('date_from') && $this->request->filled('date_to'), function ($q) {
                 $q->whereBetween('sign_date', [
                     Carbon::parse($this->request->date_from)->format('Y-m-d'),
                     Carbon::parse($this->request->date_to)->format('Y-m-d'),
