@@ -54,4 +54,9 @@ class Admin extends Authenticatable implements HasMedia
             ->singleFile()
             ->useFallbackUrl('/backend/global_assets/images/placeholders/placeholder.jpg');
     }
+
+    public function getFullNameAttribute(): string
+    {
+        return trim("{$this->last_name} {$this->first_name}");
+    }
 }
