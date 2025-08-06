@@ -540,24 +540,6 @@
 
 @section('page-content')
 <!-- First row: Top 5 Merchants This Month (highlighted) -->
-<!-- Existing dashboard cards -->
-<div class="row">
-    <div class="col-sm-6 col-xl-3">
-        <div class="card card-body has-bg-image" style="background: #ff6a00; background: -webkit-linear-gradient(to right, #ff9e40, #ff6a00); background: linear-gradient(to right, #ff9e40, #ff6a00);">
-            <div class="media">
-                <div class="media-body">
-                    <h3 class="mb-0"><a href="{{ route('admin.merchants.index') }}" class="text-white">{{ formatNumber($totalMerchants) }}</a></h3>
-                    <span class="text-uppercase font-size-theme"><a href="{{ route('admin.merchants.index') }}" class="text-white">{{ __('Merchants') }}</a></span>
-                </div>
-                <div class="ml-3 align-self-center">
-                    <a href="{{ route('admin.merchants.index') }}">
-                        <i class="fal fa-2x fa-users text-white"></i>
-                    </a>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
 <div class="row mb-4">
     <div class="col-md-12 hourly-chart-container">
         <div id="topMerchantsThisMonthChart" style="width: 100%; height: 500px;"></div>
