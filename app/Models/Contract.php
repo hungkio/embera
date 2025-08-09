@@ -31,6 +31,7 @@ class Contract extends Model
         'shop_id',
         'merchant_id',
         'admin_id',
+        'business_registration',
         'title',
         'ceo_sign',
         'location',

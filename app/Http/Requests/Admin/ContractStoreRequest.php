@@ -36,6 +36,7 @@ class ContractStoreRequest extends FormRequest
             'note' => 'nullable|string',
             'upload' => 'nullable|file|mimes:pdf',
             'download_count' => 'nullable|integer|min:0',
+            'business_registration' => 'required|string|regex:/^([0-9]{12}|[0-9]{10}(-[0-9]{3})?)$/', // CCCD (12 số) hoặc MST (10 hoặc 13 số)
         ];
     }
 
