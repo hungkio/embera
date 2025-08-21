@@ -48,6 +48,7 @@ class ContractDataTable extends BaseDatable
             ->filterColumn('admin_id', function ($query, $keyword) {
                 $query->whereRaw("LOWER(CONCAT(admins.last_name, ' ', admins.first_name)) like ?", ["%" . strtolower($keyword) . "%"]);
             })
+            ->editColumn('business_registration', fn(Contract $c) => e($c->business_registration ?? '-'))
             ->filterColumn('bank_account_number', fn($query, $keyword) => $query->where('bank_account_number', 'like', "%$keyword%"))
             ->filterColumn('bank_account_name', fn($query, $keyword) => $query->where('bank_account_name', 'like', "%$keyword%"))
             ->editColumn('expired_time', function (Contract $c) {
@@ -112,6 +113,7 @@ class ContractDataTable extends BaseDatable
             Column::computed('shop_name')->title('Cửa hàng'),
             Column::make('customer_name')->title('Tên khách hàng'),
             Column::make('contract_number')->title('Mã hợp đồng'),
+            Column::make('business_registration')->title('GĐKKD'), // Thêm cột mới
             Column::make('sign_date')->title('Ngày ký'),
             Column::make('expired_date')->title('Ngày hết hạn'),
             Column::make('expired_time')->title('Thời hạn'),
