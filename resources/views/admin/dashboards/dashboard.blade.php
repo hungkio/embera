@@ -480,11 +480,14 @@
             applyCommonOptions(totalMerchantChart, totalMerchantOption, 'totalMerchantChart');
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
             console.log('Total Merchant chart initialized with data:', {{ $totalMerchants ?? 0 }});
 >>>>>>> 0857709 (update chart)
 =======
 >>>>>>> bb475a3 (update chart)
+=======
+>>>>>>> 848ed1c (update chart 1)
         } else {
             console.error('Total merchant chart container not found');
         }
@@ -531,11 +534,14 @@
             applyCommonOptions(totalIncomeTodayChart, totalIncomeTodayOption, 'totalIncomeTodayChart');
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
             console.log('Total Income Today chart initialized with data:', {{ $totalIncomeToday ?? 0 }});
 >>>>>>> 0857709 (update chart)
 =======
 >>>>>>> bb475a3 (update chart)
+=======
+>>>>>>> 848ed1c (update chart 1)
         } else {
             console.error('Total income today chart container not found');
         }
@@ -582,11 +588,14 @@
             applyCommonOptions(totalIncomeYesterdayChart, totalIncomeYesterdayOption, 'totalIncomeYesterdayChart');
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
             console.log('Total Income Yesterday chart initialized with data:', {{ $totalIncomeYesterday ?? 0 }});
 >>>>>>> 0857709 (update chart)
 =======
 >>>>>>> bb475a3 (update chart)
+=======
+>>>>>>> 848ed1c (update chart 1)
         } else {
             console.error('Total income yesterday chart container not found');
         }
