@@ -13,20 +13,19 @@
                                 {{ __('Thông tin hợp đồng') }}
                             </legend>
 
+                            <!-- Các trường thông tin hợp đồng giữ nguyên -->
                             <x-text-field
                                 name="contract_number"
                                 :label="__('Mã hợp đồng')"
                                 :value="$contract->contract_number ?? ''"
                                 readonly
                             />
-
                             <x-text-field
                                 name="title"
                                 :label="__('Tiêu đề')"
                                 :value="$contract->title"
                                 required
                             />
-
                             <x-text-field
                                 name="sign_date"
                                 type="date"
@@ -35,7 +34,6 @@
                                 id="sign_date"
                                 required
                             />
-
                             <x-text-field
                                 name="expired_time"
                                 type="number"
@@ -44,7 +42,6 @@
                                 id="expired_time"
                                 required
                             />
-
                             <x-text-field
                                 name="expired_date"
                                 type="date"
@@ -52,14 +49,12 @@
                                 :value="optional($contract->expired_date)->format('Y-m-d')"
                                 id="expired_date"
                             />
-
                             <x-text-field
                                 name="location"
                                 :label="__('Địa điểm')"
                                 :value="$contract->location"
                                 required
                             />
-
                             <div class="form-group row">
                                 <label for="city" class="col-lg-2 col-form-label text-lg-right">
                                     <span class="text-danger">*</span> {{ __('Tỉnh/TP') }}
@@ -79,8 +74,6 @@
                                     @enderror
                                 </div>
                             </div>
-
-
                             <div class="form-group row">
                                 <label for="status" class="col-lg-2 col-form-label text-lg-right">
                                     <span class="text-danger">*</span> {{ __('Trạng thái') }}
@@ -150,6 +143,12 @@
                                 name="customer_cccd"
                                 :label="__('CCCD khách hàng')"
                                 :value="old('customer_cccd', $contract->customer_cccd)"
+                            />
+
+                            <x-text-field
+                                name="business_registration"
+                                :label="__('Giấy đăng ký kinh doanh/CCCD')"
+                                :value="old('business_registration', $contract->business_registration ?? '')"
                                 required
                             />
 
@@ -171,6 +170,7 @@
                                 {{ __('Thông tin ngân hàng') }}
                             </legend>
 
+                            <!-- Các trường ngân hàng giữ nguyên -->
                             <div class="form-group row">
                                 <label for="bank_info"
                                        class="col-lg-2 col-form-label text-lg-right">
@@ -215,6 +215,7 @@
                                 {{ __('Thông tin bổ sung') }}
                             </legend>
 
+                            <!-- Các trường bổ sung giữ nguyên -->
                             <x-text-field
                                 name="ceo_sign"
                                 :label="__('Giám đốc ký')"
@@ -290,6 +291,7 @@
                 </div>
             </div>
         </div>
+    </div>
 </form>
 
 @push('js')
@@ -363,4 +365,3 @@
     }
 </style>
 @endpush
-

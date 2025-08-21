@@ -54,33 +54,29 @@
         if (merchantChartElement) {
             var merchantChart = echarts.init(merchantChartElement);
             var merchantOption = {
-                title: {
-                    text: 'Tăng trưởng Merchant theo tháng',
-                    left: 'center',
-                    textStyle: {fontSize: 22, fontWeight: '500', fontFamily: 'Noto Sans', color: '#333'}
-                },
+                title: { text: 'Tăng trưởng Merchant theo tháng', left: 'center', textStyle: { fontSize: 22, fontWeight: '500', fontFamily: 'Noto Sans', color: '#333' } },
                 tooltip: {
                     trigger: 'axis',
-                    axisPointer: {type: 'line', lineStyle: {color: '#6dd5ed'}},
-                    textStyle: {fontFamily: 'Noto Sans', fontSize: 12},
-                    formatter: function (params) {
+                    axisPointer: { type: 'line', lineStyle: { color: '#6dd5ed' } },
+                    textStyle: { fontFamily: 'Noto Sans', fontSize: 12 },
+                    formatter: function(params) {
                         return params[0].name + '<br/>' + params[0].value + ' Merchants';
                     }
                 },
-                grid: {left: '5%', right: '5%', bottom: '20%', containLabel: true},
+                grid: { left: '5%', right: '5%', bottom: '20%', containLabel: true },
                 xAxis: {
                     type: 'category',
                     data: @json(array_column($merchantGrowth, 'month')),
-                    axisLabel: {interval: 0, rotate: 45, fontSize: 12, fontFamily: 'Noto Sans', color: '#666'},
-                    axisLine: {lineStyle: {color: '#ccc'}}
+                    axisLabel: { interval: 0, rotate: 45, fontSize: 12, fontFamily: 'Noto Sans', color: '#666' },
+                    axisLine: { lineStyle: { color: '#ccc' } }
                 },
                 yAxis: {
                     type: 'value',
                     name: 'Số Merchant',
-                    nameTextStyle: {fontFamily: 'Noto Sans', fontSize: 14, color: '#666'},
-                    axisLabel: {fontFamily: 'Noto Sans', fontSize: 12, color: '#666'},
-                    axisLine: {lineStyle: {color: '#ccc'}},
-                    splitLine: {lineStyle: {color: '#eee'}}
+                    nameTextStyle: { fontFamily: 'Noto Sans', fontSize: 14, color: '#666' },
+                    axisLabel: { fontFamily: 'Noto Sans', fontSize: 12, color: '#666' },
+                    axisLine: { lineStyle: { color: '#ccc' } },
+                    splitLine: { lineStyle: { color: '#eee' } }
                 },
                 series: [{
                     name: 'Số Merchant',
@@ -90,15 +86,15 @@
                     lineStyle: {
                         width: 3,
                         color: new echarts.graphic.LinearGradient(0, 0, 1, 0, [
-                            {offset: 0, color: '#a8e063'},
-                            {offset: 1, color: '#56ab2f'}
+                            { offset: 0, color: '#a8e063' },
+                            { offset: 1, color: '#56ab2f' }
                         ])
                     },
                     areaStyle: {
                         opacity: 0.3,
                         color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-                            {offset: 0, color: '#a8e063'},
-                            {offset: 1, color: 'rgba(255, 255, 255, 0)'}
+                            { offset: 0, color: '#a8e063' },
+                            { offset: 1, color: 'rgba(255, 255, 255, 0)' }
                         ])
                     },
                     symbol: 'circle',
@@ -127,12 +123,12 @@
                 title: {
                     text: 'Số hợp đồng tăng trưởng theo ngày',
                     left: 'center',
-                    textStyle: {fontSize: 22, fontWeight: '500', fontFamily: 'Noto Sans', color: '#333'}
+                    textStyle: { fontSize: 22, fontWeight: '500', fontFamily: 'Noto Sans', color: '#333' }
                 },
                 tooltip: {
                     trigger: 'axis',
-                    axisPointer: {type: 'line', lineStyle: {color: '#6dd5ed'}},
-                    textStyle: {fontFamily: 'Noto Sans', fontSize: 12},
+                    axisPointer: { type: 'line', lineStyle: { color: '#6dd5ed' } },
+                    textStyle: { fontFamily: 'Noto Sans', fontSize: 12 },
                     formatter: function (params) {
                         var result = params[0].name + '<br/>';
                         params.forEach(function (item) {
@@ -161,16 +157,16 @@
                     type: 'category',
                     boundaryGap: false,
                     data: @json(array_column($contractGrowth, 'date')),
-                    axisLabel: {interval: 0, rotate: 45, fontSize: 12, fontFamily: 'Noto Sans', color: '#666'},
-                    axisLine: {lineStyle: {color: '#ccc'}}
+                    axisLabel: { interval: 0, rotate: 45, fontSize: 12, fontFamily: 'Noto Sans', color: '#666' },
+                    axisLine: { lineStyle: { color: '#ccc' } }
                 },
                 yAxis: {
                     type: 'value',
                     name: 'Số hợp đồng',
-                    nameTextStyle: {fontFamily: 'Noto Sans', fontSize: 14, color: '#666'},
-                    axisLabel: {fontFamily: 'Noto Sans', fontSize: 12, color: '#666'},
-                    axisLine: {lineStyle: {color: '#ccc'}},
-                    splitLine: {lineStyle: {color: '#eee'}}
+                    nameTextStyle: { fontFamily: 'Noto Sans', fontSize: 14, color: '#666' },
+                    axisLabel: { fontFamily: 'Noto Sans', fontSize: 12, color: '#666' },
+                    axisLine: { lineStyle: { color: '#ccc' } },
+                    splitLine: { lineStyle: { color: '#eee' } }
                 },
                 series: [
                     {
@@ -181,15 +177,15 @@
                         lineStyle: {
                             width: 3,
                             color: new echarts.graphic.LinearGradient(0, 0, 1, 0, [
-                                {offset: 0, color: '#a8e063'},
-                                {offset: 1, color: '#56ab2f'}
+                                { offset: 0, color: '#a8e063' },
+                                { offset: 1, color: '#56ab2f' }
                             ])
                         },
                         areaStyle: {
                             opacity: 0.4,
                             color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-                                {offset: 0, color: '#a8e063'},
-                                {offset: 1, color: 'rgba(255, 255, 255, 0)'}
+                                { offset: 0, color: '#a8e063' },
+                                { offset: 1, color: 'rgba(255, 255, 255, 0)' }
                             ])
                         },
                         symbol: 'circle',
@@ -202,8 +198,8 @@
                         emphasis: {
                             itemStyle: {
                                 color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-                                    {offset: 0, color: '#a8e063'},
-                                    {offset: 1, color: '#56ab2f'}
+                                    { offset: 0, color: '#a8e063' },
+                                    { offset: 1, color: '#56ab2f' }
                                 ]),
                                 borderColor: '#fff',
                                 borderWidth: 3
@@ -218,15 +214,15 @@
                         lineStyle: {
                             width: 3,
                             color: new echarts.graphic.LinearGradient(0, 0, 1, 0, [
-                                {offset: 0, color: '#ff6a00'},
-                                {offset: 1, color: '#ff9e40'}
+                                { offset: 0, color: '#ff6a00' },
+                                { offset: 1, color: '#ff9e40' }
                             ])
                         },
                         areaStyle: {
                             opacity: 0.4,
                             color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-                                {offset: 0, color: '#ff6a00'},
-                                {offset: 1, color: 'rgba(255, 255, 255, 0)'}
+                                { offset: 0, color: '#ff6a00' },
+                                { offset: 1, color: 'rgba(255, 255, 255, 0)' }
                             ])
                         },
                         symbol: 'circle',
@@ -239,8 +235,8 @@
                         emphasis: {
                             itemStyle: {
                                 color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-                                    {offset: 0, color: '#ff6a00'},
-                                    {offset: 1, color: '#ff9e40'}
+                                    { offset: 0, color: '#ff6a00' },
+                                    { offset: 1, color: '#ff9e40' }
                                 ]),
                                 borderColor: '#fff',
                                 borderWidth: 3
@@ -255,15 +251,15 @@
                         lineStyle: {
                             width: 3,
                             color: new echarts.graphic.LinearGradient(0, 0, 1, 0, [
-                                {offset: 0, color: '#00c6ff'},
-                                {offset: 1, color: '#0072ff'}
+                                { offset: 0, color: '#00c6ff' },
+                                { offset: 1, color: '#0072ff' }
                             ])
                         },
                         areaStyle: {
                             opacity: 0.4,
                             color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-                                {offset: 0, color: '#00c6ff'},
-                                {offset: 1, color: 'rgba(255, 255, 255, 0)'}
+                                { offset: 0, color: '#00c6ff' },
+                                { offset: 1, color: 'rgba(255, 255, 255, 0)' }
                             ])
                         },
                         symbol: 'circle',
@@ -276,8 +272,8 @@
                         emphasis: {
                             itemStyle: {
                                 color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-                                    {offset: 0, color: '#00c6ff'},
-                                    {offset: 1, color: '#0072ff'}
+                                    { offset: 0, color: '#00c6ff' },
+                                    { offset: 1, color: '#0072ff' }
                                 ]),
                                 borderColor: '#fff',
                                 borderWidth: 3
@@ -297,51 +293,47 @@
         if (userChartElement) {
             var userChart = echarts.init(userChartElement);
             var userOption = {
-                title: {
-                    text: 'Tăng trưởng người dùng theo tháng',
-                    left: 'center',
-                    textStyle: {fontSize: 22, fontWeight: '500', fontFamily: 'Noto Sans', color: '#333'}
-                },
+                title: { text: 'Tăng trưởng người dùng theo tháng', left: 'center', textStyle: { fontSize: 22, fontWeight: '500', fontFamily: 'Noto Sans', color: '#333' } },
                 tooltip: {
                     trigger: 'axis',
-                    axisPointer: {type: 'line', lineStyle: {color: '#f7971e'}},
-                    textStyle: {fontFamily: 'Noto Sans', fontSize: 12},
-                    formatter: function (params) {
+                    axisPointer: { type: 'line', lineStyle: { color: '#f7971e' } },
+                    textStyle: { fontFamily: 'Noto Sans', fontSize: 12 },
+                    formatter: function(params) {
                         return params[0].name + '<br/>' + (params[0].value || 0) + ' Người dùng';
                     }
                 },
-                grid: {left: '5%', right: '5%', bottom: '20%', containLabel: true},
+                grid: { left: '5%', right: '5%', bottom: '20%', containLabel: true },
                 xAxis: {
                     type: 'category',
-                    data: @json(array_column($userGrowth, 'month') ? : []),
-                    axisLabel: {interval: 0, rotate: 45, fontSize: 12, fontFamily: 'Noto Sans', color: '#666'},
-                    axisLine: {lineStyle: {color: '#ccc'}}
+                    data: @json(array_column($userGrowth, 'month') ?: []),
+                    axisLabel: { interval: 0, rotate: 45, fontSize: 12, fontFamily: 'Noto Sans', color: '#666' },
+                    axisLine: { lineStyle: { color: '#ccc' } }
                 },
                 yAxis: {
                     type: 'value',
                     name: 'Số người dùng',
-                    nameTextStyle: {fontFamily: 'Noto Sans', fontSize: 14, color: '#666'},
-                    axisLabel: {fontFamily: 'Noto Sans', fontSize: 12, color: '#666'},
-                    axisLine: {lineStyle: {color: '#ccc'}},
-                    splitLine: {lineStyle: {color: '#eee'}}
+                    nameTextStyle: { fontFamily: 'Noto Sans', fontSize: 14, color: '#666' },
+                    axisLabel: { fontFamily: 'Noto Sans', fontSize: 12, color: '#666' },
+                    axisLine: { lineStyle: { color: '#ccc' } },
+                    splitLine: { lineStyle: { color: '#eee' } }
                 },
                 series: [{
                     name: 'Số người dùng',
                     type: 'line',
                     smooth: true,
-                    data: @json(array_column($userGrowth, 'user_count') ? : []),
+                    data: @json(array_column($userGrowth, 'user_count') ?: []),
                     lineStyle: {
                         width: 3,
                         color: new echarts.graphic.LinearGradient(0, 0, 1, 0, [
-                            {offset: 0, color: '#8E54E9'},
-                            {offset: 1, color: '#4776E6'}
+                            { offset: 0, color: '#8E54E9' },
+                            { offset: 1, color: '#4776E6' }
                         ])
                     },
                     areaStyle: {
                         opacity: 0.3,
                         color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-                            {offset: 0, color: '#8E54E9'},
-                            {offset: 1, color: 'rgba(255, 255, 255, 0)'}
+                            { offset: 0, color: '#8E54E9' },
+                            { offset: 1, color: 'rgba(255, 255, 255, 0)' }
                         ])
                     },
                     symbol: 'circle',
@@ -367,15 +359,10 @@
         if (totalMerchantChartElement) {
             var totalMerchantChart = echarts.init(totalMerchantChartElement);
             var totalMerchantOption = {
-                title: {
-                    text: 'Tổng số lượng Merchant',
-                    left: 'center',
-                    top: 20,
-                    textStyle: {fontSize: 18, fontWeight: '500', fontFamily: 'Noto Sans', color: '#333'}
-                },
+                title: { text: 'Tổng số lượng Merchant', left: 'center', top: 20, textStyle: { fontSize: 18, fontWeight: '500', fontFamily: 'Noto Sans', color: '#333' } },
                 tooltip: {
                     trigger: 'item',
-                    textStyle: {fontFamily: 'Noto Sans', fontSize: 12},
+                    textStyle: { fontFamily: 'Noto Sans', fontSize: 12 },
                     formatter: '{a} <br/>{b}: {c}'
                 },
                 series: [{
@@ -392,11 +379,8 @@
                         fontSize: 18,
                         fontWeight: 'bold'
                     },
-                    emphasis: {label: {show: true, fontSize: 20, fontWeight: 'bold', fontFamily: 'Noto Sans'}},
-                    data: [{value: {{$totalMerchants ?? 0
-                }
-            }, name: 'Tổng Merchant'
-        }],
+                    emphasis: { label: { show: true, fontSize: 20, fontWeight: 'bold', fontFamily: 'Noto Sans' } },
+                    data: [{ value: {{ $totalMerchants ?? 0 }}, name: 'Tổng Merchant' }],
             itemStyle: {
                 color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
                     {offset: 0, color: '#39f3f3'},
@@ -404,8 +388,7 @@
                 ])
             }
         }]
-        }
-            ;
+        };
             totalMerchantChart.setOption(totalMerchantOption);
         } else {
             console.error('Total merchant chart container not found');
@@ -416,20 +399,12 @@
         if (totalIncomeTodayChartElement) {
             var totalIncomeTodayChart = echarts.init(totalIncomeTodayChartElement);
             var totalIncomeTodayOption = {
-                title: {
-                    text: 'Tổng thu nhập hôm nay',
-                    left: 'center',
-                    top: 20,
-                    textStyle: {fontSize: 18, fontWeight: '500', fontFamily: 'Noto Sans', color: '#333'}
-                },
+                title: { text: 'Tổng thu nhập hôm nay', left: 'center', top: 20, textStyle: { fontSize: 18, fontWeight: '500', fontFamily: 'Noto Sans', color: '#333' } },
                 tooltip: {
                     trigger: 'item',
-                    textStyle: {fontFamily: 'Noto Sans', fontSize: 12},
-                    formatter: function (params) {
-                        return params.name + '<br/>' + params.value.toLocaleString('vi-VN', {
-                            style: 'currency',
-                            currency: 'VND'
-                        });
+                    textStyle: { fontFamily: 'Noto Sans', fontSize: 12 },
+                    formatter: function(params) {
+                        return params.name + '<br/>' + params.value.toLocaleString('vi-VN', { style: 'currency', currency: 'VND' });
                     }
                 },
                 series: [{
@@ -441,21 +416,15 @@
                     label: {
                         show: true,
                         position: 'center',
-                        formatter: function (params) {
-                            return params.name + '\n' + params.value.toLocaleString('vi-VN', {
-                                style: 'currency',
-                                currency: 'VND'
-                            });
+                        formatter: function(params) {
+                            return params.name + '\n' + params.value.toLocaleString('vi-VN', { style: 'currency', currency: 'VND' });
                         },
                         fontFamily: 'Noto Sans',
                         fontSize: 18,
                         fontWeight: 'bold'
                     },
-                    emphasis: {label: {show: true, fontSize: 20, fontWeight: 'bold', fontFamily: 'Noto Sans'}},
-                    data: [{value: {{$totalIncomeToday ?? 0
-                }
-            }, name: 'Hôm nay'
-        }],
+                    emphasis: { label: { show: true, fontSize: 20, fontWeight: 'bold', fontFamily: 'Noto Sans' } },
+                    data: [{ value: {{ $totalIncomeToday ?? 0 }}, name: 'Hôm nay' }],
             itemStyle: {
                 color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
                     {offset: 0, color: '#00c6ff'},
@@ -463,8 +432,7 @@
                 ])
             }
         }]
-        }
-            ;
+        };
             totalIncomeTodayChart.setOption(totalIncomeTodayOption);
         } else {
             console.error('Total income today chart container not found');
@@ -475,20 +443,12 @@
         if (totalIncomeYesterdayChartElement) {
             var totalIncomeYesterdayChart = echarts.init(totalIncomeYesterdayChartElement);
             var totalIncomeYesterdayOption = {
-                title: {
-                    text: 'Tổng thu nhập hôm qua',
-                    left: 'center',
-                    top: 20,
-                    textStyle: {fontSize: 18, fontWeight: '500', fontFamily: 'Noto Sans', color: '#333'}
-                },
+                title: { text: 'Tổng thu nhập hôm qua', left: 'center', top: 20, textStyle: { fontSize: 18, fontWeight: '500', fontFamily: 'Noto Sans', color: '#333' } },
                 tooltip: {
                     trigger: 'item',
-                    textStyle: {fontFamily: 'Noto Sans', fontSize: 12},
-                    formatter: function (params) {
-                        return params.name + '<br/>' + params.value.toLocaleString('vi-VN', {
-                            style: 'currency',
-                            currency: 'VND'
-                        });
+                    textStyle: { fontFamily: 'Noto Sans', fontSize: 12 },
+                    formatter: function(params) {
+                        return params.name + '<br/>' + params.value.toLocaleString('vi-VN', { style: 'currency', currency: 'VND' });
                     }
                 },
                 series: [{
@@ -500,21 +460,15 @@
                     label: {
                         show: true,
                         position: 'center',
-                        formatter: function (params) {
-                            return params.name + '\n' + params.value.toLocaleString('vi-VN', {
-                                style: 'currency',
-                                currency: 'VND'
-                            });
+                        formatter: function(params) {
+                            return params.name + '\n' + params.value.toLocaleString('vi-VN', { style: 'currency', currency: 'VND' });
                         },
                         fontFamily: 'Noto Sans',
                         fontSize: 18,
                         fontWeight: 'bold'
                     },
-                    emphasis: {label: {show: true, fontSize: 20, fontWeight: 'bold', fontFamily: 'Noto Sans'}},
-                    data: [{value: {{$totalIncomeYesterday ?? 0
-                }
-            }, name: 'Hôm qua'
-        }],
+                    emphasis: { label: { show: true, fontSize: 20, fontWeight: 'bold', fontFamily: 'Noto Sans' } },
+                    data: [{ value: {{ $totalIncomeYesterday ?? 0 }}, name: 'Hôm qua' }],
             itemStyle: {
                 color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
                     {offset: 0, color: '#f7971e'},
@@ -522,8 +476,7 @@
                 ])
             }
         }]
-        }
-            ;
+        };
             totalIncomeYesterdayChart.setOption(totalIncomeYesterdayOption);
         } else {
             console.error('Total income yesterday chart container not found');
@@ -534,28 +487,24 @@
         if (orderPerHourChartElement) {
             var orderPerHourChart = echarts.init(orderPerHourChartElement);
             var orderPerHourOption = {
-                title: {
-                    text: 'Đơn hàng trong 24h ngày hôm qua',
-                    left: 'center',
-                    textStyle: {fontSize: 22, fontWeight: '500', fontFamily: 'Noto Sans', color: '#333'}
-                },
+                title: { text: 'Đơn hàng trong 24h ngày hôm qua', left: 'center', textStyle: { fontSize: 22, fontWeight: '500', fontFamily: 'Noto Sans', color: '#333' } },
                 tooltip: {
                     trigger: 'axis',
-                    textStyle: {fontFamily: 'Noto Sans', fontSize: 12}
+                    textStyle: { fontFamily: 'Noto Sans', fontSize: 12 }
                 },
                 xAxis: {
                     type: 'category',
                     data: ['0h', '1h', '2h', '3h', '4h', '5h', '6h', '7h', '8h', '9h', '10h', '11h', '12h', '13h', '14h', '15h', '16h', '17h', '18h', '19h', '20h', '21h', '22h', '23h'],
                     boundaryGap: false,
-                    axisLabel: {interval: 0, rotate: 45, fontSize: 12, fontFamily: 'Noto Sans', color: '#666'}
+                    axisLabel: { interval: 0, rotate: 45, fontSize: 12, fontFamily: 'Noto Sans', color: '#666' }
                 },
                 yAxis: {
                     type: 'value',
                     name: 'Số đơn hàng',
-                    nameTextStyle: {fontFamily: 'Noto Sans', fontSize: 14, color: '#666'},
-                    axisLabel: {fontFamily: 'Noto Sans', fontSize: 12, color: '#666'},
-                    axisLine: {lineStyle: {color: '#ccc'}},
-                    splitLine: {lineStyle: {color: '#eee'}}
+                    nameTextStyle: { fontFamily: 'Noto Sans', fontSize: 14, color: '#666' },
+                    axisLabel: { fontFamily: 'Noto Sans', fontSize: 12, color: '#666' },
+                    axisLine: { lineStyle: { color: '#ccc' } },
+                    splitLine: { lineStyle: { color: '#eee' } }
                 },
                 series: [{
                     name: 'Số đơn hàng',
@@ -594,19 +543,16 @@
                 title: {
                     text: 'Top 5 Merchant Doanh Thu Theo Tháng',
                     left: 'center',
-                    textStyle: {fontSize: 22, fontWeight: '500', fontFamily: 'Noto Sans', color: '#333'}
+                    textStyle: { fontSize: 22, fontWeight: '500', fontFamily: 'Noto Sans', color: '#333' }
                 },
                 tooltip: {
                     trigger: 'axis',
-                    axisPointer: {type: 'shadow'},
-                    textStyle: {fontFamily: 'Noto Sans', fontSize: 12},
-                    formatter: function (params) {
+                    axisPointer: { type: 'shadow' },
+                    textStyle: { fontFamily: 'Noto Sans', fontSize: 12 },
+                    formatter: function(params) {
                         var result = params[0].name + '<br/>';
-                        params.forEach(function (item) {
-                            result += item.seriesName + ': ' + item.value.toLocaleString('vi-VN', {
-                                style: 'currency',
-                                currency: 'VND'
-                            }) + '<br/>';
+                        params.forEach(function(item) {
+                            result += item.seriesName + ': ' + item.value.toLocaleString('vi-VN', { style: 'currency', currency: 'VND' }) + '<br/>';
                         });
                         return result;
                     }
@@ -614,18 +560,18 @@
                 legend: {
                     data: ['Tháng này', 'Tháng trước'],
                     top: 'bottom',
-                    textStyle: {fontFamily: 'Noto Sans', fontSize: 12}
+                    textStyle: { fontFamily: 'Noto Sans', fontSize: 12 }
                 },
-                grid: {left: '5%', right: '5%', bottom: '20%', containLabel: true},
+                grid: { left: '5%', right: '5%', bottom: '20%', containLabel: true },
                 xAxis: {
                     type: 'value',
                     name: 'Doanh Thu (VND)',
                     nameLocation: 'center',
                     nameGap: 35,
-                    nameTextStyle: {fontFamily: 'Noto Sans', fontSize: 14, color: '#666'},
+                    nameTextStyle: { fontFamily: 'Noto Sans', fontSize: 14, color: '#666' },
                     axisLabel: {
-                        formatter: function (value) {
-                            return value.toLocaleString('vi-VN', {style: 'currency', currency: 'VND'});
+                        formatter: function(value) {
+                            return value.toLocaleString('vi-VN', { style: 'currency', currency: 'VND' });
                         },
                         fontFamily: 'Noto Sans',
                         fontSize: 12,
@@ -641,7 +587,7 @@
                     type: 'category',
                     inverse: true,
                     data: @json(array_column($topMerchantsThisMonth, 'name')),
-                    axisLabel: {interval: 0, rotate: 0, fontSize: 12, fontFamily: 'Noto Sans', color: '#666'}
+                    axisLabel: { interval: 0, rotate: 0, fontSize: 12, fontFamily: 'Noto Sans', color: '#666' }
                 },
                 series: [
                     {
@@ -662,8 +608,8 @@
                             fontFamily: 'Noto Sans',
                             fontWeight: 'bold',
                             fontSize: 12,
-                            formatter: function (params) {
-                                return params.value.toLocaleString('vi-VN', {style: 'currency', currency: 'VND'});
+                            formatter: function(params) {
+                                return params.value.toLocaleString('vi-VN', { style: 'currency', currency: 'VND' });
                             }
                         }
                     },
@@ -685,8 +631,8 @@
                             fontFamily: 'Noto Sans',
                             fontWeight: 'bold',
                             fontSize: 12,
-                            formatter: function (params) {
-                                return params.value.toLocaleString('vi-VN', {style: 'currency', currency: 'VND'});
+                            formatter: function(params) {
+                                return params.value.toLocaleString('vi-VN', { style: 'currency', currency: 'VND' });
                             }
                         }
                     }
@@ -703,19 +649,12 @@
         if (revenueByShopTypeChartElement) {
             var revenueByShopTypeChart = echarts.init(revenueByShopTypeChartElement);
             var revenueByShopTypeOption = {
-                title: {
-                    text: 'Phân bố Doanh thu theo Shop Type',
-                    left: 'center',
-                    textStyle: {fontSize: 22, fontWeight: '500', fontFamily: 'Noto Sans', color: '#333'}
-                },
+                title: { text: 'Phân bố Doanh thu theo Shop Type', left: 'center', textStyle: { fontSize: 22, fontWeight: '500', fontFamily: 'Noto Sans', color: '#333' } },
                 tooltip: {
                     trigger: 'item',
-                    textStyle: {fontFamily: 'Noto Sans', fontSize: 12},
-                    formatter: function (params) {
-                        return params.name + '<br/>' + params.value.toLocaleString('vi-VN', {
-                            style: 'currency',
-                            currency: 'VND'
-                        });
+                    textStyle: { fontFamily: 'Noto Sans', fontSize: 12 },
+                    formatter: function(params) {
+                        return params.name + '<br/>' + params.value.toLocaleString('vi-VN', { style: 'currency', currency: 'VND' });
                     }
                 },
                 series: [{
@@ -732,11 +671,11 @@
                         fontWeight: 'bold'
                     },
                     emphasis: {
-                        label: {show: true, fontSize: 14, fontWeight: 'bold', fontFamily: 'Noto Sans'}
+                        label: { show: true, fontSize: 14, fontWeight: 'bold', fontFamily: 'Noto Sans' }
                     },
                     data: @json($revenueByShopType),
                     itemStyle: {
-                        color: function (params) {
+                        color: function(params) {
                             var colorList = [
                                 ['#00c6ff', '#0072ff'],
                                 ['#f7971e', '#ffd200'],
@@ -769,20 +708,12 @@
         if (avgRevenuePerOrderChartElement) {
             var avgRevenuePerOrderChart = echarts.init(avgRevenuePerOrderChartElement);
             var avgRevenuePerOrderOption = {
-                title: {
-                    text: 'Bình quân doanh thu/ đơn hàng',
-                    left: 'center',
-                    top: 20,
-                    textStyle: {fontSize: 18, fontWeight: '500', fontFamily: 'Noto Sans', color: '#333'}
-                },
+                title: { text: 'Bình quân doanh thu/ đơn hàng', left: 'center', top: 20, textStyle: { fontSize: 18, fontWeight: '500', fontFamily: 'Noto Sans', color: '#333' } },
                 tooltip: {
                     trigger: 'item',
-                    textStyle: {fontFamily: 'Noto Sans', fontSize: 12},
-                    formatter: function (params) {
-                        return params.name + '<br/>' + params.value.toLocaleString('vi-VN', {
-                            style: 'currency',
-                            currency: 'VND'
-                        });
+                    textStyle: { fontFamily: 'Noto Sans', fontSize: 12 },
+                    formatter: function(params) {
+                        return params.name + '<br/>' + params.value.toLocaleString('vi-VN', { style: 'currency', currency: 'VND' });
                     }
                 },
                 series: [{
@@ -794,18 +725,15 @@
                     label: {
                         show: true,
                         position: 'center',
-                        formatter: function (params) {
-                            return params.name + '\n' + params.value.toLocaleString('vi-VN', {
-                                style: 'currency',
-                                currency: 'VND'
-                            });
+                        formatter: function(params) {
+                            return params.name + '\n' + params.value.toLocaleString('vi-VN', { style: 'currency', currency: 'VND' });
                         },
                         fontFamily: 'Noto Sans',
                         fontSize: 23,
                         fontWeight: 'bold',
                         lineHeight: 10
                     },
-                    emphasis: {label: {show: true, fontSize: 20, fontWeight: 'bold', fontFamily: 'Noto Sans'}},
+                    emphasis: { label: { show: true, fontSize: 20, fontWeight: 'bold', fontFamily: 'Noto Sans' } },
                     data: @json($avgRevenuePerOrder),
                     itemStyle: {
                         color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
@@ -842,7 +770,7 @@
                 },
                 tooltip: {
                     trigger: 'axis',
-                    axisPointer: {type: 'shadow'},
+                    axisPointer: { type: 'shadow' },
                     formatter: function (params) {
                         var result = params[0].name + '<br/>';
                         params.forEach(function (item) {
@@ -867,7 +795,7 @@
                         fontFamily: 'Noto Sans',
                         color: '#666'
                     },
-                    axisLine: {lineStyle: {color: '#ccc'}}
+                    axisLine: { lineStyle: { color: '#ccc' } }
                 },
                 yAxis: {
                     type: 'value',
@@ -882,8 +810,8 @@
                         fontSize: 12,
                         color: '#666'
                     },
-                    axisLine: {lineStyle: {color: '#ccc'}},
-                    splitLine: {lineStyle: {color: '#eee'}}
+                    axisLine: { lineStyle: { color: '#ccc' } },
+                    splitLine: { lineStyle: { color: '#eee' } }
                 },
                 series: [
                     {
@@ -893,8 +821,8 @@
                         barWidth: '50%',
                         itemStyle: {
                             color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-                                {offset: 0, color: '#00c6ff'},
-                                {offset: 1, color: '#0072ff'}
+                                { offset: 0, color: '#00c6ff' },
+                                { offset: 1, color: '#0072ff' }
                             ])
                         },
                         label: {
@@ -932,14 +860,10 @@
         if (shopsByShopTypeChartElement) {
             var shopsByShopTypeChart = echarts.init(shopsByShopTypeChartElement);
             var shopsByShopTypeOption = {
-                title: {
-                    text: 'Số lượng Shop theo Shop Type',
-                    left: 'center',
-                    textStyle: {fontSize: 22, fontWeight: '500', fontFamily: 'Noto Sans', color: '#333'}
-                },
+                title: { text: 'Số lượng Shop theo Shop Type', left: 'center', textStyle: { fontSize: 22, fontWeight: '500', fontFamily: 'Noto Sans', color: '#333' } },
                 tooltip: {
                     trigger: 'item',
-                    textStyle: {fontFamily: 'Noto Sans', fontSize: 12},
+                    textStyle: { fontFamily: 'Noto Sans', fontSize: 12 },
                     formatter: '{a} <br/>{b}: {c} (shops)'
                 },
                 series: [{
@@ -956,11 +880,11 @@
                         fontWeight: 'bold'
                     },
                     emphasis: {
-                        label: {show: true, fontSize: 14, fontWeight: 'bold', fontFamily: 'Noto Sans'}
+                        label: { show: true, fontSize: 14, fontWeight: 'bold', fontFamily: 'Noto Sans' }
                     },
                     data: @json($shopsByShopType),
                     itemStyle: {
-                        color: function (params) {
+                        color: function(params) {
                             var colorList = [
                                 ['#00c6ff', '#0072ff'],
                                 ['#f7971e', '#ffd200'],
@@ -992,7 +916,7 @@
         }
 
         // Make charts responsive
-        window.addEventListener('resize', function () {
+        window.addEventListener('resize', function() {
             if (merchantChartElement) merchantChart.resize();
             if (userChartElement) userChart.resize();
             if (totalMerchantChartElement) totalMerchantChart.resize();
@@ -1096,8 +1020,7 @@
     <div class="col-md-6">
         <div class="card ajax-card" data-url="{{ route('admin.most-visited-pages') }}">
             <div class="card-header header-elements-inline">
-                <h6 class="card-title"><i class="far fa-bullseye-pointer"></i> {{ __('Trang truy cập nhiều nhất') }}
-                </h6>
+                <h6 class="card-title"><i class="far fa-bullseye-pointer"></i> {{ __('Trang truy cập nhiều nhất') }}</h6>
             </div>
             <div class="card-body"></div>
         </div>
