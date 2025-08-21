@@ -479,9 +479,12 @@
             };
             applyCommonOptions(totalMerchantChart, totalMerchantOption, 'totalMerchantChart');
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
             console.log('Total Merchant chart initialized with data:', {{ $totalMerchants ?? 0 }});
 >>>>>>> 0857709 (update chart)
+=======
+>>>>>>> bb475a3 (update chart)
         } else {
             console.error('Total merchant chart container not found');
         }
@@ -527,9 +530,12 @@
             };
             applyCommonOptions(totalIncomeTodayChart, totalIncomeTodayOption, 'totalIncomeTodayChart');
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
             console.log('Total Income Today chart initialized with data:', {{ $totalIncomeToday ?? 0 }});
 >>>>>>> 0857709 (update chart)
+=======
+>>>>>>> bb475a3 (update chart)
         } else {
             console.error('Total income today chart container not found');
         }
@@ -575,9 +581,12 @@
             };
             applyCommonOptions(totalIncomeYesterdayChart, totalIncomeYesterdayOption, 'totalIncomeYesterdayChart');
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
             console.log('Total Income Yesterday chart initialized with data:', {{ $totalIncomeYesterday ?? 0 }});
 >>>>>>> 0857709 (update chart)
+=======
+>>>>>>> bb475a3 (update chart)
         } else {
             console.error('Total income yesterday chart container not found');
         }
@@ -782,15 +791,12 @@
                                 ['#FF512F', '#DD2476'],
                                 ['#56ab2f', '#a8e063'],
                                 ['#fc00ff', '#00dbde'],
-                                ['#0052D4', '#6FB1FC'],
-                                ['#a8e063', '#56ab2f'],
-                                ['#ff9e40', '#ff6a00'],
-                                ['#0072ff', '#00c6ff']
+                                ['#0052D4', '#6FB1FC']
                             ];
                             var gradient = colorList[params.dataIndex % colorList.length];
                             return new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-                                { offset: 0, color: gradient[0] },
-                                { offset: 1, color: gradient[1] }
+                                {offset: 0, color: gradient[0]},
+                                {offset: 1, color: gradient[1]}
                             ]);
                         }
                     }
