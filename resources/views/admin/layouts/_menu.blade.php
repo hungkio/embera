@@ -13,13 +13,11 @@
     </div>
     <!-- /sidebar mobile toggler -->
 
-
     <!-- Sidebar content -->
     <div class="sidebar-content">
 
         <!-- User menu -->
         <div class="sidebar-user-material">
-
             <div class="collapse" id="user-nav">
                 <ul class="nav nav-sidebar">
                     <li class="nav-item">
@@ -51,7 +49,7 @@
 
         <!-- Main navigation -->
         <div class="card card-sidebar-mobile">
-            <ul class="nav nav-sidebar" data-nav-type="accordion">
+            <ul class="nav nav-sidebar">
 
                 <!-- Main -->
                 <li class="nav-item-header">
@@ -66,82 +64,23 @@
                 <li class="nav-item">
                     <a href="{{ route('admin.dashboard') }}" class="nav-link">
                         <i class="fal fa-home"></i>
-                        <span>
-                            {{ __('Trang chủ') }}
-                        </span>
+                        <span>{{ __('Trang chủ') }}</span>
                     </a>
                 </li>
-{{--                @can('taxonomies.view')--}}
-{{--                    <li class="nav-item">--}}
-{{--                        <a href="{{ route('admin.taxonomies.index') }}"--}}
-{{--                           class="nav-link {{ request()->routeIs('admin.taxonomies*') ? 'active' : null }}">--}}
-{{--                            <i class="fal fa-folder-tree"></i>--}}
-{{--                            <span>{{ __('Danh mục') }}</span></a>--}}
-{{--                    </li>--}}
-{{--                @endcan--}}
-
-
-{{--                @can('posts.view')--}}
-{{--                    <li class="nav-item">--}}
-{{--                        <a href="{{ route('admin.posts.index') }}"--}}
-{{--                           class="nav-link {{ request()->routeIs('admin.posts*') ? 'active' : null }}">--}}
-{{--                            <i class="fal fa-edit"></i>--}}
-{{--                            <span>--}}
-{{--                            {{ __("Bài viết") }}--}}
-{{--                        </span>--}}
-{{--                        </a>--}}
-{{--                    </li>--}}
-{{--                @endcan--}}
-{{--                @can('comments.view')--}}
-{{--                    <li class="nav-item">--}}
-{{--                        <a href="{{ route('admin.comments') }}"--}}
-{{--                           class="nav-link {{ request()->routeIs('admin.comments*') ? 'active' : null }}">--}}
-{{--                            <i class="fal fa-comment"></i>--}}
-{{--                            <span>{{ __('Bình luận') }}</span></a>--}}
-{{--                    </li>--}}
-{{--                @endcan--}}
-
-{{--                @can('pages.view')--}}
-{{--                    <li class="nav-item">--}}
-{{--                        <a href="{{ route('admin.pages.index') }}"--}}
-{{--                           class="nav-link @if(request()->routeIs('admin.pages*'))active @endif">--}}
-{{--                            <i class="fal fa-file"></i>--}}
-{{--                            <span>--}}
-{{--                             {{ __("Trang") }}--}}
-{{--                    </span>--}}
-{{--                        </a>--}}
-{{--                    </li>--}}
-{{--                @endcan--}}
-
-
-
-{{--                @can('banners.view')--}}
-{{--                    @if(setting('store_banner', \App\Domain\Banner\Models\Banner::SHOW) == \App\Domain\Banner\Models\Banner::SHOW)--}}
-{{--                        <li class="nav-item">--}}
-{{--                            <a href="{{ route('admin.banners.index') }}"--}}
-{{--                               class="nav-link @if(request()->routeIs('admin.banners*'))active @endif">--}}
-{{--                                <i class="fal fa-image"></i>--}}
-{{--                                <span> {{ __("Quảng Cáo") }} </span>--}}
-{{--                            </a>--}}
-{{--                        </li>--}}
-{{--                    @endif--}}
-{{--                @endcan--}}
                 <li class="nav-item">
                     <a href="{{ route('admin.orders.index') }}"
                        class="nav-link @if(request()->routeIs('admin.orders*'))active @endif">
                         <i class="fal fa-image"></i>
-                        <span> {{ __("Đơn hàng") }} </span>
+                        <span>{{ __("Đơn hàng") }}</span>
                     </a>
                 </li>
-
                 <li class="nav-item">
                     <a href="{{ route('admin.contracts.index') }}"
                        class="nav-link @if(request()->routeIs('admin.contracts*'))active @endif">
                         <i class="fal fa-file-contract"></i>
-                        <span> {{ __("Hợp Đồng") }} </span>
+                        <span>{{ __("Hợp Đồng") }}</span>
                     </a>
                 </li>
-
                 <li class="nav-item">
                     <a href="{{ route('admin.merchants.index') }}"
                        class="nav-link @if(request()->routeIs('admin.merchants.index'))active @endif">
@@ -149,95 +88,55 @@
                         <span>{{ __("Merchant") }}</span>
                     </a>
                 </li>
-
                 <li class="nav-item">
                     <a href="{{ route('admin.shops.index') }}"
-                       class="nav-link @if(request()->routeIs('admin.shops*'))active @endif">
+                       class="nav-link @if(request()->routeIs('admin.shops.index'))active @endif"> <!-- Changed to exact match -->
                         <i class="fal fa-store"></i>
                         <span>{{ __("Shop") }}</span>
                     </a>
                 </li>
-                {{--                @canany(['contacts.view', 'log-search.view', 'subscribe-email.view', 'mail-settings.view'])--}}
-{{--                <li class="nav-item-header">--}}
-{{--                    <div class="text-uppercase font-size-xs line-height-xs">{{ __('Khách Hàng') }}</div>--}}
-{{--                    <i class="fal fa-horizontal-rule" title="{{ __('Khách Hàng') }}"></i></li>--}}
-{{--                @endcan--}}
-{{--                <!-- Customer -->--}}
-{{--                @can('contacts.view')--}}
-{{--                <li class="nav-item">--}}
-{{--                    <a href="{{ route('admin.contacts.index') }}"--}}
-{{--                       class="nav-link @if(request()->routeIs('admin.contacts.index'))active @endif">--}}
-{{--                        <i class="fal fa-phone"></i>--}}
-{{--                        <span>--}}
-{{--                         {{ __("Liên hệ") }}--}}
-{{--                    </span>--}}
-{{--                    </a>--}}
-{{--                </li>--}}
-{{--                @endcan--}}
-{{--                @canany(['subscribe-email.view', 'mail-settings.view'])--}}
-{{--                <li class="nav-item nav-item-submenu--}}
-{{--{{ request()->routeIs('admin.mail-settings*') || request()->routeIs('admin.contacts.subscribe_email') || request()->routeIs('admin.subs_group*') ? 'nav-item-expanded nav-item-open' : null }}">--}}
-{{--                    <a href="#" class="nav-link"><i class="fal fa-mail-bulk"></i> <span>{{ __('Email Marketing') }}</span></a>--}}
-{{--                    <ul class="nav nav-group-sub" data-submenu-title="{{ __('Email Marketing') }}">--}}
-{{--                        @can('subscribe-email.view')--}}
-{{--                        <li class="nav-item">--}}
-{{--                            <a href="{{ route('admin.contacts.subscribe_email') }}" class="nav-link @if(request()->routeIs('admin.contacts.subscribe_email'))active @endif">--}}
-{{--                                <span>--}}
-{{--                                     {{ __("Email list") }}--}}
-{{--                                </span>--}}
-{{--                            </a>--}}
-{{--                        </li>--}}
-{{--                        @endcan--}}
-{{--                        @can('mail-settings.view')--}}
-{{--                                <li class="nav-item">--}}
-{{--                                    <a href="{{ route('admin.subs_group.index') }}"--}}
-{{--                                       class="nav-link @if(request()->routeIs('admin.subs_group*'))active @endif">--}}
-{{--                                <span>--}}
-{{--                                    {{ __('Nhóm email') }}--}}
-{{--                                </span>--}}
-{{--                                    </a>--}}
-{{--                                </li>--}}
-{{--                            @endcan--}}
-{{--                        @can('mail-settings.view')--}}
-{{--                        <li class="nav-item">--}}
-{{--                            <a href="{{ route('admin.mail-settings.index', ['tab' => 'mail-template']) }}"--}}
-{{--                               class="nav-link @if(request()->routeIs('admin.mail-settings*'))active @endif">--}}
-{{--                                <span>--}}
-{{--                                    {{ __('Chiến dịch') }}--}}
-{{--                                </span>--}}
-{{--                            </a>--}}
-{{--                        </li>--}}
-{{--                        @endcan--}}
-
-{{--                    </ul>--}}
-{{--                </li>--}}
-{{--                @endcan--}}
 
                 <!-- System -->
                 @canany(['admins.view', 'menus.index', 'log-activities.index', 'admins.view', 'roles.view'])
                 <li class="nav-item-header">
                     <div class="text-uppercase font-size-xs line-height-xs">{{ __('Hệ thống') }}</div>
-                    <i class="fal fa-horizontal-rule" title="{{ __('Hệ thống') }}"></i></li>
+                    <i class="fal fa-horizontal-rule" title="{{ __('Hệ thống') }}"></i>
+                </li>
                 @endcan
                 @canany(['admins.view', 'roles.view'])
-                <li class="nav-item nav-item-submenu {{ request()->routeIs('admin.admins*') || request()->routeIs('admin.roles*') || request()->routeIs('admin.mergeTransaction*') ? 'nav-item-expanded nav-item-open' : null }}">
+                <li class="nav-item nav-item-submenu {{ request()->routeIs('admin.admins*') || request()->routeIs('admin.roles*') ? 'nav-item-expanded nav-item-open' : null }}">
                     <a href="#" class="nav-link"><i class="fal fa-user"></i> <span>{{ __('Tài khoản') }}</span></a>
                     <ul class="nav nav-group-sub" data-submenu-title="{{ __('Tài khoản') }}">
                         @can('admins.view')
-                            <li class="nav-item"><a href="{{ route('admin.admins.index') }}"
-                                                    class="nav-link @if(request()->routeIs('admin.admins*'))active @endif">{{ __('Tài khoản') }}</a>
-                            </li>
+                        <li class="nav-item"><a href="{{ route('admin.admins.index') }}"
+                                               class="nav-link @if(request()->routeIs('admin.admins*'))active @endif">{{ __('Tài khoản') }}</a>
+                        </li>
                         @endcan
                         @can('roles.view')
-                            <li class="nav-item"><a href="{{ route('admin.roles.index') }}"
-                                                    class="nav-link @if(request()->routeIs('admin.roles*'))active @endif">{{ __('Vai trò') }}</a>
-                            </li>
+                        <li class="nav-item"><a href="{{ route('admin.roles.index') }}"
+                                               class="nav-link @if(request()->routeIs('admin.roles*'))active @endif">{{ __('Vai trò') }}</a>
+                        </li>
                         @endcan
                     </ul>
                 </li>
-                <li class="nav-item"><a href="{{ route('admin.mergeTransaction') }}"
-                                        class="nav-link @if(request()->routeIs('admin.mergeTransaction*'))active @endif">
-                        <i class="fal fa-money-bill"></i>{{ __('Dối soát MB') }}</a>
+                <li class="nav-item nav-item-submenu {{ request()->routeIs('admin.shops.revenue') ? 'nav-item-expanded nav-item-open' : null }}">
+                    <a href="#" class="nav-link"><i class="fal fa-user"></i> <span>{{ __('Báo Cáo') }}</span></a>
+                    <ul class="nav nav-group-sub" data-submenu-title="{{ __('Báo Cáo') }}">
+                        @can('admins.view')
+                        <li class="nav-item">
+                            <a href="{{ route('admin.shops.revenue') }}"
+                               class="nav-link @if(request()->routeIs('admin.shops.revenue'))active @endif">
+                                <i class="fal fa-money-bill"></i>
+                                <span>{{ __("Doanh thu Shop") }}</span>
+                            </a>
+                        </li>
+                        @endcan
+                    </ul>
+                </li>
+                <li class="nav-item {{ request()->routeIs('admin.mergeTransaction*') ? 'active' : null }}">
+                    <a href="{{ route('admin.mergeTransaction') }}"
+                       class="nav-link @if(request()->routeIs('admin.mergeTransaction*'))active @endif">
+                        <i class="fal fa-money-bill"></i>{{ __('Đối soát MB') }}</a>
                 </li>
                 <li class="nav-item">
                     <a href="{{ route('admin.merchants-history.index') }}"
@@ -247,53 +146,6 @@
                     </a>
                 </li>
                 @endcan
-{{--                @canany(['admins.view', 'menus.index', 'log-activities.index'])--}}
-{{--                <li class="nav-item nav-item-submenu {{ request()->routeIs('admin.settings*') || request()->routeIs('admin.menus*') || request()->routeIs('admin.log-activities*') ? 'nav-item-expanded nav-item-open' : null }}">--}}
-{{--                    <a href="#" class="nav-link"><i class="fal fa-solar-system"></i> <span>{{ __('Hệ Thống') }}</span></a>--}}
-{{--                    <ul class="nav nav-group-sub" data-submenu-title="{{ __('Hệ Thống') }}">--}}
-{{--                    @can('admins.view')--}}
-{{--                        <li class="nav-item">--}}
-{{--                            <a href="{{ route('admin.settings.edit') }}"--}}
-{{--                               class="nav-link @if(request()->routeIs('admin.settings*'))active @endif">--}}
-{{--                                <span>--}}
-{{--                                {{ __('Cài đặt chung') }}--}}
-{{--                            </span>--}}
-{{--                            </a>--}}
-{{--                        </li>--}}
-{{--                    @endcan--}}
-
-{{--                    @can('menus.index')--}}
-{{--                        <li class="nav-item">--}}
-{{--                            <a href="{{ route('admin.menus.index') }}"--}}
-{{--                               class="nav-link @if(request()->routeIs('admin.menus*'))active @endif">--}}
-{{--                                <span>--}}
-{{--                            {{ __("Quản lý menu") }}--}}
-{{--                        </span>--}}
-{{--                            </a>--}}
-{{--                        </li>--}}
-{{--                        --}}{{--<li class="nav-item">--}}
-{{--                            <a href="{{ route('admin.internal-links') }}"--}}
-{{--                               class="nav-link @if(request()->routeIs('admin.internal-links*'))active @endif">--}}
-{{--                                <span>--}}
-{{--                            {{ __("Quản lý link nội tuyến") }}--}}
-{{--                        </span>--}}
-{{--                            </a>--}}
-{{--                        </li>--}}
-{{--                    @endcan--}}
-
-{{--                    @can('log-activities.index')--}}
-{{--                        --}}{{--<li class="nav-item">--}}
-{{--                            <a href="{{ route('admin.log-activities.index') }}"--}}
-{{--                               class="nav-link @if(request()->routeIs('admin.log-activities*'))active @endif">--}}
-{{--                                <span>--}}
-{{--                            {{ __("Lịch sử thao tác") }}--}}
-{{--                        </span>--}}
-{{--                            </a>--}}
-{{--                        </li>--}}
-{{--                    @endcan--}}
-{{--                    </ul>--}}
-{{--                </li>--}}
-{{--                @endcan--}}
             </ul>
         </div>
         <!-- /main navigation -->

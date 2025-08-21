@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\DataTables\ShopDataTable;
+use App\DataTables\ShopRevenueDataTable;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\ShopStoreRequest;
 use App\Http\Requests\Admin\ShopUpdateRequest;
@@ -24,6 +25,11 @@ class ShopController extends Controller
     public function index(ShopDataTable $dataTable)
     {
         return $dataTable->render('admin.shops.index');
+    }
+
+    public function revenue(ShopRevenueDataTable $dataTable)
+    {
+        return $dataTable->render('admin.shops.shop-revenue');
     }
 
     public function create()
@@ -159,7 +165,6 @@ class ShopController extends Controller
             ];
 
             if ($request->hasFile('bbnt_file')) {
-                // Delete old file if exists
                 if ($shop->bbnt_file && \Storage::disk('public')->exists($shop->bbnt_file)) {
                     \Storage::disk('public')->delete($shop->bbnt_file);
                 }
@@ -186,7 +191,6 @@ class ShopController extends Controller
             ], 500);
         }
     }
-
 
     public function bbntDownload(Shop $shop, BBNTExportService $service)
     {

@@ -270,6 +270,12 @@ Breadcrumbs::for('admin.shops.bbnt.preview', function ($trail, $shop) {
     $trail->push('BBNT', route('admin.shops.bbnt.preview', $shop));
 });
 
+// Home > Shop Revenue
+Breadcrumbs::for('admin.shops.revenue', function (BreadcrumbsGenerator $trail) {
+    $trail->parent('admin.dashboard');
+    $trail->push(__('Doanh thu Shop'), route('admin.shops.revenue'), ['icon' => 'fal fa-money-bill']);
+});
+
 // Home > Admins > [order] > Edit
 Breadcrumbs::for('admin.orders.edit', function (BreadcrumbsGenerator $trail, Order $order) {
     $trail->parent('admin.orders.index');

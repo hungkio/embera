@@ -223,6 +223,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
             Route::get('/shops/export', [ShopController::class, 'export'])->name('shops.export');
             Route::post('/shops/{shop}/toggle-bind', [ShopController::class, 'toggleBind'])
                 ->name('admin.shops.toggleBind');
+            Route::get('/shops/revenue', [App\Http\Controllers\Admin\ShopController::class, 'revenue'])->name('shops.revenue');
 
             // BBNT export cho Shop
             Route::get('/shops/{shop}/bbnt-preview', [ShopController::class, 'bbntPreview'])->name('shops.bbnt.preview');
