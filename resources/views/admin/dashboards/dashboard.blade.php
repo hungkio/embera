@@ -462,8 +462,6 @@
             };
             applyCommonOptions(totalMerchantChart, totalMerchantOption, 'totalMerchantChart');
             console.log('Total Merchant chart initialized with data:', {{ $totalMerchants ?? 0 }});
-        } else {
-            console.error('Total merchant chart container not found');
         }
 
         // Total Income Today Chart
@@ -507,8 +505,6 @@
             };
             applyCommonOptions(totalIncomeTodayChart, totalIncomeTodayOption, 'totalIncomeTodayChart');
             console.log('Total Income Today chart initialized with data:', {{ $totalIncomeToday ?? 0 }});
-        } else {
-            console.error('Total income today chart container not found');
         }
 
         // Total Income Yesterday Chart
@@ -552,8 +548,6 @@
             };
             applyCommonOptions(totalIncomeYesterdayChart, totalIncomeYesterdayOption, 'totalIncomeYesterdayChart');
             console.log('Total Income Yesterday chart initialized with data:', {{ $totalIncomeYesterday ?? 0 }});
-        } else {
-            console.error('Total income yesterday chart container not found');
         }
 
         // Orders Per Hour Chart
@@ -739,15 +733,12 @@
                                 ['#FF512F', '#DD2476'],
                                 ['#56ab2f', '#a8e063'],
                                 ['#fc00ff', '#00dbde'],
-                                ['#0052D4', '#6FB1FC'],
-                                ['#a8e063', '#56ab2f'],
-                                ['#ff9e40', '#ff6a00'],
-                                ['#0072ff', '#00c6ff']
+                                ['#0052D4', '#6FB1FC']
                             ];
                             var gradient = colorList[params.dataIndex % colorList.length];
                             return new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-                                { offset: 0, color: gradient[0] },
-                                { offset: 1, color: gradient[1] }
+                                {offset: 0, color: gradient[0]},
+                                {offset: 1, color: gradient[1]}
                             ]);
                         }
                     }
@@ -971,7 +962,7 @@
             if (avgDailyTransactionsChartElement) avgDailyTransactionsChart.resize();
             if (shopsByShopTypeChartElement) shopsByShopTypeChart.resize();
         });
-    })
+    });
 </script>
 @endpush
 
@@ -1021,6 +1012,7 @@
             <div id="merchantChart" class="large-chart-container"></div>
         </div>
     </div>
+
     <div class="col-md-6">
         <div class="card dashboard-card">
             <div id="userChart" class="large-chart-container"></div>
