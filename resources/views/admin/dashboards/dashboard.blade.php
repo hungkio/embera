@@ -12,30 +12,68 @@
 <link rel="stylesheet" href="/backend/global_assets/js/vendors/vector-map/jquery-jvectormap-2.0.5.css">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;500;700&display=swap" rel="stylesheet">
 <style>
-    .card-body {
-        padding: 1.750rem 1rem;
+    body, h4, .card-title, .table {
+        font-family: 'Noto Sans', sans-serif !important;
     }
-
+    .dashboard-card {
+        border-radius: 12px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+        overflow: hidden;
+        transition: transform 0.3s ease;
+    }
+    .dashboard-card:hover {
+        transform: translateY(-5px);
+    }
+    .card-header {
+        background: linear-gradient(135deg, #f5f7fa 0%, #e4e9f0 100%);
+        border-bottom: 1px solid #dee2e6;
+        padding: 1rem;
+    }
+    .card-body {
+        padding: 1.5rem 1rem;
+    }
     .chart-container {
         width: 100%;
-        height: 400px;
+        height: 300px;
         margin: 0 auto;
-        padding: 15px;
+        padding: 10px;
     }
-
+    .large-chart-container {
+        width: 100%;
+        height: 450px;
+        margin: 0 auto;
+        padding: 10px;
+    }
     .hourly-chart-container {
         width: 100%;
         height: 500px;
         margin: 0 auto;
         padding: 15px;
     }
-
     .row {
-        margin-bottom: 30px;
+        margin-bottom: 15px;
     }
-
-    body, h4, .card-title, .table {
-        font-family: 'Noto Sans', sans-serif !important;
+    .content-wrapper {
+        background: linear-gradient(to bottom, #f8f9fc 0%, #ffffff 100%);
+    }
+    .table {
+        border-radius: 8px;
+        overflow: hidden;
+    }
+    .table thead th {
+        background: #e9ecef;
+        font-weight: 600;
+    }
+    .table tbody tr:hover {
+        background: #f8f9fa;
+    }
+    .badge {
+        font-size: 0.9rem;
+        padding: 0.5em 0.8em;
+    }
+    .modal-chart {
+        width: 100%;
+        height: 500px;
     }
 </style>
 @endpush
@@ -44,10 +82,74 @@
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script src="/backend/global_assets/js/vendors/vector-map/jquery-jvectormap-2.0.5.min.js"></script>
 <script src="/backend/global_assets/js/vendors/echarts/echarts.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
     $(function () {
         console.log('jQuery loaded:', typeof $ !== 'undefined');
         console.log('ECharts loaded:', typeof echarts !== 'undefined');
+
+        // Store modal instances and charts
+        let modalInstances = {};
+        let modalCharts = {};
+
+        // Common chart options for consistency and interactivity
+        function applyCommonOptions(chart, option, chartId) {
+            option.toolbox = {
+                feature: {
+                    saveAsImage: {title: 'Lưu ảnh'},
+                    restore: {title: 'Khôi phục'},
+                    myZoom: {
+                        show: true,
+                        title: 'Phóng to',
+                        icon: 'path://M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z',
+                        onclick: function () {
+                            openChartModal(chartId, option);
+                        }
+                    }
+                }
+            };
+            option.animationDuration = 800;
+            option.animationEasing = 'cubicOut';
+            option.tooltip = {
+                backgroundColor: 'rgba(255,255,255,0.95)',
+                borderColor: '#ddd',
+                textStyle: {color: '#333', fontFamily: 'Noto Sans'},
+                extraCssText: 'box-shadow: 0 2px 10px rgba(0,0,0,0.1);'
+            };
+            chart.setOption(option);
+        }
+
+        // Function to open chart in a modal
+        function openChartModal(chartId, option) {
+            if (!modalInstances[chartId]) {
+                $('body').append(`
+                    <div class="modal fade" id="${chartId}-modal" tabindex="-1" aria-labelledby="${chartId}-modal-label" aria-hidden="true">
+                        <div class="modal-dialog modal-lg">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="modal-title" id="${chartId}-modal-label">${option.title.text}</h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                </div>
+                                <div class="modal-body">
+                                    <div id="${chartId}-modal-chart" class="modal-chart"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `);
+                modalInstances[chartId] = new bootstrap.Modal(document.getElementById(chartId + '-modal'));
+                modalCharts[chartId] = echarts.init(document.getElementById(chartId + '-modal-chart'));
+                $('#' + chartId + '-modal').on('hidden.bs.modal', function () {
+                    modalCharts[chartId].dispose();
+                    modalCharts[chartId] = null;
+                });
+            }
+            modalCharts[chartId].setOption(option);
+            modalInstances[chartId].show();
+            document.getElementById(chartId + '-modal').addEventListener('shown.bs.modal', function () {
+                modalCharts[chartId].resize();
+            });
+        }
 
         // Merchant Chart (Merchant Growth by Month)
         var merchantChartElement = document.getElementById('merchantChart');
@@ -99,17 +201,10 @@
                     },
                     symbol: 'circle',
                     symbolSize: 6,
-                    itemStyle: {
-                        color: '#56ab2f',
-                        borderColor: '#fff',
-                        borderWidth: 2
-                    },
-                    label: {
-                        show: false // Tắt nhãn trên điểm để tránh rối, có thể bật lại nếu cần
-                    }
+                    itemStyle: { color: '#56ab2f', borderColor: '#fff', borderWidth: 2 }
                 }]
             };
-            merchantChart.setOption(merchantOption);
+            applyCommonOptions(merchantChart, merchantOption, 'merchantChart');
             console.log('Merchant Growth chart initialized with data:', @json($merchantGrowth));
         } else {
             console.error('Merchant chart container not found');
@@ -282,7 +377,7 @@
                     }
                 ]
             };
-            contractGrowthChart.setOption(contractGrowthOption);
+            applyCommonOptions(contractGrowthChart, contractGrowthOption, 'contractGrowthChart');
             console.log('Contract Growth chart initialized with data:', @json($contractGrowth));
         } else {
             console.error('Contract Growth chart container not found');
@@ -338,17 +433,10 @@
                     },
                     symbol: 'circle',
                     symbolSize: 6,
-                    itemStyle: {
-                        color: '#4776E6',
-                        borderColor: '#fff',
-                        borderWidth: 2
-                    },
-                    label: {
-                        show: false // Tắt nhãn trên điểm để tránh rối, có thể bật lại nếu cần
-                    }
+                    itemStyle: { color: '#4776E6', borderColor: '#fff', borderWidth: 2 }
                 }]
             };
-            userChart.setOption(userOption);
+            applyCommonOptions(userChart, userOption, 'userChart');
             console.log('User Growth chart initialized with data:', @json($userGrowth));
         } else {
             console.error('User chart container not found');
@@ -381,15 +469,15 @@
                     },
                     emphasis: { label: { show: true, fontSize: 20, fontWeight: 'bold', fontFamily: 'Noto Sans' } },
                     data: [{ value: {{ $totalMerchants ?? 0 }}, name: 'Tổng Merchant' }],
-            itemStyle: {
-                color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-                    {offset: 0, color: '#39f3f3'},
-                    {offset: 1, color: '#40ffcc'}
-                ])
-            }
-        }]
-        };
-            totalMerchantChart.setOption(totalMerchantOption);
+                    itemStyle: {
+                        color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                            {offset: 0, color: '#39f3f3'},
+                            {offset: 1, color: '#40ffcc'}
+                        ])
+                    }
+                }]
+            };
+            applyCommonOptions(totalMerchantChart, totalMerchantOption, 'totalMerchantChart');
         } else {
             console.error('Total merchant chart container not found');
         }
@@ -425,15 +513,15 @@
                     },
                     emphasis: { label: { show: true, fontSize: 20, fontWeight: 'bold', fontFamily: 'Noto Sans' } },
                     data: [{ value: {{ $totalIncomeToday ?? 0 }}, name: 'Hôm nay' }],
-            itemStyle: {
-                color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-                    {offset: 0, color: '#00c6ff'},
-                    {offset: 1, color: '#0072ff'}
-                ])
-            }
-        }]
-        };
-            totalIncomeTodayChart.setOption(totalIncomeTodayOption);
+                    itemStyle: {
+                        color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                            {offset: 0, color: '#00c6ff'},
+                            {offset: 1, color: '#0072ff'}
+                        ])
+                    }
+                }]
+            };
+            applyCommonOptions(totalIncomeTodayChart, totalIncomeTodayOption, 'totalIncomeTodayChart');
         } else {
             console.error('Total income today chart container not found');
         }
@@ -469,15 +557,15 @@
                     },
                     emphasis: { label: { show: true, fontSize: 20, fontWeight: 'bold', fontFamily: 'Noto Sans' } },
                     data: [{ value: {{ $totalIncomeYesterday ?? 0 }}, name: 'Hôm qua' }],
-            itemStyle: {
-                color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-                    {offset: 0, color: '#f7971e'},
-                    {offset: 1, color: '#ffd200'}
-                ])
-            }
-        }]
-        };
-            totalIncomeYesterdayChart.setOption(totalIncomeYesterdayOption);
+                    itemStyle: {
+                        color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                            {offset: 0, color: '#f7971e'},
+                            {offset: 1, color: '#ffd200'}
+                        ])
+                    }
+                }]
+            };
+            applyCommonOptions(totalIncomeYesterdayChart, totalIncomeYesterdayOption, 'totalIncomeYesterdayChart');
         } else {
             console.error('Total income yesterday chart container not found');
         }
@@ -529,7 +617,7 @@
                     symbolSize: 8
                 }]
             };
-            orderPerHourChart.setOption(orderPerHourOption);
+            applyCommonOptions(orderPerHourChart, orderPerHourOption, 'orderPerHourChart');
             console.log('Order per hour chart initialized with data:', @json($hourlyOrderData));
         } else {
             console.error('Order per hour chart container not found');
@@ -578,11 +666,6 @@
                         color: '#666'
                     }
                 },
-                toolbox: {
-                    feature: {
-                        saveAsImage: {} // Thêm nút lưu ảnh
-                    }
-                },
                 yAxis: {
                     type: 'category',
                     inverse: true,
@@ -598,8 +681,8 @@
                         itemStyle: {
                             borderRadius: 6,
                             color: new echarts.graphic.LinearGradient(1, 0, 0, 0, [
-                                {offset: 0, color: '#00c6ff'},
-                                {offset: 1, color: '#0072ff'}
+                                { offset: 0, color: '#00c6ff' },
+                                { offset: 1, color: '#0072ff' }
                             ])
                         },
                         label: {
@@ -621,8 +704,8 @@
                         itemStyle: {
                             borderRadius: 6,
                             color: new echarts.graphic.LinearGradient(1, 0, 0, 0, [
-                                {offset: 0, color: '#f7971e'},
-                                {offset: 1, color: '#ffd200'}
+                                { offset: 0, color: '#f7971e' },
+                                { offset: 1, color: '#ffd200' }
                             ])
                         },
                         label: {
@@ -638,12 +721,13 @@
                     }
                 ]
             };
-            topMerchantsThisMonthChart.setOption(topMerchantsThisMonthOption);
+            applyCommonOptions(topMerchantsThisMonthChart, topMerchantsThisMonthOption, 'topMerchantsThisMonthChart');
             console.log('Top Merchants This Month chart initialized with data:', @json($topMerchantsThisMonth));
             console.log('Top Merchants Last Month chart initialized with data:', @json($topMerchantsLastMonth));
         } else {
             console.error('Top Merchants This Month chart container not found');
         }
+
         // Revenue by Shop Type Chart
         var revenueByShopTypeChartElement = document.getElementById('revenueByShopTypeChart');
         if (revenueByShopTypeChartElement) {
@@ -697,7 +781,7 @@
                     }
                 }]
             };
-            revenueByShopTypeChart.setOption(revenueByShopTypeOption);
+            applyCommonOptions(revenueByShopTypeChart, revenueByShopTypeOption, 'revenueByShopTypeChart');
             console.log('Revenue by Shop Type chart initialized with data:', @json($revenueByShopType));
         } else {
             console.error('Revenue by Shop Type chart container not found');
@@ -743,7 +827,7 @@
                     }
                 }]
             };
-            avgRevenuePerOrderChart.setOption(avgRevenuePerOrderOption);
+            applyCommonOptions(avgRevenuePerOrderChart, avgRevenuePerOrderOption, 'avgRevenuePerOrderChart');
             console.log('Average Revenue Per Order chart initialized with data:', @json($avgRevenuePerOrder));
         } else {
             console.error('Average Revenue Per Order chart container not found');
@@ -756,7 +840,6 @@
             var dates = @json($avgDailyTransactionsData['dates']);
             var counts = @json($avgDailyTransactionsData['counts']);
             var average = @json($avgDailyTransactionsData['average']);
-
             var avgDailyTransactionsOption = {
                 title: {
                     text: 'Số lượng giao dịch trung bình mỗi ngày (Tháng này)',
@@ -770,7 +853,7 @@
                 },
                 tooltip: {
                     trigger: 'axis',
-                    axisPointer: { type: 'shadow' },
+                    axisPointer: {type: 'shadow'},
                     formatter: function (params) {
                         var result = params[0].name + '<br/>';
                         params.forEach(function (item) {
@@ -848,11 +931,8 @@
                     }
                 ]
             };
-
-            avgDailyTransactionsChart.setOption(avgDailyTransactionsOption);
+            applyCommonOptions(avgDailyTransactionsChart, avgDailyTransactionsOption, 'avgDailyTransactionsChart');
             console.log('Average Daily Transactions chart initialized with data:', @json($avgDailyTransactionsData));
-        } else {
-            console.error('Average Daily Transactions chart container not found');
         }
 
         // Shops by Shop Type Chart
@@ -902,17 +982,15 @@
                             ];
                             var gradient = colorList[params.dataIndex % colorList.length];
                             return new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-                                {offset: 0, color: gradient[0]},
-                                {offset: 1, color: gradient[1]}
+                                { offset: 0, color: gradient[0] },
+                                { offset: 1, color: gradient[1] }
                             ]);
                         }
                     }
                 }]
             };
-            shopsByShopTypeChart.setOption(shopsByShopTypeOption);
+            applyCommonOptions(shopsByShopTypeChart, shopsByShopTypeOption, 'shopsByShopTypeChart');
             console.log('Shops by Shop Type chart initialized with data:', @json($shopsByShopType));
-        } else {
-            console.error('Shops by Shop Type chart container not found');
         }
 
         // Make charts responsive
@@ -930,78 +1008,97 @@
             if (avgDailyTransactionsChartElement) avgDailyTransactionsChart.resize();
             if (shopsByShopTypeChartElement) shopsByShopTypeChart.resize();
         });
-    });
+    })
 </script>
 @endpush
 
 @section('page-content')
-<div class="row mb-4">
-    <div class="col-md-12 hourly-chart-container">
-        <div id="topMerchantsThisMonthChart" style="width: 100%; height: 500px;"></div>
-    </div>
-</div>
+<!-- Row 1: KPIs (Pie charts) - Compact 4-column layout -->
 <div class="row">
-    <div class="col-md-12 hourly-chart-container">
-        <div id="contractGrowthChart" style="width: 100%; height: 500px;"></div>
+    <div class="col-md-3">
+        <div class="card dashboard-card">
+            <div id="totalIncomeTodayChart" class="chart-container"></div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card dashboard-card">
+            <div id="totalIncomeYesterdayChart" class="chart-container"></div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card dashboard-card">
+            <div id="avgRevenuePerOrderChart" class="chart-container"></div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card dashboard-card">
+            <div id="totalMerchantChart" class="chart-container"></div>
+        </div>
     </div>
 </div>
 
-<!-- Second row: Total Income Today, Total Income Yesterday, Average Revenue Per Order, Total Merchant -->
-<div class="row mb-4">
-    <div class="col-md-3 chart-container">
-        <div id="totalIncomeTodayChart" style="width: 100%; height: 300px;"></div>
+<!-- Row 2: Large charts - 2 columns -->
+<div class="row">
+    <div class="col-md-6">
+        <div class="card dashboard-card">
+            <div id="shopsByShopTypeChart" class="large-chart-container"></div>
+        </div>
     </div>
-    <div class="col-md-3 chart-container">
-        <div id="totalIncomeYesterdayChart" style="width: 100%; height: 300px;"></div>
-    </div>
-    <div class="col-md-3 chart-container">
-        <div id="avgRevenuePerOrderChart" style="width: 100%; height: 300px;"></div>
-    </div>
-    <div class="col-md-3 chart-container">
-        <div id="totalMerchantChart" style="width: 100%; height: 300px;"></div>
+    <div class="col-md-6">
+        <div class="card dashboard-card">
+            <div id="revenueByShopTypeChart" class="large-chart-container"></div>
+        </div>
     </div>
 </div>
 
-<!-- Third row: Average Transactions per Day -->
-<div class="row mb-4">
-    <div class="col-md-12 hourly-chart-container">
-        <div id="avgDailyTransactionsChart" style="width: 100%; height: 500px;"></div>
+<!-- Row 3: Growth charts - 2 columns -->
+<div class="row">
+    <div class="col-md-6">
+        <div class="card dashboard-card">
+            <div id="merchantChart" class="large-chart-container"></div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card dashboard-card">
+            <div id="userChart" class="large-chart-container"></div>
+        </div>
     </div>
 </div>
 
-<!-- Fourth row: Merchant Growth, Orders Per Hour -->
-<div class="row mb-4">
-    <div class="col-md-6 chart-container">
-        <div id="merchantChart" style="width: 100%; height: 600px;"></div>
+<!-- Row 4: Top Merchants and Orders - 2 columns -->
+<div class="row">
+    <div class="col-md-6">
+        <div class="card dashboard-card">
+            <div id="topMerchantsThisMonthChart" class="large-chart-container"></div>
+        </div>
     </div>
-    <div class="col-md-6 chart-container">
-        <div id="userChart" style="width: 100%; height: 600px;"></div>
-    </div>
-</div>
-
-<!-- Fifth row: User Growth, Revenue by Shop Type -->
-<div class="row mb-4" style="margin-top: 200px;">
-
-    <div class="col-md-6 hourly-chart-container">
-        <div id="shopsByShopTypeChart" style="width: 100%; height: 500px;"></div>
-    </div>
-    <div class="col-md-6 hourly-chart-container">
-        <div id="revenueByShopTypeChart" style="width: 100%; height: 500px;"></div>
+    <div class="col-md-6">
+        <div class="card dashboard-card">
+            <div id="orderPerHourChart" class="large-chart-container"></div>
+        </div>
     </div>
 </div>
 
-<!-- Sixth row: Shops by Shop Type -->
-<div class="row mb-4">
-    <div class="col-12 hourly-chart-container">
-        <div id="orderPerHourChart" style="width: 100%; height: 570px;"></div>
+<!-- Row 5: Pie charts - 2 columns -->
+<div class="row">
+    <div class="col-md-6">
+        <div class="card dashboard-card">
+            <div id="contractGrowthChart" class="large-chart-container"></div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card dashboard-card">
+            <div id="avgDailyTransactionsChart" class="large-chart-container"></div>
+        </div>
     </div>
 </div>
 
+<!-- Analytics and Tables -->
 @if(setting('analytics', 0) == \App\Enums\AnalyticsState::SHOW)
 <div class="row">
     <div class="col-md-12">
-        <div class="card ajax-card" data-url="{{ route('admin.analytics') }}">
-            <div class="card-header header-elements-inline">
+        <div class="card dashboard-card ajax-card" data-url="{{ route('admin.analytics') }}">
+            <div class="card-header">
                 <h6 class="card-title"><i class="fal fa-chart-bar mr-2"></i> {{ __('Phân tích') }}</h6>
             </div>
             <div class="card-body"></div>
@@ -1010,17 +1107,9 @@
 </div>
 <div class="row">
     <div class="col-md-6">
-        <div class="card ajax-card" data-url="{{ route('admin.top-referrers') }}">
-            <div class="card-header header-elements-inline">
-                <h6 class="card-title"><i class="far fa-bullseye-pointer"></i> {{ __('Tìm kiếm hàng đầu') }}</h6>
-            </div>
-            <div class="card-body"></div>
-        </div>
-    </div>
-    <div class="col-md-6">
-        <div class="card ajax-card" data-url="{{ route('admin.most-visited-pages') }}">
-            <div class="card-header header-elements-inline">
-                <h6 class="card-title"><i class="far fa-bullseye-pointer"></i> {{ __('Trang truy cập nhiều nhất') }}</h6>
+        <div class="card dashboard-card ajax-card" data-url="{{ route('admin.top-referrers') }}">
+            <div class="card-header">
+                <h6 class="card-title"><i class="far fa-bullseye-pointer mr-2"></i> {{ __('Trang truy cập nhiều nhất') }}</h6>
             </div>
             <div class="card-body"></div>
         </div>
@@ -1031,9 +1120,9 @@
 <div class="row">
     @if($pageTops->count() > 0)
     <div class="col-md-6">
-        <div class="card" data-url="{{ route('admin.pages.index') }}">
-            <div class="card-header header-elements">
-                <h6 class="card-title"><i class="fal fa-file-alt"></i> {{ __('Trang được xem nhiều nhất') }}</h6>
+        <div class="card dashboard-card" data-url="{{ route('admin.pages.index') }}">
+            <div class="card-header">
+                <h6 class="card-title"><i class="fal fa-file-alt mr-2"></i> {{ __('Trang được xem nhiều nhất') }}</h6>
             </div>
             <div class="card-body">
                 <div class="table-responsive">
@@ -1047,13 +1136,8 @@
                         <tbody>
                         @foreach($pageTops as $pageTop)
                         <tr>
-                            <td>
-                                <a target="_blank" href="{{ $pageTop->url() }}"
-                                   class="text-default font-weight-semibold letter-icon-title">{{ $pageTop->title }}</a>
-                            </td>
-                            <td>
-                                <span class="text-muted font-size-sm">{{ $pageTop->view }}</span>
-                            </td>
+                            <td><a target="_blank" href="{{ $pageTop->url() }}" class="text-primary font-weight-semibold">{{ $pageTop->title }}</a></td>
+                            <td><span class="badge badge-info">{{ $pageTop->view }}</span></td>
                         </tr>
                         @endforeach
                         </tbody>
@@ -1066,9 +1150,9 @@
 
     @if($postTops->count() > 0)
     <div class="col-md-6">
-        <div class="card" data-url="{{ route('admin.posts.index') }}">
-            <div class="card-header header-elements-inline">
-                <h6 class="card-title"><i class="fal fa-edit"></i> {{ __('Bài viết được xem nhiều nhất') }}</h6>
+        <div class="card dashboard-card" data-url="{{ route('admin.posts.index') }}">
+            <div class="card-header">
+                <h6 class="card-title"><i class="fal fa-edit mr-2"></i> {{ __('Bài viết được xem nhiều nhất') }}</h6>
             </div>
             <div class="card-body">
                 <div class="table-responsive">
@@ -1082,13 +1166,8 @@
                         <tbody>
                         @foreach($postTops as $postTop)
                         <tr>
-                            <td>
-                                <a target="_blank" href="{{ $postTop->url() }}"
-                                   class="text-default font-weight-semibold letter-icon-title">{{ $postTop->title }}</a>
-                            </td>
-                            <td>
-                                <span class="text-muted font-size-sm">{{ $postTop->view }}</span>
-                            </td>
+                            <td><a target="_blank" href="{{ $postTop->url() }}" class="text-primary font-weight-semibold">{{ $postTop->title }}</a></td>
+                            <td><span class="badge badge-info">{{ $postTop->view }}</span></td>
                         </tr>
                         @endforeach
                         </tbody>
