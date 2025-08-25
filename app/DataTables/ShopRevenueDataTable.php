@@ -5,6 +5,7 @@ namespace App\DataTables;
 use App\DataTables\Core\BaseDatable;
 use App\Models\Shop;
 use App\Models\Order;
+use App\Models\DeviceStatus;
 use Yajra\DataTables\Html\Button;
 use Yajra\DataTables\Html\Column;
 use Illuminate\Support\Facades\DB;
@@ -30,7 +31,7 @@ class ShopRevenueDataTable extends BaseDatable
                 $totalRevenue = Order::where('rental_shop', $shop->shop_name)
                     ->whereBetween('payment_time', [$this->startDate . ' 00:00:00', $this->endDate . ' 23:59:59'])
                     ->sum('order_amount');
-                return number_format($totalRevenue, 0) . ' VNĐ';
+                return number_format($totalRevenue, 0, ',', '.') . ' VNĐ';
             })
             ->addColumn('device_summary', function (Shop $shop) {
                 $deviceData = Order::where('rental_shop', $shop->shop_name)
@@ -39,14 +40,13 @@ class ShopRevenueDataTable extends BaseDatable
                     ->select('rental_equipment_id', DB::raw('SUM(order_amount) as total_revenue'))
                     ->get()
                     ->map(function ($item) {
-                        $status = Order::where('rental_equipment_id', $item->rental_equipment_id)
-                            ->whereBetween('payment_time', [$this->startDate . ' 00:00:00', $this->endDate . ' 23:59:59'])
-                            ->latest('payment_time')
-                            ->first()?->payment_time >= now()->subHours(24) ? 'online' : 'offline';
+                        $deviceStatus = DeviceStatus::where('equip_id', $item->rental_equipment_id)->first();
+                        $status = $deviceStatus ? $deviceStatus->status : 'offline';
+
                         return [
                             'code' => $item->rental_equipment_id,
                             'status' => $status,
-                            'revenue' => number_format($item->total_revenue, 0) . ' VNĐ',
+                            'revenue' => number_format($item->total_revenue, 0, ',', '.') . ' VNĐ',
                         ];
                     });
 
@@ -54,25 +54,10 @@ class ShopRevenueDataTable extends BaseDatable
                     return '-';
                 }
 
-                $html = '<div class="table-responsive">
-    <table class="table table-bordered table-sm mb-0 text-center">
-        <thead class="thead-light">
-            <tr>
-                <th class="text-center">Mã máy</th>
-                <th class="text-center">Trạng thái</th>
-                <th class="text-center">Doanh thu</th>
-            </tr>
-        </thead>
-        <tbody>';
-
+                $html = '<div class="table-responsive"><table class="table table-bordered table-sm mb-0 text-center"><thead class="thead-light"><tr><th>Mã máy</th><th>Trạng thái</th><th>Doanh thu</th></tr></thead><tbody>';
                 foreach ($deviceData as $row) {
-                    $html .= '<tr>
-            <td>' . e($row['code']) . '</td>
-            <td>' . e($row['status']) . '</td>
-            <td>' . e($row['revenue']) . '</td>
-        </tr>';
+                    $html .= '<tr><td>' . e($row['code']) . '</td><td>' . e($row['status']) . '</td><td>' . e($row['revenue']) . '</td></tr>';
                 }
-
                 $html .= '</tbody></table></div>';
 
                 return $html;
@@ -86,10 +71,12 @@ class ShopRevenueDataTable extends BaseDatable
             ->filterColumn('device_summary', function ($query, $keyword) {
                 $query->whereHas('orders', function ($q) use ($keyword) {
                     $q->where('rental_equipment_id', 'like', "%$keyword%")
-                      ->orWhere('order_amount', 'like', "%$keyword%");
+                        ->orWhere('order_amount', 'like', "%$keyword%");
                 });
             })
-            ->rawColumns(['revenue', 'device_summary']);
+            ->rawColumns(['revenue', 'device_summary'])
+            ->with('start_date', $this->startDate)
+            ->with('end_date', $this->endDate);
     }
 
     public function query(Shop $model)
