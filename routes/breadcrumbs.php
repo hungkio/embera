@@ -18,6 +18,7 @@ use DaveJamesMiller\Breadcrumbs\Facades\Breadcrumbs;
 use Spatie\Activitylog\Models\Activity;
 use App\Domain\Menu\Models\Menu;
 use App\Models\Order;
+use App\Models\Pin;
 
 // Home
 Breadcrumbs::for('admin.dashboard', function (BreadcrumbsGenerator $trail) {
@@ -402,4 +403,22 @@ Breadcrumbs::for('admin.mergeTransaction', function (BreadcrumbsGenerator $trail
 Breadcrumbs::for('admin.post-compare', function (BreadcrumbsGenerator $trail) {
     $trail->parent('admin.dashboard');
     $trail->push(__('Đối soát'), route('admin.compare'), ['icon' => 'fal fa-image']);
+});
+// Home > Pins
+Breadcrumbs::for('admin.pins.index', function (BreadcrumbsGenerator $trail) {
+    $trail->parent('admin.dashboard');
+    $trail->push(__('Pins'), route('admin.pins.index'), ['icon' => 'fal fa-battery-full']);
+});
+
+// Home > Pins > Create
+Breadcrumbs::for('admin.pins.create', function (BreadcrumbsGenerator $trail) {
+    $trail->parent('admin.pins.index');
+    $trail->push(__('Tạo'), route('admin.pins.create'));
+});
+
+// Home > Pins > [pin] > Edit
+Breadcrumbs::for('admin.pins.edit', function (BreadcrumbsGenerator $trail, Pin $pin) {
+    $trail->parent('admin.pins.index');
+    $trail->push($pin->imei, '#');
+    $trail->push(__('Chỉnh sửa'), route('admin.pins.edit', $pin));
 });

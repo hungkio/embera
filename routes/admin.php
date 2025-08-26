@@ -46,6 +46,7 @@ use App\Http\Controllers\Admin\MenuController;
 use App\Http\Controllers\Admin\MenuItemController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Admin\OrderController;
+use App\Http\Controllers\Admin\PinController;
 
 Route::prefix('admin')->name('admin.')->group(function () {
     Route::get('clear_cache', function (){
@@ -307,5 +308,27 @@ Route::prefix('admin')->name('admin.')->group(function () {
 
             // save refresh_token zalo zns
             Route::get('/save-zns-token', [AdminController::class, 'saveZNSToken'])->name('saveZNSToken');
+
+            //import PINS
+            // Route cho danh sách Pins
+                Route::get('/pins', [PinController::class, 'index'])->name('pins.index');
+
+                // Route cho tạo mới Pins
+                Route::get('/pins/create', [PinController::class, 'create'])->name('pins.create');
+                Route::post('/pins', [PinController::class, 'store'])->name('pins.store');
+
+                // Route cho xem chi tiết Pins
+                Route::get('/pins/{pin}', [PinController::class, 'show'])->name('pins.show');
+
+                // Route cho chỉnh sửa Pins
+                Route::get('/pins/{pin}/edit', [PinController::class, 'edit'])->name('pins.edit');
+                Route::put('/pins/{pin}', [PinController::class, 'update'])->name('pins.update');
+
+                // Route cho xóa Pins
+                Route::delete('/pins/{pin}', [PinController::class, 'destroy'])->name('pins.destroy');
+
+                // Route cho import Pins
+                Route::get('/pins/import', [PinController::class, 'importForm'])->name('pins.import.form');
+                Route::post('/pins/import', [PinController::class, 'import'])->name('pins.import');
         });
 });

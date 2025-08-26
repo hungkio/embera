@@ -90,12 +90,21 @@
                 </li>
                 <li class="nav-item">
                     <a href="{{ route('admin.shops.index') }}"
-                       class="nav-link @if(request()->routeIs('admin.shops.index'))active @endif"> <!-- Changed to exact match -->
+                       class="nav-link @if(request()->routeIs('admin.shops.index'))active @endif">
                         <i class="fal fa-store"></i>
                         <span>{{ __("Shop") }}</span>
                     </a>
                 </li>
-
+                <!-- Pins (chỉ hiển thị cho người có quyền pins.view) -->
+                @can('pins.view')
+                <li class="nav-item">
+                    <a href="{{ route('admin.pins.index') }}"
+                       class="nav-link @if(request()->routeIs('admin.pins*'))active @endif">
+                        <i class="fal fa-battery-full"></i>
+                        <span>{{ __('Pins') }}</span>
+                    </a>
+                </li>
+                @endcan
                 <!-- System -->
                 @canany(['admins.view', 'menus.index', 'log-activities.index', 'admins.view', 'roles.view'])
                 <li class="nav-item-header">

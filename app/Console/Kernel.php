@@ -25,6 +25,7 @@ class Kernel extends ConsoleKernel
     protected function schedule(Schedule $schedule)
     {
          $schedule->command('app:send-mail')->everyMinute();
+         $schedule->command('device:refresh-status')->everyThirtyMinutes();
     }
 
     /**
