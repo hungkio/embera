@@ -10,9 +10,15 @@ class PinImport implements ToModel, WithHeadingRow
 {
     public function model(array $row)
     {
-        return new Pin([
-            'imei' => $row['imei'],
-            'serial_number' => $row['serial_number'],
-        ]);
+        return Pin::updateOrCreate(
+            [
+                'imei' => $row['imei'],
+                'serial_number' => $row['serial_number'],
+            ],
+            [
+                'imei' => $row['imei'],
+                'serial_number' => $row['serial_number'],
+            ]
+        );
     }
 }

@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\Admin;
 
 use App\DataTables\PinDataTable;
+use App\Http\Requests\Admin\PinStoreRequest;
+use App\Http\Requests\Admin\PinUpdateRequest;
 use App\Imports\PinImport;
 use App\Models\Pin;
 use Illuminate\Http\Request;
@@ -22,15 +24,10 @@ class PinController
         return view('admin.pins.create');
     }
 
-    public function store(Request $request)
+    public function store(PinStoreRequest $request)
     {
         try {
-            $data = $request->validate([
-                'imei' => 'required|string|max:255',
-                'serial_number' => 'required|string|max:255',
-            ]);
-
-            Pin::create($data);
+            Pin::create($request->validated());
 
             flash()->success(__('Pin đã được tạo thành công'));
             return redirect()->route('admin.pins.index');
@@ -50,15 +47,10 @@ class PinController
         return view('admin.pins.edit', compact('pin'));
     }
 
-    public function update(Request $request, Pin $pin)
+    public function update(PinUpdateRequest $request, Pin $pin)
     {
         try {
-            $data = $request->validate([
-                'imei' => 'required|string|max:255',
-                'serial_number' => 'required|string|max:255',
-            ]);
-
-            $pin->update($data);
+            $pin->update($request->validated());
 
             flash()->success(__('Pin đã được cập nhật thành công'));
             return redirect()->route('admin.pins.index');
@@ -90,15 +82,15 @@ class PinController
                 throw new \Exception('Không tìm thấy file để import.');
             }
 
-            Excel::import(new \App\Imports\PinImport, $request->file('file'));
+            Excel::import(new PinImport, $request->file('file'));
 
             if ($request->ajax()) {
                 return response()->json([
                     'success' => true,
-                    'message' => __('Đã import danh sách Pins!'),
+                    'message' => __('Đã import danh sách Pins! Các bản ghi trùng lặp đã được cập nhật.'),
                 ]);
             }
-            flash()->success(__('Đã import danh sách Pins!'));
+            flash()->success(__('Đã import danh sách Pins! Các bản ghi trùng lặp đã được cập nhật.'));
             return redirect()->route('admin.pins.index');
         } catch (\Illuminate\Validation\ValidationException $e) {
             Log::error('Validation failed in pin import', ['errors' => $e->errors()]);
