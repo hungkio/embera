@@ -18,19 +18,46 @@ class DashboardController
     {
         $totalMerchants = Merchant::count();
 
-        // Define today and yesterday
-        $today = now()->startOfDay();
-        $yesterday = now()->subDay()->startOfDay();
+        // Define date ranges: "Today" uses yesterday, "Yesterday" uses day before yesterday
+        $today = now()->subDay()->startOfDay();
+        $todayEnd = now()->subDay()->endOfDay();
+        $yesterday = now()->subDays(2)->startOfDay();
+        $yesterdayEnd = now()->subDays(2)->endOfDay();
 
-        // Calculate total income (no status filter to ensure data)
-        $totalIncomeToday = Order::whereDate('created_at', $today)->sum('order_amount');
-        $totalIncomeYesterday = Order::whereDate('created_at', $yesterday)->sum('order_amount');
+        // Calculate daily revenue for "Today" (yesterday) and "Yesterday" (day before yesterday)
+        $dailyRevenue = Order::whereBetween('payment_time', [$yesterday, $todayEnd])
+                ->whereRaw('LOWER(order_status) = ?', ['complete'])
+                ->selectRaw('DATE(payment_time) as date, SUM(order_amount) as revenue')
+                ->groupBy('date')
+                ->get()
+                ->keyBy('date');
 
-        // Debug: Log order statuses and income data
-        $orderStatuses = Order::distinct('order_status')->pluck('order_status')->toArray();
-        \Log::info('Order Statuses:', $orderStatuses);
-        \Log::info('Total Income Today:', ['value' => $totalIncomeToday]);
-        \Log::info('Total Income Yesterday:', ['value' => $totalIncomeYesterday]);
+        // Extract revenue for "Today" (yesterday) and "Yesterday" (day before yesterday)
+        $totalIncomeToday = $dailyRevenue->get($today->format('Y-m-d'))->revenue ?? 0.0;
+        $totalIncomeYesterday = $dailyRevenue->get($yesterday->format('Y-m-d'))->revenue ?? 0.0;
+
+        // Debug: Log orders for verification
+        $yesterdayOrders = Order::whereBetween('payment_time', [$yesterday, $yesterdayEnd])
+                ->whereRaw('LOWER(order_status) = ?', ['complete'])
+                ->select('id', 'order_amount', 'order_status', 'payment_time')
+                ->get()
+                ->toArray();
+        \Log::info('Orders for Yesterday (Day Before Yesterday):', [
+                'date' => $yesterday->format('Y-m-d'),
+                'orders' => $yesterdayOrders,
+                'total' => $totalIncomeYesterday
+            ]);
+
+        $todayOrders = Order::whereBetween('payment_time', [$today, $todayEnd])
+                ->whereRaw('LOWER(order_status) = ?', ['complete'])
+                ->select('id', 'order_amount', 'order_status', 'payment_time')
+                ->get()
+                ->toArray();
+        \Log::info('Orders for Today (Yesterday):', [
+                'date' => $today->format('Y-m-d'),
+                'orders' => $todayOrders,
+                'total' => $totalIncomeToday
+            ]);
 
         // Orders per hour in the last 24 hours
         $yesterday = now()->subDay()->startOfDay();
