@@ -5,16 +5,16 @@ namespace App\DataTables\Export;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Collection;
 use Maatwebsite\Excel\Concerns\Exportable;
-use Maatwebsite\Excel\Concerns\FromView;
+use Maatwebsite\Excel\Concerns\WithMultipleSheets;
 use Maatwebsite\Excel\Concerns\ShouldAutoSize;
 
-class OrderExportHandler implements ShouldAutoSize, FromView
+class OrderExportHandler implements WithMultipleSheets, ShouldAutoSize
 {
     use Exportable;
     protected $collection;
 
     /**
-     * DataTablesExportHandler constructor.
+     * OrderExportHandler constructor.
      *
      * @param Collection $collection
      */
@@ -23,9 +23,55 @@ class OrderExportHandler implements ShouldAutoSize, FromView
         $this->collection = $collection;
     }
 
+    /**
+     * Define the sheets for the Excel file.
+     *
+     * @return array
+     */
+    public function sheets(): array
+    {
+        return [
+            'Order Details' => new OrderDetailsSheet($this->collection),
+            'Transaction Summary' => new TransactionSummarySheet($this->collection),
+        ];
+    }
+}
+
+/**
+ * Class for the Order Details sheet
+ */
+class OrderDetailsSheet implements ShouldAutoSize, \Maatwebsite\Excel\Concerns\FromView
+{
+    protected $collection;
+
+    public function __construct(Collection $collection)
+    {
+        $this->collection = $collection;
+    }
+
     public function view(): View
     {
-        return view('admin.orders.export', [
+        return view('admin.orders.export-detail', [
+            'orders' => $this->collection
+        ]);
+    }
+}
+
+/**
+ * Class for the Transaction Summary sheet
+ */
+class TransactionSummarySheet implements ShouldAutoSize, \Maatwebsite\Excel\Concerns\FromView
+{
+    protected $collection;
+
+    public function __construct(Collection $collection)
+    {
+        $this->collection = $collection;
+    }
+
+    public function view(): View
+    {
+        return view('admin.orders.export-summary', [
             'orders' => $this->collection
         ]);
     }
