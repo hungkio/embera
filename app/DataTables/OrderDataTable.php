@@ -23,7 +23,7 @@ class OrderDataTable extends BaseDatable
             ->editColumn('shop_name', fn(Order $order) => $order->rental_shop)
             ->editColumn('merchant_name', fn(Order $order) => $order->merchant_name)
             ->editColumn('employee_name', fn(Order $order) => $order->employee_name)
-            ->editColumn('payment_time', fn(Order $order) => formatDate($order->payment_time))
+            ->editColumn('payment_time', fn(Order $order) => $order->payment_time ? formatDate($order->payment_time) : '')
             ->filterColumn('rental_shop', function ($query, $keyword) {
                 $query->where('rental_shop', 'like', "%$keyword%");
             })
@@ -36,6 +36,9 @@ class OrderDataTable extends BaseDatable
             ->filterColumn('order_status', function ($query, $keyword) {
                 $query->where('order_status', 'like', "%$keyword%");
             })
+            ->filterColumn('order_number', function ($query, $keyword) {
+                $query->where('order_number', 'like', "%$keyword%");
+            })
             ->orderColumn('payment_time', 'payment_time $1')
             ->rawColumns(['action']);
     }
@@ -47,7 +50,7 @@ class OrderDataTable extends BaseDatable
         $filters = $this->request->all();
 
         if (!empty($filters['date_from']) && !empty($filters['date_to'])) {
-            $query->whereBetween('payment_time', [
+            $query->whereBetween('return_time', [
                 Carbon::parse($filters['date_from'])->startOfDay(),
                 Carbon::parse($filters['date_to'])->endOfDay(),
             ]);
@@ -96,6 +99,7 @@ class OrderDataTable extends BaseDatable
     {
         return [
             Column::checkbox(''),
+            Column::make('order_number')->title('Order Number'),
             Column::make('payment_id')->title('Payment ID'),
             Column::make('rental_time')->title('Rental Time'),
             Column::make('return_time')->title('Return Time'),

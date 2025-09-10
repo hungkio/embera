@@ -26,7 +26,7 @@
                 <td>{{ $row->rental_shop }}</td>
                 <td>{{ $row->duration_of_use }}</td>
                 <td>{{ $row->currency }}</td>
-                <td>{{ number_format($row->order_amount, 0, '.', ',') }}</td>
+                <td>{{ $row->order_amount }}</td>
                 @php($total += $row->order_amount)
             </tr>
         @endif

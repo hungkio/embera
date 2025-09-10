@@ -45,7 +45,7 @@ class OrderController
         $paymentChannelList = Order::distinct()->pluck('payment_channels')->filter()->sort()->toArray();
 
         $query = Order::query()
-            ->whereBetween('payment_time', [
+            ->whereBetween('return_time', [
                 Carbon::parse($date_from)->startOfDay(),
                 Carbon::parse($date_to)->endOfDay(),
             ])->leftJoin('shops', 'shops.shop_name', '=', 'orders.rental_shop');
@@ -85,7 +85,7 @@ class OrderController
         }
 
         $orders = (clone $query)->select('orders.*', 'shops.share_rate_type', 'shops.share_rate')
-            ->orderByDesc('payment_time')->get();
+            ->orderByDesc('return_time')->get();
         $totalRevenue = $orders->sum('order_amount');
 
         $byShop = $orders->groupBy('rental_shop')->map(function ($group) {
@@ -120,7 +120,7 @@ class OrderController
             ];
         })->values();
 
-        $byDate = $orders->groupBy(fn($o) => Carbon::parse($o->payment_time)->format('Y-m-d'))
+        $byDate = $orders->groupBy(fn($o) => Carbon::parse($o->return_time)->format('Y-m-d'))
             ->map(function ($group, $date) {
                 return [
                     'date' => $date,
@@ -278,7 +278,7 @@ class OrderController
         $orders = Order::query()
             ->when($orderCode, fn($q) => $q->where('payment_id', $orderCode))
             ->where('payment_channels', 'mbpay')
-            ->whereBetween('payment_time', [$from, $to])
+            ->whereBetween('return_time', [$from, $to])
             ->get();
 
         $orderMap = $orders->keyBy('payment_id');
@@ -306,7 +306,7 @@ class OrderController
                     'reason' => 'Lệch số tiền',
                     'revenue' => $mb->revenue,
                     'order_amount' => $order->order_amount,
-                    'payment_time' => formatDate($order->payment_time),
+                    'payment_time' => $order->payment_time? formatDate($order->payment_time) : '',
                     'date_in' => formatDate($mb->date_in),
                     'ft_in' => $mb->ft_code_in,
                     'ft_out' => $mb->ft_code_out,
@@ -319,7 +319,7 @@ class OrderController
                 'reason' => 'Khớp',
                 'revenue' => $mb->revenue,
                 'order_amount' => $order->order_amount,
-                'payment_time' => formatDate($order->payment_time),
+                'payment_time' => $order->payment_time? formatDate($order->payment_time) : '',
                 'date_in' => formatDate($mb->date_in),
                 'ft_in' => $mb->ft_code_in,
                 'ft_out' => $mb->ft_code_out,
@@ -336,7 +336,7 @@ class OrderController
                     'reason' => 'Không tìm thấy giao dịch MB',
                     'amount_in' => null,
                     'order_amount' => $order->order_amount,
-                    'payment_time' => formatDate($order->payment_time),
+                    'payment_time' => $order->payment_time? formatDate($order->payment_time) : '',
                     'date_in' => null,
                     'ft_in' => null,
                     'ft_out' => null,

@@ -45,19 +45,19 @@
             <td>{{ formatDate($row->return_time) }}</td>
             <td>{{ $row->merchant_id }}</td>
             <td>{{ $row->merchant_name }}</td>
-            <td>{{ number_format($row->order_amount, 0, '.', ',') }}</td>
-            <td>{{ number_format($row->fees, 0, '.', ',') }}</td>
+            <td>{{ $row->order_amount }}</td>
+            <td>{{ $row->fees }}</td>
             <td>{{ $row->order_status }}</td>
             <td>{{ $row->employee_id }}</td>
             <td>{{ $row->employee_name }}</td>
             <td>{{ $row->order_source }}</td>
-            <td>{{ formatDate($row->payment_time) }}</td>
+            <td>{{ $row->payment_time ? formatDate($row->payment_time) : '' }}</td>
             <td>{{ $row->payment_channels }}</td>
             <td>{{ $row->refund_status }}</td>
-            <td>{{ number_format($row->refund_amount, 0, '.', ',') }}</td>
-            <td>{{ number_format($row->refund_fee, 0, '.', ',') }}</td>
-            <td>{{ number_format($row->revenue_to_dealer, 0, '.', ',') }}</td>
-            <td>{{ number_format($row->revenue_to_merchant, 0, '.', ',') }}</td>
+            <td>{{ $row->refund_amount }}</td>
+            <td>{{ $row->refund_fee }}</td>
+            <td>{{ $row->revenue_to_dealer }}</td>
+            <td>{{ $row->revenue_to_merchant }}</td>
             <td>{{ $row->charging_strategy }}</td>
             <td>{{ $row->rental_shop_address }}</td>
             <td>{{ $row->region }}</td>
