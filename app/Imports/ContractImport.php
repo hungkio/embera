@@ -11,80 +11,112 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Maatwebsite\Excel\Concerns\ToCollection;
 use Maatwebsite\Excel\Concerns\WithCalculatedFormulas;
+use Illuminate\Support\Facades\Log;
 
 class ContractImport implements ToCollection, WithCalculatedFormulas
 {
     public function collection(Collection $rows)
     {
         $statuses = [
-            'bbnt' => 0,
-            'notsign' => 1,
-            'signed' => 2,
+            'đã ký' => 2,
+            'chưa ký' => 1,
+            'không ký' => 1,
         ];
 
         DB::transaction(function () use ($rows, $statuses) {
-            // Gom theo contract_number
-            $grouped = $rows->groupBy(fn($row) => trim($row[0]));
+            // Group by shop_name (index 0), since 1 shop has 1 BD and 1 contract, but multiple devices
+            $grouped = $rows->groupBy(fn($row) => trim($row[0] ?? ''));
 
-            if ($grouped['contract_number']) {
-                unset($grouped['contract_number']);
+            // Unset header group
+            if ($grouped->has('shop name')) {
+                $grouped = $grouped->forget('shop name');
             }
-            foreach ($grouped as $contractNumber => $items) {
-                $firstRow = $items->first();
 
-                $contractNumber = trim($firstRow[0] ?? '');
-                $signDate = $this->parseDate($firstRow[1] ?? null);
-                $expiredDate = $this->parseDate($firstRow[2] ?? null);
-                $status = $firstRow[3] ? $statuses[$firstRow[3]] : 1;
-                $bankInfo = trim($firstRow[4] ?? '');
-                $bankNumber = trim($firstRow[5] ?? '');
-                $bankName = trim($firstRow[6] ?? '');
-                $merchantEmail = trim($firstRow[7] ?? '');
-                $merchantPhone = trim($firstRow[8] ?? '');
-                $adminName = trim($firstRow[9] ?? '');
-
-                $shopName = trim($firstRow[10] ?? '');
-                $title = trim($firstRow[11] ?? '');
-                $ceoSign = trim($firstRow[12] ?? '');
-                $location = trim($firstRow[13] ?? '');
-                $shopType = trim($firstRow[14] ?? '');
-                $merchantName = trim($firstRow[15] ?? '');
-                $shareRate = trim($firstRow[16] ?? '');
-                $merchantUsername = trim($firstRow[20] ?? '');
-                $merchantPassword = trim($firstRow[21] ?? '');
-
-                if (!$adminName) {
+            foreach ($grouped as $groupKey => $items) {
+                if ($items->isEmpty()) {
                     continue;
                 }
-                // Tìm admin_id từ tên
-                $admin = Admin::whereRaw("CONCAT(first_name, ' ', last_name) = ?", $adminName)->first();
 
-                if (!$admin) {
-                    throw new \Exception("Không tìm thấy BD: $adminName");
+                $firstRow = $items->first();
+
+                $shopName = trim($firstRow[0] ?? '');
+                $contractNumber = trim($firstRow[1] ?? '');
+                $signDate = $this->parseDate($firstRow[2] ?? null);
+                $expiredDate = $this->parseDate($firstRow[3] ?? null);
+                $statusRaw = strtolower(trim($firstRow[4] ?? ''));
+                $status = isset($statuses[$statusRaw]) ? $statuses[$statusRaw] : 1;
+                $bankInfo = trim($firstRow[5] ?? '');
+                $bankNumber = trim($firstRow[6] ?? '');
+                $bankName = trim($firstRow[7] ?? '');
+                $bdName = trim($firstRow[8] ?? '');
+                $customerName = trim($firstRow[9] ?? '');
+                $customerPosition = trim($firstRow[10] ?? '');
+                $merchantEmail = trim($firstRow[11] ?? '');
+                $merchantPhone = trim($firstRow[12] ?? '');
+                $businessRegistration = trim($firstRow[13] ?? '');
+                $customerCccd = trim($firstRow[14] ?? '');
+                $location = trim($firstRow[15] ?? '');
+                $title = trim($firstRow[17] ?? '');
+                $ceoSign = trim($firstRow[18] ?? '');
+                $shopType = trim($firstRow[19] ?? '');
+                $merchantName = trim($firstRow[20] ?? '');
+                $shareRate = trim($firstRow[21] ?? '');
+                $merchantUsername = trim($firstRow[25] ?? '');
+                $merchantPassword = trim($firstRow[26] ?? '');
+
+
+                if (!$shopName || !$contractNumber) {
+                    continue;
                 }
 
-                // Merchant
-                $merchant = Merchant::updateOrCreate(
+                $adminName = $bdName ?: $customerPosition;
+                if (!$adminName) {
+                    Log::warning("Skipping row for shop '{$shopName}' due to empty BD name.");
+                    continue;
+                }
+
+                // Split adminName into first_name (family name) and last_name (given name)
+                $nameParts = explode(' ', $adminName);
+                $firstName = array_shift($nameParts); // First word as first_name (e.g., 'Trần')
+                $lastName = implode(' ', $nameParts); // Rest as last_name (e.g., 'Hải Yến')
+
+                // Tìm or create admin
+                $admin = Admin::firstOrCreate(
                     [
-                        'username' => $merchantUsername,
+                        'first_name' => $firstName,
+                        'last_name' => $lastName,
                     ],
                     [
-                        'email' => $merchantEmail,
-                        'phone' => $merchantPhone,
-                        'password' => $merchantPassword, // Có thể thay bằng logic khác
-                        'admin_id' => $admin->id,
+                        'email' => $merchantEmail ?: 'default_' . $adminName . '@example.com', // Fallback email
+                        'phone' => $merchantPhone ?: '',
+                        'password' => bcrypt('default_password'), // Default hashed password
                     ]
                 );
 
-                // Gom thiết bị
+                $merchantId = null;
+                if ($merchantUsername) {
+                    $merchant = Merchant::updateOrCreate(
+                        [
+                            'username' => $merchantUsername,
+                        ],
+                        [
+                            'email' => $merchantEmail,
+                            'phone' => $merchantPhone,
+                            'password' => $merchantPassword ?: bcrypt('default_password'),
+                            'admin_id' => $admin->id,
+                        ]
+                    );
+                    $merchantId = $merchant->id;
+                }
+
+                // Gom thiết bị từ all items in group
                 $devices = [];
                 foreach ($items as $row) {
-                    $deviceCode = trim($row[17] ?? '');
-                    $deviceName = trim($row[18] ?? '');
-                    $pin = (int) $row[19];
+                    $deviceCode = trim($row[22] ?? '');
+                    $deviceName = trim($row[23] ?? '');
+                    $pin = (int) ($row[24] ?? 0);
 
-
-                    if ($deviceName) {
+                    if ($deviceCode && $deviceName) {
                         $devices[] = [
                             'code' => $deviceCode,
                             'name' => $deviceName,
@@ -113,20 +145,26 @@ class ContractImport implements ToCollection, WithCalculatedFormulas
                         'email' => $merchantEmail,
                         'phone' => $merchantPhone,
                         'admin_id' => $admin->id,
-                        'merchant_id' => $merchant->id,
+                        'merchant_id' => $merchantId,
                         'title' => $title,
-                        'ceo_sign' => $ceoSign ?? Contract::CURRENT_CEO,
+                        'ceo_sign' => $ceoSign ?: Contract::CURRENT_CEO,
                         'location' => $location,
+                        'customer_name' => $customerName,
+                        'customer_position' => $customerPosition,
+                        'customer_cccd' => $customerCccd,
+                        'business_registration' => $businessRegistration,
                     ]
                 );
 
                 // Shop
-                if (isset($shopName) && preg_match('/\((.*?)\)/', $shopName, $matches)) {
-                    $parts = explode('-', $matches[1]);
-                    $region = $parts[0] ?? null;
-                    $city   = $parts[1] ?? null;
-                    $area   = $parts[2] ?? null;
+                $region = $city = $area = null;
+                if (preg_match('/\((.*?)\)/', $shopName, $matches)) {
+                    $parts = explode('-', trim($matches[1]));
+                    $region = trim($parts[0] ?? '');
+                    $city = trim($parts[1] ?? '');
+                    $area = trim($parts[2] ?? '');
                 }
+
                 Shop::updateOrCreate(
                     [
                         'shop_name' => $shopName,
@@ -135,16 +173,15 @@ class ContractImport implements ToCollection, WithCalculatedFormulas
                         'contract_id' => $contract->id,
                         'address' => $location,
                         'shop_type' => $shopType,
-//                        'share_rate' => $shareRate ? $shareRate*100 : 0,
-                        'share_rate' => $shareRate,
+                        'share_rate' => (float) ($shareRate ?: 0),
                         'share_rate_type' => 'fixed',
                         'contact_phone' => $merchantPhone,
                         'strategy' => '(VND-1h)20-10000-52000',
-                        'area' => trim($area),
-                        'city' => trim($city),
-                        'region' => trim($region),
-                        'device_json' => ['devices' => $devices],
-                        'admin_id' => $admin->id,
+                        'area' => $area,
+                        'city' => $city,
+                        'region' => $region,
+                        'device_json' => $deviceJson,
+                        'merchant_id' => $merchantId,
                     ]
                 );
             }
@@ -160,7 +197,8 @@ class ContractImport implements ToCollection, WithCalculatedFormulas
                 $date = \PhpOffice\PhpSpreadsheet\Shared\Date::excelToDateTimeObject($value);
                 return Carbon::parse($date);
             } else {
-                return \Carbon\Carbon::createFromFormat('d/m/Y', $value);
+                // Handle formats like d/m/Y or other variations in data
+                return Carbon::createFromFormat('d/m/Y', $value) ?? Carbon::parse($value);
             }
         } catch (\Exception $e) {
             return null;

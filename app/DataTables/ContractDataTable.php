@@ -44,9 +44,14 @@ class ContractDataTable extends BaseDatable
             ->addColumn('city', function (Contract $c) {
                 return Contract::provinces()[$c->city] ?? '-';
             })
-            ->editColumn('admin_id', fn(Contract $c) => $c->admin->full_name ?? '')
+            ->editColumn('admin_id', function (Contract $c) {
+                if (!$c->admin) {
+                    return '';
+                }
+                return trim($c->admin->first_name . ' ' . $c->admin->last_name);
+            })
             ->filterColumn('admin_id', function ($query, $keyword) {
-                $query->whereRaw("LOWER(CONCAT(admins.last_name, ' ', admins.first_name)) like ?", ["%" . strtolower($keyword) . "%"]);
+                $query->whereRaw("LOWER(CONCAT(admins.first_name, ' ', admins.last_name)) like ?", ["%" . strtolower($keyword) . "%"]);
             })
             ->editColumn('business_registration', fn(Contract $c) => e($c->business_registration ?? '-'))
             ->filterColumn('bank_account_number', fn($query, $keyword) => $query->where('bank_account_number', 'like', "%$keyword%"))

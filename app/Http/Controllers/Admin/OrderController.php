@@ -175,50 +175,56 @@ class OrderController
         $inFile = $request->file('input_file_in');
         $outFile = $request->file('input_file_out');
 
-        $incoming = Excel::toCollection(null, $inFile)[0];
-        $outgoing = Excel::toCollection(null, $outFile)[0];
+        // Đọc toàn bộ sheet
+        $incomingSheet = Excel::toCollection(null, $inFile)[0];
+        $outgoingSheet = Excel::toCollection(null, $outFile)[0];
 
-        $incomingData = collect();
-        foreach ($incoming->slice(1) as $row) {
-            $code = trim($row[2] ?? '');
-            if (!$code) continue;
+        // Bỏ 6 dòng đầu (thông tin), dòng 7 mới là header -> data từ dòng 8
+        $incoming = $incomingSheet->slice(7)->filter(fn($row) => !empty($row[2]));
+        $outgoing = $outgoingSheet->slice(7)->filter(fn($row) => !empty($row[3]) || !empty($row[9]));
 
-            $incomingData->push([
-                'code' => $code,
-                'date_in' => $this->parseDate($row[1] ?? ''),
-                'amount_in' => (float) $row[4],
-                'ft_code_in' => trim($row[7] ?? ''),
-            ]);
-        }
+        $incomingData = $incoming->map(function ($row) {
+            return [
+                'code'       => trim($row[2] ?? ''),
+                'date_in'    => $this->parseDate($row[1] ?? ''),
+                'amount_in'  => (float) str_replace(',', '', (string) ($row[4] ?? 0)),
+                'ft_code_in' => trim($row[11] ?? ''),
+            ];
+        })->filter(fn($in) => $in['code'] && $in['ft_code_in']);
 
-        $outgoingData = collect();
-        foreach ($outgoing->slice(1) as $row) {
-
-            $outgoingData->push([
-                'code_ref' => trim($row[3] ?? ''), // Mã giao dịch gốc
-                'amount_out' => (float)$row[5],
-                'date_out' => $this->parseDate($row[1] ?? ''),
-                'ft_code_out' => trim($row[7] ?? ''),
-            ]);
-        }
+        $outgoingData = $outgoing->map(function ($row) {
+            return [
+                'code_ref'   => trim($row[3] ?? ''),
+                'amount_out' => (float) str_replace(',', '', (string) ($row[5] ?? 0)),
+                'date_out'   => $this->parseDate($row[1] ?? ''),
+                'ft_code_out'=> trim($row[8] ?? ''),
+                'ft_code_in' => trim($row[9] ?? ''),
+            ];
+        });
 
         foreach ($incomingData as $in) {
-            $match = $outgoingData->firstWhere('code_ref', $in['code']);
+            // Ưu tiên match theo FT gốc
+            $match = $outgoingData->firstWhere('ft_code_in', $in['ft_code_in']);
+
+            // Nếu không khớp, fallback theo mã GD
+            if (!$match) {
+                $match = $outgoingData->firstWhere('code_ref', $in['code']);
+            }
 
             MBTransaction::updateOrCreate(
                 ['code_in' => $in['code']],
                 [
-                    'code_in' => $in['code'],
-                    'date_in' => $in['date_in'],
-                    'ft_code_in' => $in['ft_code_in'],
-                    'amount_in' => $in['amount_in'],
+                    'code_in'     => $in['code'],
+                    'date_in'     => $in['date_in'],
+                    'ft_code_in'  => $in['ft_code_in'],
+                    'amount_in'   => $in['amount_in'],
 
-                    'code_out' => $match['code_ref'] ?? null,
-                    'date_out' => $match['date_out'] ?? null,
+                    'code_out'    => $match['code_ref'] ?? null,
+                    'date_out'    => $match['date_out'] ?? null,
                     'ft_code_out' => $match['ft_code_out'] ?? null,
-                    'amount_out' => $match['amount_out'] ?? 0,
+                    'amount_out'  => $match['amount_out'] ?? 0,
 
-                    'revenue' => $in['amount_in'] - ($match['amount_out'] ?? 0),
+                    'revenue'     => $in['amount_in'] - ($match['amount_out'] ?? 0),
                 ]
             );
         }
@@ -226,14 +232,20 @@ class OrderController
         return back()->with('success', 'Import dữ liệu thành công!');
     }
 
-    private function parseDate($value)
-    {
-        try {
-            return Carbon::createFromFormat('d/m/Y H:i', $value);
-        } catch (\Exception $e) {
-            return null;
-        }
-    }
+   private function parseDate($value)
+   {
+       if (empty($value)) return null;
+
+       try {
+           return Carbon::createFromFormat('d/m/Y H:i', $value);
+       } catch (\Exception $e) {
+           try {
+               return Carbon::createFromFormat('d/m/Y', $value);
+           } catch (\Exception $e) {
+               return null;
+           }
+       }
+   }
 
     public function mergeTransaction(MBTransactionDataTable $dataTable, Request $request) {
         $dateRange = $request->get('date_range');
