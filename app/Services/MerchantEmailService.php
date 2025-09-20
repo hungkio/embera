@@ -28,6 +28,10 @@ class MerchantEmailService
             return;
         }
 
+        // Chu kỳ giao dịch từ 01/04/năm hiện tại đến hiện tại
+        $startDate = Carbon::createFromDate(2025, 4, 1);
+        $endDate   = Carbon::create(2025, 8, 31);
+
         // Xác định template
         $type = $this->detectType($shops);
         $view = $type === 'fixed'
@@ -75,30 +79,32 @@ class MerchantEmailService
             ->where('shops.is_deleted', false)
             ->get();
 
-        $now = Carbon::today()->subMonth();
-        $totalOrders = $shops->sum(function ($shop) use ($now) {
+        // 2) Reconstruct period from data
+        $fromDate = Carbon::create($data['from_year'], $data['from_month'], $data['from_day']);
+        $toDate = Carbon::create($data['to_year'], $data['to_month'], $data['to_day']);
+        $periodStartLog = $fromDate->copy()->startOfDay();
+        $periodEndLog = $toDate->copy()->endOfDay();
+
+        $totalOrders = $shops->sum(function ($shop) use ($periodStartLog, $periodEndLog) {
             return Order::whereRaw('LOWER(rental_shop) = ?', [Str::lower($shop->shop_name)])
                 ->where('order_amount', '>', 0)
-                ->whereBetween('payment_time', [
-                    $now->clone()->startOfMonth()->startOfDay(),
-                    $now->clone()->endOfMonth()->endOfDay(),
-                ])
+                ->whereBetween('payment_time', [$periodStartLog, $periodEndLog])
                 ->count();
         });
 
-        // 2) Lấy shop_data đã format xong ở prepareData()
+        // 3) Lấy shop_data đã format xong ở prepareData()
         $shopsData = collect($data['shop_data'] ?? []);
 
-        // 3) Parser chung: xóa dấu . VNĐ %
+        // 4) Parser chung: xóa dấu . VNĐ %
         $parse = function (string $s): float {
             return (float)str_replace(['.', ' VNĐ', '%'], '', $s);
         };
 
-        // 4) Tính tổng doanh thu và tổng tiền chia
+        // 5) Tính tổng doanh thu và tổng tiền chia
         $totalRevenue = $shopsData->sum(fn($r) => $parse($r['doanh_thu']));
         $totalShareMoney = $shopsData->sum(fn($r) => $parse($r['thanh_toan']));
 
-        // 5) Xác định share_percentValue qua if/else
+        // 6) Xác định share_percentValue qua if/else
         if ($type === 'fixed') {
             // Với fixed:
             //    - lấy giá trị chia cố định từ mỗi shop: $parse($r['chia_se'])
@@ -113,7 +119,7 @@ class MerchantEmailService
                 : 0;
         }
 
-        // 6) Tạo bản ghi log
+        // 7) Tạo bản ghi log
         MerchantShareLog::create([
             'merchant_id' => $merchant->id,
             'year' => $data['from_year'] ?? now()->year,
@@ -130,10 +136,13 @@ class MerchantEmailService
         ]);
     }
 
-    public function prepareData(Merchant $merchant, $shops = []): array
+    public function prepareData(Merchant $merchant, $shops = [], Carbon $startDate = null, Carbon $endDate = null): array
     {
         $today = now();
         $lastMonth = Carbon::now()->subMonth();
+
+        $periodStart = $startDate ?? $lastMonth->copy()->startOfMonth();
+        $periodEnd = $endDate ?? $lastMonth->copy()->endOfMonth();
 
         $bd = $merchant->admin;
         $firstRoleName = $bd ? optional($bd->roles()->first())->name : '';
@@ -156,30 +165,29 @@ class MerchantEmailService
             'so_tai_khoan' => $merchant->contract->bank_account_number ?? '',
             'giam_doc_ky' => $giamDocKy,
 
-            'from_day' => $lastMonth->firstOfMonth()->format('d'),
-            'from_month' => $lastMonth->firstOfMonth()->format('m'),
-            'from_year' => $lastMonth->firstOfMonth()->format('Y'),
-            'to_day' => $lastMonth->endOfMonth()->format('d'),
-            'to_month' => $lastMonth->endOfMonth()->format('m'),
-            'to_year' => $lastMonth->endOfMonth()->format('Y'),
+            'from_day' => $periodStart->format('d'),
+            'from_month' => $periodStart->format('m'),
+            'from_year' => $periodStart->format('Y'),
+            'to_day' => $periodEnd->format('d'),
+            'to_month' => $periodEnd->format('m'),
+            'to_year' => $periodEnd->format('Y'),
         ];
 
         $shops_data = [];
         $totalRevenue = 0;    // Tổng doanh thu
         $totalPayment = 0;    // Tổng tiền chia
-        $now = Carbon::today()->subMonth();
 
         foreach ($shops as $key => $shop) {
+            $periodStartDay = $periodStart->copy()->startOfDay();
+            $periodEndDay = $periodEnd->copy()->endOfDay();
+
             if ($shop->share_rate_type == 'fixed') {
                 $displayShopName = trim(Str::before($shop->shop_name ?? '', '('));
                 $address = $shop->address ?? '';
 
                 // Tính doanh thu tháng trước
                 $sumNumberOrder = Order::whereRaw('LOWER(rental_shop) = ?', [Str::lower($shop->shop_name)])->where('order_amount', '>', 0)
-                    ->whereBetween('payment_time', [
-                        $now->clone()->startOfMonth()->startOfDay(),
-                        $now->clone()->endOfMonth()->endOfDay(),
-                    ])
+                    ->whereBetween('payment_time', [$periodStartDay, $periodEndDay])
                     ->count();
                 $shareRate = $shop->share_rate ?? 0;
 
@@ -200,10 +208,7 @@ class MerchantEmailService
 
                 // Tính doanh thu tháng trước
                 $revenue = Order::whereRaw('LOWER(rental_shop) = ?', [Str::lower($shop->shop_name)])
-                    ->whereBetween('payment_time', [
-                        $now->clone()->startOfMonth()->startOfDay(),
-                        $now->clone()->endOfMonth()->endOfDay(),
-                    ])
+                    ->whereBetween('payment_time', [$periodStartDay, $periodEndDay])
                     ->sum('order_amount');
                 $shareRate = $shop->share_rate ?? 0;
                 $payment = $revenue * ($shareRate / 100);

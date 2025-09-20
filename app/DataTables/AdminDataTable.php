@@ -20,16 +20,16 @@ class AdminDataTable extends BaseDatable
         return datatables()
             ->eloquent($query)
             ->addIndexColumn()
-            ->addColumn('full_name', fn (Admin $admin) => view('admin.admins._tableFullName', compact('admin')))
+            ->addColumn('full_name', fn (Admin $admin) => e(trim($admin->first_name . ' ' . $admin->last_name)))
             ->addColumn('roles', fn (Admin $admin) => $admin->roles->implode('display_name', ', '))
             ->editColumn('created_at', fn (Admin $admin) => formatDate($admin->created_at))
             ->editColumn('phone', fn(Admin $admin) => $admin->phone)
-            ->orderColumn('full_name',
-                fn($query, $direction) => $query->orderByRaw("CONCAT(first_name, ' ', last_name) $direction")
-            )
-            ->filterColumn('full_name', function($query, $keyword) {
-                $query->whereRaw("CONCAT(first_name, ' ', last_name) like ?", ["%{$keyword}%"]);
-            })
+           ->orderColumn('full_name',
+               fn($query, $direction) => $query->orderByRaw("CONCAT(last_name, ' ', first_name) $direction")
+           )
+           ->filterColumn('full_name', function($query, $keyword) {
+               $query->whereRaw("CONCAT(last_name, ' ', first_name) like ?", ["%{$keyword}%"]);
+           })
             ->addColumn('action', 'admin.admins._tableAction');
     }
 

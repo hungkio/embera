@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\Merchant;
 use Illuminate\Support\Facades\Log;
+use Carbon\Carbon;
 
 class ZaloService
 {
@@ -41,13 +42,15 @@ class ZaloService
                 continue;
             }
 
-            // Chuẩn bị dữ liệu từ MerchantEmailService
-            $data = $emailService->prepareData($merchant, $merchant->shops);
-            $shareType = $emailService->detectType($merchant->shops);
+            // Chu kỳ giao dịch từ 01/04/năm hiện tại đến hiện tại
+            $currentYear = now()->year;
+            $startDate = Carbon::createFromDate(2025, 4, 1);
+                    $endDate   = Carbon::create(2025, 8, 31);
+            $thangGiaodich = 'Từ 01/04/' . $currentYear . ' đến ' . $endDate->format('d/m/Y');
 
-            // Chu kỳ giao dịch
-            $lastMonth = now()->subMonth();
-            $thangGiaodich = $lastMonth->format('m/Y');
+            // Chuẩn bị dữ liệu từ MerchantEmailService với khoảng thời gian
+            $data = $emailService->prepareData($merchant, $merchant->shops, $startDate, $endDate);
+            $shareType = $emailService->detectType($merchant->shops);
 
             // Cấu trúc dữ liệu chung cho Zalo
             $templateData = [
