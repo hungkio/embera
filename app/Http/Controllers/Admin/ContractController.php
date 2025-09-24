@@ -273,9 +273,8 @@ class ContractController
 
     public function show(Contract $contract)
     {
-        // nếu cần list merchants cho dropdown chỉ‐view (thường ko cần)
         $merchants = Admin::whereHas('roles', fn($q) =>
-        $q->where('name', 'BD')
+            $q->where('name', 'BD')
         )
             ->selectRaw("CONCAT(first_name, ' ', last_name) as full_name, id")
             ->pluck('full_name', 'id');
