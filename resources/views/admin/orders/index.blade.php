@@ -144,7 +144,7 @@
                                     <tr>
                                         <td>{{ $i + 1 }}</td>
                                         <td>{{ $staff['employee'] }}</td>
-                                        <td>{{ number_format($staff['revenue'], 0, ',', '.') }}</td>
+                                        <td>{{ number_format($staff['revenue'], 0, ',', ',') }}</td>
                                     </tr>
                                 @endforeach
                                 </tbody>

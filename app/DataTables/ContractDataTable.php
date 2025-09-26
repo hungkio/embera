@@ -16,8 +16,6 @@ class ContractDataTable extends BaseDatable
             ->eloquent($query)
             ->addIndexColumn()
             ->addColumn('action', 'admin.contracts._tableAction')
-
-            // 1) Merchant có link vào form edit
             ->addColumn('merchant', function (Contract $c) {
                 if (!$c->merchant) {
                     return '-';
@@ -25,8 +23,6 @@ class ContractDataTable extends BaseDatable
                 $url = route('admin.merchants.edit', ['merchant' => $c->merchant_id]);
                 return '<a href="' . $url . '" target="_blank">' . e($c->merchant->username) . '</a>';
             })
-
-            // 2) Shop list có link vào từng Shop edit
             ->addColumn('shop_name', function (Contract $c) {
                 if ($c->shops->isEmpty()) {
                     return '-';
@@ -44,9 +40,14 @@ class ContractDataTable extends BaseDatable
             ->addColumn('city', function (Contract $c) {
                 return Contract::provinces()[$c->city] ?? '-';
             })
-            ->editColumn('admin_id', fn(Contract $c) => $c->admin->full_name ?? '')
+            ->editColumn('admin_id', function (Contract $c) {
+                if (!$c->admin) {
+                    return '';
+                }
+                return trim($c->admin->first_name . ' ' . $c->admin->last_name);
+            })
             ->filterColumn('admin_id', function ($query, $keyword) {
-                $query->whereRaw("LOWER(CONCAT(admins.last_name, ' ', admins.first_name)) like ?", ["%" . strtolower($keyword) . "%"]);
+                $query->whereRaw("LOWER(CONCAT(admins.first_name, ' ', admins.last_name)) like ?", ["%" . strtolower($keyword) . "%"]);
             })
             ->editColumn('business_registration', fn(Contract $c) => e($c->business_registration ?? '-'))
             ->filterColumn('bank_account_number', fn($query, $keyword) => $query->where('bank_account_number', 'like', "%$keyword%"))
@@ -73,7 +74,8 @@ class ContractDataTable extends BaseDatable
                 } else {
                     $query->where('status', 'like', "%$keyword%");
                 }
-            })->orderColumn('sign_date', 'sign_date $1')
+            })
+            ->orderColumn('sign_date', 'sign_date $1')
             ->filterColumn('shop_name', function ($query, $keyword) {
                 $query->whereHas('shops', function ($q) use ($keyword) {
                     $q->where('shop_name', 'like', "%$keyword%");
@@ -84,16 +86,16 @@ class ContractDataTable extends BaseDatable
                     ->select('contracts.*')
                     ->orderBy('shops.shop_name', $direction);
             })
-            ->filterColumn('expired_time', fn($query, $keyword) => $query->where('expired_time', 'like', "%$keyword%")) // Text search
-            ->rawColumns(['merchant', 'shop_name', 'action']);  // cho phép output thẻ <a>
+            ->filterColumn('expired_time', fn($query, $keyword) => $query->where('expired_time', 'like', "%$keyword%"))
+            ->rawColumns(['merchant', 'shop_name', 'action']);
     }
 
     public function query(Contract $model)
     {
         return $model->newQuery()
-            ->with(['merchant', 'shops', 'admin']) // đảm bảo load quan hệ
+            ->with(['merchant', 'shops', 'admin'])
             ->leftJoin('admins', 'contracts.admin_id', '=', 'admins.id')
-            ->select('contracts.*') // tránh lỗi select lại
+            ->select('contracts.*')
             ->where('contracts.is_deleted', 0)
             ->when($this->request->filled('date_from') && $this->request->filled('date_to'), function ($q) {
                 $q->whereBetween('sign_date', [
@@ -101,19 +103,17 @@ class ContractDataTable extends BaseDatable
                     Carbon::parse($this->request->date_to)->format('Y-m-d'),
                 ]);
             });
-
     }
-
 
     protected function getColumns(): array
     {
         return [
             Column::checkbox(''),
             Column::make('merchant')->title('Merchant')->addClass('text-center'),
-            Column::computed('shop_name')->title('Cửa hàng'),
+            Column::make('shop_name')->title('Cửa hàng')->data('shop_name'),
             Column::make('customer_name')->title('Tên khách hàng'),
             Column::make('contract_number')->title('Mã hợp đồng'),
-            Column::make('business_registration')->title('GĐKKD'), // Thêm cột mới
+            Column::make('business_registration')->title('GĐKKD'),
             Column::make('sign_date')->title('Ngày ký'),
             Column::make('expired_date')->title('Ngày hết hạn'),
             Column::make('expired_time')->title('Thời hạn'),
@@ -145,9 +145,7 @@ class ContractDataTable extends BaseDatable
             Button::make('create')->addClass('btn btn-success')->text('<i class="fal fa-plus-circle mr-2"></i>' . __('Tạo mới')),
             Button::make('bulkDelete')->addClass('btn bg-danger')->text('<i class="fal fa-trash-alt mr-2"></i>' . __('Xóa')),
             Button::make('reset')->addClass('btn bg-blue')->text('<i class="fal fa-undo mr-2"></i>' . __('Thiết lập lại')),
-            Button::make('selected')->addClass('btn bg-teal-400 import')
-                ->text('<i class="icon-compose mr-2"></i>' . __('Import')
-                ),
+            Button::make('selected')->addClass('btn bg-teal-400 import')->text('<i class="icon-compose mr-2"></i>' . __('Import')),
         ];
     }
 
@@ -155,5 +153,4 @@ class ContractDataTable extends BaseDatable
     {
         return 'Contracts_' . now()->format('YmdHis');
     }
-
 }
