@@ -29,8 +29,8 @@ class MerchantEmailService
         }
 
         // Chu kỳ giao dịch từ 01/04/năm hiện tại đến hiện tại
-        $startDate = Carbon::createFromDate(now()->year, 4, 1);
-        $endDate = now();
+        $startDate = Carbon::createFromDate(2025, 4, 1);
+        $endDate   = Carbon::create(2025, 8, 31);
 
         // Xác định template
         $type = $this->detectType($shops);
