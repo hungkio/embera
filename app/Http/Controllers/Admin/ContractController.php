@@ -24,20 +24,46 @@ class ContractController
 {
     public function index(ContractDataTable $dataTable, Request $request)
     {
-        $dateRange = $request->get('date_range');
-        if ($dateRange && str_contains($dateRange, ' - ')) {
-            list($date_from, $date_to) = explode(' - ', $dateRange);
-            $request->merge([
-                'date_from' => $date_from,
-                'date_to' => $date_to,
-            ]);
-        }
+         $dateRange = $request->get('date_range');
+            if ($dateRange && str_contains($dateRange, ' - ')) {
+                [$date_from, $date_to] = explode(' - ', $dateRange);
+                $request->merge([
+                    'date_from' => $date_from,
+                    'date_to'   => $date_to,
+                ]);
+            }
 
-        return $dataTable->with([
-            'filters' => $request->only(['date_from', 'date_to']),
-        ])->render('admin.contracts.index', [
-            'filters' => $request->only(['date_from', 'date_to']),
-        ]);
+            // ✅ Hợp đồng sắp hết hạn trong 30 ngày
+            $expiringContracts = Contract::with('admin')
+                ->active()
+                ->whereBetween('expired_date', [now(), now()->addDays(30)])
+                ->get();
+
+            $expiringByAdmin = $expiringContracts
+                ->groupBy('admin_id')
+                ->map(function ($group) {
+                    return [
+                        'admin_name'     => optional($group->first()->admin)->full_name ?? 'Unknown',
+                        'expiring_count' => $group->count(),
+                    ];
+                });
+
+            $totalExpiring = $expiringByAdmin->sum('expiring_count');
+
+            $expiringByAdmin = $expiringByAdmin->map(function ($row) use ($totalExpiring) {
+                $row['percent'] = $totalExpiring > 0
+                    ? round(($row['expiring_count'] / $totalExpiring) * 100, 2)
+                    : 0;
+                return $row;
+            })->values();
+
+            return $dataTable->with([
+                'filters' => $request->only(['date_from', 'date_to']),
+            ])->render('admin.contracts.index', [
+                'filters'        => $request->only(['date_from', 'date_to']),
+                'expiringByAdmin'=> $expiringByAdmin,
+                'totalExpiring'  => $totalExpiring,
+            ]);
     }
 
     public function create(): View

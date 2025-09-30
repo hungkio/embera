@@ -27,6 +27,44 @@
             </button>
         </div>
     </form>
+<x-card title="Cảnh báo HĐ sắp hết hạn (30 ngày)">
+    <div class="table-responsive" style="max-width:700px; margin:auto;">
+        <table class="table table-sm table-bordered text-center align-middle" style="width:auto; margin:auto; font-size:14px;">
+            <thead class="table-light">
+                <tr>
+                    <th class="text-start px-3">Nhân viên BD</th>
+                    <th>Số HĐ sắp hết hạn</th>
+                    <th>Tỷ lệ (%)</th>
+                </tr>
+            </thead>
+            <tbody>
+                @forelse($expiringByAdmin as $row)
+                    <tr>
+                        <td class="text-start px-3">{{ $row['admin_name'] }}</td>
+                        <td>{{ $row['expiring_count'] }}</td>
+                        <td>
+                            <span class="badge
+                                {{ $row['percent'] >= 50 ? 'bg-success' : ($row['percent'] >= 20 ? 'bg-warning text-dark' : 'bg-danger') }}">
+                                {{ $row['percent'] }}%
+                            </span>
+                        </td>
+                    </tr>
+                @empty
+                    <tr>
+                        <td colspan="3">Không có HĐ nào sắp hết hạn</td>
+                    </tr>
+                @endforelse
+            </tbody>
+            <tfoot class="table-light fw-bold">
+                <tr>
+                    <td class="text-start px-3">Tổng</td>
+                    <td>{{ $totalExpiring }}</td>
+                    <td>{{ $totalExpiring > 0 ? '100%' : '0%' }}</td>
+                </tr>
+            </tfoot>
+        </table>
+    </div>
+</x-card>
 
 <x-card title="Hợp Đồng">
     <div class="table-responsive">
@@ -68,6 +106,7 @@
             </form>
         </div>
     </div>
+
 @stop
 
 @push('js')
