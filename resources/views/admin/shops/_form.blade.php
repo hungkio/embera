@@ -201,9 +201,9 @@
                                 <div class="device-entry d-flex mb-2">
                                     <select name="device_name[]" class="form-control mr-2" required>
                                         <option value="">-- Chọn thiết bị --</option>
-                                        <option value="CP8">CP8</option>
-                                        <option value="CB8PRO">CP8 PRO</option>
-                                        <option value="CP32">CP32</option>
+                                        <option value="CB8">CB8</option>
+                                        <option value="CB8PRO">CB8PRO</option>
+                                        <option value="CB32">CB32</option>
                                     </select>
 
                                     <input type="text" name="device_code[]"
