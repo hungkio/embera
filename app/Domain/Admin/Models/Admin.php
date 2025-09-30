@@ -57,6 +57,13 @@ class Admin extends Authenticatable implements HasMedia
 
     public function getFullNameAttribute(): string
     {
-        return trim("{$this->last_name} {$this->first_name}");
+        return trim("{$this->first_name} {$this->last_name}");
     }
+
+    public function contracts()
+    {
+        return $this->hasMany(\App\Models\Contract::class, 'admin_id');
+    }
+
+
 }

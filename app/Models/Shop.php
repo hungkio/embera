@@ -48,4 +48,15 @@ class Shop extends Model
     {
         return $this->hasMany(Order::class, 'rental_shop', 'shop_name');
     }
+
+    public function shop()
+    {
+        return $this->belongsTo(Shop::class, 'rental_shop_id', 'id');
+    }
+
+    public function ordersByName()
+    {
+        return $this->hasMany(\App\Models\Order::class, 'rental_shop', 'shop_name');
+    }
+
 }
