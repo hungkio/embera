@@ -47,6 +47,7 @@ use App\Http\Controllers\Admin\MenuItemController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Admin\OrderController;
 use App\Http\Controllers\Admin\PinController;
+use App\Http\Controllers\Admin\OrderUpdateController;
 
 Route::prefix('admin')->name('admin.')->group(function () {
     Route::get('clear_cache', function (){
@@ -55,6 +56,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
         \Illuminate\Support\Facades\Artisan::call('config:clear');
         echo 'Configuration cleared and cached';
     });
+    Route::get('/orders/update-shops-name', [OrderUpdateController::class, 'updateShops'])->name('orders.update-shops');
 
     Route::get('login', [LoginController::class, 'showLoginForm'])->name('login');
     Route::post('login', [LoginController::class, 'login']);
