@@ -19,11 +19,11 @@ class DashboardController
         // --- Lấy start_date và end_date từ request ---
         $startDate = $request->get('start_date')
             ? Carbon::parse($request->get('start_date'))->startOfDay()
-            : now()->startOfMonth();
+            : now()->subDays(6)->startOfDay();   // mặc định 7 ngày gần nhất
 
         $endDate = $request->get('end_date')
             ? Carbon::parse($request->get('end_date'))->endOfDay()
-            : now()->endOfDay();
+            : now()->endOfDay();                 // đến hiện tại
 
         // Nếu start > end thì hoán đổi
         if ($startDate->gt($endDate)) {
@@ -33,15 +33,13 @@ class DashboardController
         // --- KPI theo khoảng ngày ---
         $targetRevenue = setting('target_revenue', 0);
 
-        $totalRevenue = Order::whereBetween('payment_time', [$startDate, $endDate])
-            ->where('order_status', 'complete')
+        $totalRevenue = Order::whereBetween('return_time', [$startDate, $endDate])
             ->sum('order_amount');
 
         $percentRevenue = $targetRevenue > 0 ? round(($totalRevenue / $targetRevenue) * 100, 2) : 0;
         $revenueRemaining = max(0, $targetRevenue - $totalRevenue);
 
-        $avgOrderValue = Order::whereBetween('payment_time', [$startDate, $endDate])
-            ->where('order_status', 'complete')
+        $avgOrderValue = Order::whereBetween('return_time', [$startDate, $endDate])
             ->avg('order_amount') ?? 0;
 
         $daysPassed = $startDate->diffInDays($endDate) + 1;
@@ -49,7 +47,6 @@ class DashboardController
 
         $avgRentalHours = Order::whereBetween('rental_time', [$startDate, $endDate])
             ->whereNotNull('return_time')
-            ->where('order_status', 'complete')
             ->selectRaw('AVG(TIMESTAMPDIFF(HOUR, rental_time, return_time)) as avg_hours')
             ->value('avg_hours') ?? 0;
 
@@ -57,8 +54,7 @@ class DashboardController
         $prevStartDate = $startDate->clone()->subDays($daysPassed);
         $prevEndDate   = $endDate->clone()->subDays($daysPassed);
 
-        $prevTotalRevenue = Order::whereBetween('payment_time', [$prevStartDate, $prevEndDate])
-            ->where('order_status', 'complete')
+        $prevTotalRevenue = Order::whereBetween('return_time', [$prevStartDate, $prevEndDate])
             ->sum('order_amount');
 
         $revenueChangePercent = $prevTotalRevenue > 0
@@ -82,8 +78,7 @@ class DashboardController
             ->count();
 
         // --- Top Merchants ---
-        $topMerchantsThisMonth = Order::whereBetween('payment_time', [$startDate, $endDate])
-            ->where('order_status', 'complete')
+        $topMerchantsThisMonth = Order::whereBetween('return_time', [$startDate, $endDate])
             ->selectRaw('merchant_id, MAX(merchant_name) as merchant_name, SUM(order_amount) as total_revenue')
             ->groupBy('merchant_id')
             ->orderByDesc('total_revenue')
@@ -99,8 +94,7 @@ class DashboardController
             ->toArray();
 
         // --- Revenue by Shop Type ---
-        $revenueByShopType = Order::whereBetween('payment_time', [$startDate, $endDate])
-            ->where('order_status', 'complete')
+        $revenueByShopType = Order::whereBetween('return_time', [$startDate, $endDate])
             ->select('rental_shop_type')
             ->selectRaw('SUM(order_amount) as total_revenue')
             ->groupBy('rental_shop_type')
@@ -140,9 +134,8 @@ class DashboardController
         ];
 
         // --- Daily Revenue ---
-        $dailyRevenue = Order::whereBetween('payment_time', [$startDate, $endDate])
-            ->where('order_status', 'complete')
-            ->selectRaw('DATE(payment_time) as date, SUM(order_amount) as revenue')
+        $dailyRevenue = Order::whereBetween('return_time', [$startDate, $endDate])
+            ->selectRaw('DATE(return_time) as date, SUM(order_amount) as revenue')
             ->groupBy('date')
             ->orderBy('date')
             ->get()
@@ -160,9 +153,8 @@ class DashboardController
         $dailyValues = array_column($dailyRevenue, 'value');
 
         // --- Order stats (count + avg order value) ---
-        $orderStats = Order::whereBetween('payment_time', [$startDate, $endDate])
-            ->where('order_status', 'complete')
-            ->selectRaw('DATE(payment_time) as date, COUNT(*) as order_count, AVG(order_amount) as avg_order_value')
+        $orderStats = Order::whereBetween('return_time', [$startDate, $endDate])
+            ->selectRaw('DATE(return_time) as date, COUNT(*) as order_count, AVG(order_amount) as avg_order_value')
             ->groupBy('date')
             ->orderBy('date')
             ->get()
@@ -182,39 +174,97 @@ class DashboardController
         $avgOrderValues = array_column($orderStats, 'avg_order_value');
 
         // --- Doanh thu theo khu vực ---
-        $revenueByRegion = Order::whereBetween('payment_time', [$startDate, $endDate])
-            ->where('order_status', 'complete')
-            ->select('region')
-            ->selectRaw('SUM(order_amount) as total_revenue')
-            ->groupBy('region')
-            ->get()
-            ->map(fn($row) => [
-                'region' => $row->region ?? 'Unknown',
-                'value' => (float) $row->total_revenue,
-            ])
-            ->toArray();
+        // Map code -> tên đầy đủ
+        $regionMap = [
+            'HN'  => 'Hà Nội',
+            'BN'  => 'Bắc Ninh',
+            'HP'  => 'Hải Phòng',
+            'DN'  => 'Đà Nẵng',
+            'HCM' => 'TP Hồ Chí Minh',
+        ];
 
-        $regions = array_column($revenueByRegion, 'region');
+        // Lấy đơn trong khoảng thời gian
+        $ordersRegion = Order::whereBetween('return_time', [$startDate, $endDate])->get();
+
+        // Gom doanh thu theo code (HN, BN, ...)
+        $revenueByRegion = $ordersRegion->groupBy(function ($order) {
+            $shop = $order->rental_shop ?? '';
+            if (preg_match('/\(MB-([A-Z]{2})-/', $shop, $matches)) {
+                return $matches[1]; // ví dụ: HN, BN
+            }
+            return 'Other';
+        })->map(function ($group, $regionCode) {
+            return [
+                'region' => $regionCode,
+                'value'  => $group->sum('order_amount'),
+            ];
+        });
+
+        // ✅ Chỉ giữ lại HN và BN
+        $revenueByRegion = $revenueByRegion->filter(function ($item) {
+            return in_array($item['region'], ['HN', 'BN']);
+        })->values()->toArray();
+
+        // Map sang tên đầy đủ (nếu cần hiển thị label đẹp)
+        $regions = array_map(function ($code) use ($regionMap) {
+            return $regionMap[$code] ?? $code;
+        }, array_column($revenueByRegion, 'region'));
+
         $regionRevenues = array_column($revenueByRegion, 'value');
 
-        // --- Top Shops ---
-        $topShops = Order::select('rental_shop', \DB::raw('COUNT(*) as order_count, SUM(order_amount) as revenue'))
-            ->where('order_status', 'complete')
-            ->whereBetween('payment_time', [$startDate, $endDate])
+        // --- Orders Stats by Region ---
+        $orderStatsByRegion = Order::whereBetween('return_time', [$startDate, $endDate])
+            ->get()
+            ->groupBy(function ($order) {
+                // Lấy code khu vực từ rental_shop (ví dụ MB-HN-xxx)
+                if (preg_match('/\(MB-([A-Z]{2})-/', $order->rental_shop ?? '', $matches)) {
+                    return $matches[1]; // HN, BN, HCM...
+                }
+                return 'Other';
+            })
+            ->map(function ($orders, $regionCode) use ($dayMap) {
+                return $orders->groupBy(function ($o) {
+                    return Carbon::parse($o->return_time)->toDateString();
+                })->map(function ($dayOrders, $date) use ($dayMap) {
+                    $parsedDate = Carbon::parse($date);
+                    return [
+                        'date' => $date,
+                        'label' => $parsedDate->format('d/m') . "\n" . $dayMap[$parsedDate->dayOfWeek],
+                        'order_count' => $dayOrders->count(),
+                        'total_value' => $dayOrders->sum('order_amount'),
+                        'avg_value'   => $dayOrders->avg('order_amount') ?? 0,
+                    ];
+                })->values();
+            });
+
+        // Top shops
+        $topShops = Order::select(
+                'rental_shop',
+                \DB::raw('COUNT(*) as order_count'),
+                \DB::raw('SUM(order_amount) as revenue')
+            )
+            ->whereBetween('return_time', [$startDate, $endDate])
             ->groupBy('rental_shop')
             ->orderByDesc('revenue')
             ->take(10)
             ->get()
             ->map(fn($item) => [
-                'shop_name' => $item->rental_shop,
-                'order_count' => $item->order_count,
-                'revenue' => (float) $item->revenue
+                'shop_name'   => $item->rental_shop,
+                'order_count' => (int) $item->order_count,
+                'revenue'     => (float) $item->revenue,
             ])
             ->toArray();
 
-        $shopNamesTop = array_column($topShops, 'shop_name');
+        $shopNamesTop   = array_column($topShops, 'shop_name');
         $topOrderCounts = array_column($topShops, 'order_count');
-        $topRevenues = array_column($topShops, 'revenue');
+        $topRevenues    = array_column($topShops, 'revenue');
+
+
+        // Chuẩn bị mảng cho chart
+        $shopNamesTop   = array_column($topShops, 'shop_name');
+        $topOrderCounts = array_column($topShops, 'order_count');
+        $topRevenues    = array_column($topShops, 'revenue');
+
 
         // Doanh thu theo mô hình kinh doanh
         $shopTypeNames = array_column($revenueByShopType, 'name');
@@ -232,6 +282,96 @@ class DashboardController
             $regionSource[] = [
                 'region' => $region,
                 'value'  => $regionRevenues[$i] ?? 0,
+            ];
+        }
+
+        // Map region code -> tên
+        $regionCodes = ['HN' => 'Hà Nội', 'BN' => 'Bắc Ninh'];
+
+        // --- Orders Stats by Region (HN, BN) ---
+        $orderStatsByRegionCharts = [];
+        $ordersByRegion = Order::whereBetween('return_time', [$startDate, $endDate])
+            ->whereNotNull('return_time') // tránh null
+            ->get()
+            ->groupBy(function ($order) {
+                if ($order->rental_shop && preg_match('/\(MB-([A-Z]{2})-/', $order->rental_shop, $matches)) {
+                    return $matches[1]; // HN, BN...
+                }
+                return null;
+            })
+            ->filter(fn($orders, $code) => in_array($code, ['HN','BN']));
+
+        foreach ($regionCodes as $regionCode => $regionName) {
+            $orders = $ordersByRegion->get($regionCode, collect());
+            $daily  = $orders->groupBy(fn($o) => Carbon::parse($o->return_time)->toDateString());
+
+            $labels = [];
+            $counts = [];
+            $totals = [];
+            $avgPct = [];
+
+            $totalRevenueRegion = (float) $orders->sum('order_amount');
+
+            foreach ($daily as $date => $dayOrders) {
+                $parsedDate = Carbon::parse($date);
+                $labels[]   = $parsedDate->format('d/m');
+
+                $counts[]   = (int) $dayOrders->count();
+                $totals[]   = (float) $dayOrders->sum('order_amount');
+
+                // tỷ lệ % đóng góp so với tổng khu vực
+                $percent = $totalRevenueRegion > 0
+                    ? round(($dayOrders->sum('order_amount') / $totalRevenueRegion) * 100, 2)
+                    : 0;
+                $avgPct[] = $percent;
+            }
+
+            $orderStatsByRegionCharts[$regionCode] = [
+                'labels' => $labels,
+                'counts' => $counts,
+                'totals' => $totals,
+                'avgPct' => $avgPct,
+            ];
+        }
+
+        // --- Đơn hàng 0 đồng theo khu vực ---
+        $zeroOrderStats = [];
+        $ordersByRegionZero = Order::whereBetween('return_time', [$startDate, $endDate])
+            ->whereNotNull('return_time')
+            ->get()
+            ->groupBy(function ($order) {
+                if ($order->rental_shop && preg_match('/\(MB-([A-Z]{2})-/', $order->rental_shop, $matches)) {
+                    return $matches[1]; // HN, BN
+                }
+                return null;
+            })
+            ->filter(fn($orders, $code) => in_array($code, ['HN','BN']));
+
+        foreach ($regionCodes as $regionCode => $regionName) {
+            $orders = $ordersByRegionZero->get($regionCode, collect());
+            $daily  = $orders->groupBy(fn($o) => Carbon::parse($o->return_time)->toDateString());
+
+            $labels      = [];
+            $zeroCounts  = [];
+            $zeroPercent = [];
+
+            foreach ($daily as $date => $dayOrders) {
+                $parsedDate = Carbon::parse($date);
+                $labels[]   = $parsedDate->format('d/m');
+
+                $countTotal = $dayOrders->count();
+                $countZero  = $dayOrders->where('order_amount', 0)->count();
+
+                $zeroCounts[]  = (int) $countZero;
+                $zeroPercent[] = $countTotal > 0
+                    ? round(($countZero / $countTotal) * 100, 2)
+                    : 0;
+            }
+
+            $zeroOrderStats[$regionCode] = [
+                'labels'      => $labels,
+                'zeroCounts'  => $zeroCounts,
+                'zeroPercent' => $zeroPercent,
             ];
         }
 
@@ -256,36 +396,34 @@ class DashboardController
             return $totalContracts > 0 ? round(($count / $totalContracts) * 100, 2) : 0;
         }, $contractCounts);
 
-        // --- Revenue by Admin (BD) qua Contract -> Shop -> Order (map theo tên shop)
-        $revenueByAdminRows = Admin::role('BD')
-            ->with(['contracts.shops.ordersByName' => function ($q) use ($startDate, $endDate) {
-                $q->whereBetween('payment_time', [$startDate, $endDate])
-                  ->where('order_status', 'complete');
-            }])
-            ->get()
-            ->map(function ($admin) {
-                $totalRevenue = 0;
-                foreach ($admin->contracts as $contract) {
-                    foreach ($contract->shops as $shop) {
-                        $totalRevenue += $shop->ordersByName->sum('order_amount');
-                    }
-                }
+        // --- Revenue by Admin (BD) từ bảng orders (giống OrderController) ---
+        $orders = Order::query()
+            ->whereBetween('return_time', [$startDate, $endDate])
+            ->leftJoin('shops', 'shops.shop_name', '=', 'orders.rental_shop')
+            ->select('orders.*', 'shops.share_rate_type', 'shops.share_rate')
+            ->orderByDesc('return_time')
+            ->get();
+
+        $revenueByAdminRows = $orders->groupBy(fn($o) => $o->employee_name ?: 'Chưa gán BD')
+            ->map(function ($group, $name) {
                 return [
-                    'admin_name'    => $admin->full_name,
-                    'total_revenue' => $totalRevenue,
+                    'admin_name'    => $name,
+                    'total_revenue' => $group->sum('order_amount'),
                 ];
             })
             ->sortByDesc('total_revenue')
             ->values();
 
-        $adminRevenueNames   = $revenueByAdminRows->pluck('admin_name')->toArray();
-        $adminRevenueValues  = $revenueByAdminRows->pluck('total_revenue')->map(fn($v) => (float)$v)->toArray();
+        // Chuẩn bị data cho chart
+        $adminRevenueNames    = $revenueByAdminRows->pluck('admin_name')->toArray();
+        $adminRevenueValues   = $revenueByAdminRows->pluck('total_revenue')->map(fn($v) => (float)$v)->toArray();
 
-        $sumAdminRevenue     = array_sum($adminRevenueValues);
+        $sumAdminRevenue      = array_sum($adminRevenueValues);
         $adminRevenuePercents = array_map(
             fn($v) => $sumAdminRevenue > 0 ? round($v / $sumAdminRevenue * 100, 2) : 0,
             $adminRevenueValues
         );
+
 
         // --- Hợp đồng sắp hết hạn trong 30 ngày tới theo từng BD ---
         $expiringContracts = Contract::with('admin')
@@ -333,7 +471,7 @@ class DashboardController
             'topMerchantsThisMonth', 'revenueByShopType','shopTypePercents',
             'hourlyOrderData', 'dailyDates', 'dailyValues',
             'orderDates', 'orderCounts', 'avgOrderValues',
-            'regions', 'regionRevenues',
+            'regions', 'regionRevenues','orderStatsByRegionCharts','zeroOrderStats',
 
             // Top shops
             'shopNamesTop', 'topOrderCounts', 'topRevenues',
