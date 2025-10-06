@@ -3,6 +3,7 @@
 
 @push('css')
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.css" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 <style>
     .dashboard-card {
         border-radius: 12px;
@@ -32,6 +33,43 @@
     }
     .chart-wrapper {
         overflow-x: auto;   /* bật scroll ngang nếu chart quá rộng */
+    }
+    .chart-download-btn {
+        position: absolute;
+        top: 6px;
+        right: 8px;
+        border: none;
+        background: transparent;
+        color: #666;
+        cursor: pointer;
+        font-size: 16px;
+        padding: 2px 6px;
+        transition: color 0.2s;
+    }
+    .chart-download-btn:hover {
+        color: #000;
+    }
+
+    /* Tooltip hiệu ứng mượt */
+    .chart-download-btn::after {
+        content: attr(data-tooltip);
+        position: absolute;
+        top: -28px;
+        right: 0;
+        background: rgba(0,0,0,0.8);
+        color: #fff;
+        font-size: 12px;
+        padding: 4px 8px;
+        border-radius: 4px;
+        white-space: nowrap;
+        opacity: 0;
+        pointer-events: none;
+        transform: translateY(4px);
+        transition: all 0.2s ease;
+    }
+    .chart-download-btn:hover::after {
+        opacity: 1;
+        transform: translateY(0);
     }
 </style>
 @endpush
@@ -146,6 +184,9 @@
 <!-- Charts -->
 <div class="row mt-4"><div class="col-md-12"><div class="card dashboard-card"><div class="card-body">
     <h6>Doanh thu theo ngày</h6>
+    <button class="chart-download-btn" data-chart="dailyRevenueChart">
+        <i class="fa fa-download"></i>
+    </button>
     <div id="dailyRevenueChart" class="chart-center"></div>
 </div></div></div></div>
 
@@ -203,6 +244,17 @@
     <div id="revenueByAdminChart" class="chart-center"></div>
 </div></div></div></div>
 
+<div class="row mt-4">
+  <div class="col-md-12">
+    <div class="card dashboard-card">
+      <div class="card-body">
+        <h6>Tăng trưởng doanh thu theo tháng</h6>
+        <div id="monthlyGrowthChart" class="chart-center"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
 @stop
 
 @push('js')
@@ -212,6 +264,74 @@
 <script src="https://cdn.jsdelivr.net/npm/echarts@5/dist/echarts.min.js"></script>
 
 <script>
+// === Tự động thêm nút tải xuống cho tất cả biểu đồ ===
+document.querySelectorAll('[id$="Chart"], [id^="regionChart_"]').forEach(chartEl => {
+    const cardBody = chartEl.closest('.card-body');
+    if (!cardBody) return;
+
+    // Đảm bảo card-body có position: relative
+    cardBody.style.position = 'relative';
+
+    // Nếu chưa có nút thì thêm vào
+    if (!cardBody.querySelector('.chart-download-btn')) {
+        const btn = document.createElement('button');
+        btn.className = 'chart-download-btn';
+        btn.innerHTML = '<i class="fa fa-download"></i>';
+        btn.setAttribute('data-tooltip', 'Tải xuống biểu đồ này');
+        btn.dataset.chart = chartEl.id;
+        cardBody.appendChild(btn);
+    }
+});
+
+// === Xử lý tải ảnh khi click (có tiêu đề trong ảnh) ===
+$(document).on('click', '.chart-download-btn', async function() {
+    const chartId = $(this).data('chart');
+    const chartEl = document.getElementById(chartId);
+    const chart = echarts.getInstanceByDom(chartEl);
+    if (!chart) return alert('Không tìm thấy biểu đồ!');
+
+    // Lấy tiêu đề
+    const titleEl = $(this).siblings('h6').first();
+    const titleText = titleEl.length ? titleEl.text().trim() : chartId;
+
+    // Lấy ảnh chart
+    const chartImg = new Image();
+    chartImg.src = chart.getDataURL({
+        type: 'png',
+        pixelRatio: 2,
+        backgroundColor: '#fff'
+    });
+    await chartImg.decode(); // đợi ảnh load xong
+
+    // Tạo canvas mới, cao hơn 50px để chừa chỗ cho tiêu đề
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    const padding = 20;
+    canvas.width = chartImg.width;
+    canvas.height = chartImg.height + 80;
+
+    // Nền trắng
+    ctx.fillStyle = '#fff';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    // Tiêu đề (đặt trên cùng)
+    ctx.fillStyle = '#000';
+    ctx.font = 'bold 28px "Segoe UI", Arial';
+    ctx.textAlign = 'center';
+    ctx.fillText(titleText, canvas.width / 2, 40);
+
+    // Vẽ ảnh chart bên dưới
+    ctx.drawImage(chartImg, 0, 60);
+
+    // Tải ảnh
+    const finalImg = canvas.toDataURL('image/png');
+    const link = document.createElement('a');
+    link.href = finalImg;
+    const safeTitle = titleText.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, '_');
+    link.download = `${safeTitle}.png`;
+    link.click();
+});
+
 function formatVND(value) {
     return value.toLocaleString('vi-VN') + ' ₫';
 }
@@ -706,6 +826,45 @@ renderZeroOrderChart(
   @json($zeroOrderStats['BN']['zeroCounts'] ?? []),
   @json($zeroOrderStats['BN']['zeroPercent'] ?? [])
 );
+
+// === Monthly Revenue Growth ===
+echarts.init(document.getElementById('monthlyGrowthChart')).setOption({
+    grid: { left: 60, right: 30, top: 50, bottom: 60, containLabel: true },
+    tooltip: { trigger: 'axis', formatter: (params) => {
+        const data = params[0];
+        return `${data.axisValue}<br/>Doanh thu: ${formatVND(data.value)}`;
+    }},
+    xAxis: {
+        type: 'category',
+        data: @json($months),
+        axisLabel: { rotate: 0 }
+    },
+    yAxis: {
+        type: 'value',
+        axisLabel: { formatter: v => formatVND(v) }
+    },
+    series: [{
+        name: 'Doanh thu',
+        type: 'line',
+        smooth: true,
+        symbol: 'circle',
+        symbolSize: 8,
+        lineStyle: { width: 3, color: '#4CAF50' },
+        itemStyle: { color: '#4CAF50' },
+        areaStyle: {
+            color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                { offset: 0, color: 'rgba(76, 175, 80, 0.3)' },
+                { offset: 1, color: 'rgba(76, 175, 80, 0)' }
+            ])
+        },
+        label: {
+            show: true,
+            position: 'top',
+            formatter: p => formatVND(p.value)
+        },
+        data: @json($monthlyTotals)
+    }]
+});
 
 </script>
 @endpush
