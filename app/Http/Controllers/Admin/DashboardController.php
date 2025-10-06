@@ -452,10 +452,28 @@ class DashboardController
             return $row;
         })->values();
 
+        // --- Revenue Growth by Month (12 tháng gần nhất) ---
+        $monthlyRevenue = Order::selectRaw('DATE_FORMAT(return_time, "%Y-%m") as month, SUM(order_amount) as total')
+            ->whereNotNull('return_time')
+            ->where('return_time', '>=', now()->subMonths(11)->startOfMonth()) // 12 tháng gần nhất
+            ->groupBy('month')
+            ->orderBy('month')
+            ->get()
+            ->map(function ($row) {
+                return [
+                    'month' => Carbon::parse($row->month . '-01')->format('m/Y'),
+                    'total' => (float) $row->total,
+                ];
+            })
+            ->toArray();
+
+        $months = array_column($monthlyRevenue, 'month');
+        $monthlyTotals = array_column($monthlyRevenue, 'total');
+
         // --- Return view ---
         return view('admin.dashboards.dashboard', compact(
             // Dates
-            'startDate', 'endDate',
+            'startDate', 'endDate','months', 'monthlyTotals',
 
 
             // KPI (filtered)
