@@ -69,7 +69,8 @@ class ContractController
     public function create(): View
     {
         $shops = Shop::with('merchant')->get();
-        $merchants = \App\Models\Merchant::pluck('username', 'id');
+        $merchants = \App\Models\Merchant::where('is_deleted', false)
+            ->pluck('username', 'id'); // ✅ chỉ lấy merchant chưa bị xóa
 
         return view('admin.contracts.create', compact('shops', 'merchants'));
     }
@@ -123,7 +124,9 @@ class ContractController
     public function edit(Contract $contract): View
     {
         $shops = Shop::with('merchant')->get();
-        $merchants = \App\Models\Merchant::pluck('username', 'id');
+        $merchants = \App\Models\Merchant::where('is_deleted', false)
+            ->orWhere('id', $contract->merchant_id) // ✅ vẫn hiển thị merchant hiện tại dù đã bị xóa
+            ->pluck('username', 'id');
 
         return view('admin.contracts.edit', compact('contract', 'shops', 'merchants'));
     }
@@ -132,6 +135,7 @@ class ContractController
     {
         try {
             $data = $request->except(['upload', 'merchant_id']);
+            $data['merchant_id'] = $request->input('merchant_id');
 
             $signDate = Carbon::parse($data['sign_date']);
             $expiredDate = Carbon::parse($data['expired_date']);

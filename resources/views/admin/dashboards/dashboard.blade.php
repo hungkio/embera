@@ -255,8 +255,18 @@
   </div>
 </div>
 
-@stop
+<div class="row mt-4">
+  <div class="col-md-12">
+    <div class="card dashboard-card">
+      <div class="card-body text-center">
+        <h6>Tình trạng lắp đặt máy</h6>
+        <div id="deviceBoundChart" style="height:400px;"></div>
+      </div>
+    </div>
+  </div>
+</div>
 
+@stop
 @push('js')
 <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/moment@2.29.4/moment.min.js"></script>
@@ -864,6 +874,48 @@ echarts.init(document.getElementById('monthlyGrowthChart')).setOption({
         },
         data: @json($monthlyTotals)
     }]
+});
+// --- Device Bound Status (from device_json) ---
+echarts.init(document.getElementById('deviceBoundChart')).setOption({
+  tooltip: {
+    trigger: 'item',
+    formatter: '{b}: {c} máy ({d}%)'
+  },
+  legend: {
+    orient: 'horizontal',
+    bottom: 10,
+    data: ['Đã lắp', 'Chưa lắp']
+  },
+  series: [
+    {
+      name: 'Tình trạng máy',
+      type: 'pie',
+      radius: ['40%', '70%'],
+      avoidLabelOverlap: false,
+      itemStyle: {
+        borderRadius: 8,
+        borderColor: '#fff',
+        borderWidth: 2
+      },
+      label: {
+        show: true,
+        position: 'outside',
+        formatter: '{b}\n{d}%'
+      },
+      emphasis: {
+        label: {
+          show: true,
+          fontSize: 18,
+          fontWeight: 'bold'
+        }
+      },
+      labelLine: { show: true },
+      data: [
+        { value: {{ $totalBoundDevices }}, name: 'Đã lắp' },
+        { value: {{ $totalUnboundDevices }}, name: 'Chưa lắp' }
+      ]
+    }
+  ]
 });
 
 </script>

@@ -237,14 +237,14 @@ Breadcrumbs::for('admin.merchants.edit', function (BreadcrumbsGenerator $trail, 
 });
 
 // Home > Merchant Share Log
-Breadcrumbs::for('admin.merchants-history.index', function (BreadcrumbsGenerator $trail) {
+Breadcrumbs::for('admin.share-logs.index', function (BreadcrumbsGenerator $trail) {
     $trail->parent('admin.dashboard');
-    $trail->push(__('Lịch sử chia sẻ'), route('admin.merchants-history.index'), ['icon' => 'fal fa-history']);
+    $trail->push(__('Lịch sử chia sẻ'), route('admin.share-logs.index'), ['icon' => 'fal fa-history']);
 });
 
-Breadcrumbs::for('admin.merchants-history.detail', function (BreadcrumbsGenerator $trail, MerchantShareLog $log) {
-    $trail->parent('admin.merchants-history.index');
-    $trail->push(__('Chi tiết'), route('admin.merchants-history.detail', $log));
+Breadcrumbs::for('admin.share-logs.detail', function (BreadcrumbsGenerator $trail, MerchantShareLog $log) {
+    $trail->parent('admin.share-logs.index');
+    $trail->push(__('Chi tiết'), route('admin.share-logs.detail', $log));
 });
 
 // Home > Shops
