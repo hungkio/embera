@@ -188,8 +188,8 @@
 
     <div class="signature section">
         <strong>Người lập biên bản:</strong><br>
-        Họ và tên: {{ $content['giam_doc_ky'] ?? '' }}<br>
-        Chức vụ: {{ $content['chuc_vu'] ?? '' }}<br>
+        Họ và tên: {{ $content['ten_bd'] ?? '' }}<br>
+        Chức vụ: {{ strtoupper($content['chuc_vu'] ?? '') }}<br>
         SĐT: {{ $content['so_dien_thoai'] ?? '' }}<br>
         Email: {{ $content['email'] ?? '' }}
     </div>

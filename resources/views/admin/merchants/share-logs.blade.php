@@ -4,17 +4,14 @@
 
 @section('page-header')
 <x-page-header>
-    {{ Breadcrumbs::render('admin.merchants-history.index') }}
+    {{ Breadcrumbs::render('admin.share-logs.index') }}
 </x-page-header>
 @stop
 
 @section('page-content')
 <x-card title="Lịch sử chia sẻ doanh thu">
     <div class="table-responsive">
-        {!! $dataTable->table([
-        'class' => 'table table-striped table-bordered nowrap',
-        'style' => 'width:100%',
-        ], true) !!}
+        {!! $dataTable->table(['class' => 'table table-striped table-bordered nowrap', 'style' => 'width:100%'], true) !!}
     </div>
 </x-card>
 @stop

@@ -470,6 +470,34 @@ class DashboardController
         $months = array_column($monthlyRevenue, 'month');
         $monthlyTotals = array_column($monthlyRevenue, 'total');
 
+        // --- Thống kê số lượng máy đã lắp / chưa lắp ---
+        $shops = \App\Models\Shop::where('is_deleted', false)->get(['device_json', 'is_bound']);
+
+        $totalBoundDevices = 0;
+        $totalUnboundDevices = 0;
+
+        foreach ($shops as $shop) {
+            if (!is_array($shop->device_json)) continue;
+
+            // Đếm tổng số máy trong shop
+            $deviceCount = 0;
+            foreach ($shop->device_json as $device) {
+                // Nếu trong device có field 'quantity' thì cộng số lượng, ngược lại = 1
+                $deviceCount += isset($device['quantity']) ? (int)$device['quantity'] : 1;
+            }
+
+            // Phân loại theo is_bound
+            if ($shop->is_bound) {
+                $totalBoundDevices += $deviceCount;
+            } else {
+                $totalUnboundDevices += $deviceCount;
+            }
+        }
+
+        $totalDevices = $totalBoundDevices + $totalUnboundDevices;
+        $boundDevicePercent = $totalDevices > 0 ? round(($totalBoundDevices / $totalDevices) * 100, 2) : 0;
+        $unboundDevicePercent = 100 - $boundDevicePercent;
+
         // --- Return view ---
         return view('admin.dashboards.dashboard', compact(
             // Dates
@@ -480,7 +508,7 @@ class DashboardController
             'targetRevenue', 'totalRevenue', 'percentRevenue', 'revenueRemaining',
             'avgOrderValue', 'avgRevenuePerDay', 'avgRentalHours',
             'prevTotalRevenue', 'revenueChangePercent',
-            'proratedPercent', 'completionDiff',
+            'proratedPercent', 'completionDiff','totalBoundDevices','totalUnboundDevices','boundDevicePercent','unboundDevicePercent',
 
             // Contracts
             'activeContracts', 'expiringContractsCount', 'signedNotInstalled',

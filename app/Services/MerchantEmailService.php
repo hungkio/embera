@@ -17,20 +17,40 @@ class MerchantEmailService
 {
     public function sendMail(Merchant $merchant, array $data): void
     {
-        if (empty(trim($merchant->email))) {
-            Log::warning("Merchant ID {$merchant->id} skipped: no email address.");
-            return;
-        }
+        $status = 'sent'; // mặc định là thành công
+        $failReason = null;
 
+        // Gán $shops ngay từ đầu, để dùng cho mọi logic sau này
         $shops = $merchant->shops()->where('shops.is_deleted', false)->get();
-        if ($shops->isEmpty()) {
+
+        if (empty(trim($merchant->email))) {
+            $status = 'failed';
+            $failReason = 'no_email';
+            Log::warning("Merchant ID {$merchant->id} skipped: no email address.");
+        } elseif ($shops->isEmpty()) {
+            $status = 'failed';
+            $failReason = 'no_shop';
             Log::warning("Merchant ID {$merchant->id} has no shop attached.");
+        }
+
+        if ($status === 'failed') {
+            // Dữ liệu log có thể lấy từ $data truyền vào hoặc mảng rỗng
+            app(\App\Services\MerchantShareLogService::class)->logShare(
+                $merchant,
+                $data ?? [],
+                'unknown',
+                'email',
+                $failReason ?? 'failed'
+            );
             return;
         }
 
-        // Chu kỳ giao dịch từ 01/04/năm hiện tại đến hiện tại
+        // Chu kỳ giao dịch từ 01/04/năm hiện tại đến hiện tại 1/4 - 30/9
         $startDate = Carbon::createFromDate(2025, 4, 1);
-        $endDate   = Carbon::create(2025, 8, 31);
+        $endDate   = Carbon::create(2025, 9, 30);
+
+        // Dùng $shops đã lấy phía trên
+        $data = $this->prepareData($merchant, $shops, $startDate, $endDate);
 
         // Xác định template
         $type = $this->detectType($shops);
@@ -54,14 +74,14 @@ class MerchantEmailService
             Mail::to($merchant->email)
                 ->queue(new MerchantEmail($data, $type));
             $email->update(['status' => 'sent']);
+            $status = 'sent';
             Log::info("Email queued successfully for merchant ID {$merchant->id}");
         } catch (\Exception $e) {
             $email->update(['status' => 'failed']);
+            $status = 'failed';
             Log::error("Failed to send email to merchant ID {$merchant->id}: {$e->getMessage()}");
         }
-
-        // **Sau khi đã queue xong, ghi log chia sẻ**
-        $this->createShareLog($merchant, $data, $type);
+        app(\App\Services\MerchantShareLogService::class)->logShare($merchant, $data, $type, 'email', $status);
     }
 
     public function detectType($shops): string
@@ -86,7 +106,7 @@ class MerchantEmailService
         $periodEndLog = $toDate->copy()->endOfDay();
 
         $totalOrders = $shops->sum(function ($shop) use ($periodStartLog, $periodEndLog) {
-            return Order::whereRaw('LOWER(rental_shop) = ?', [Str::lower($shop->shop_name)])
+            return Order::whereRaw('LOWER(rental_shop) LIKE LOWER(?)', ['%' . $shop->shop_name . '%'])
                 ->where('order_amount', '>', 0)
                 ->whereBetween('payment_time', [$periodStartLog, $periodEndLog])
                 ->count();
@@ -141,12 +161,12 @@ class MerchantEmailService
         $today = now();
         $lastMonth = Carbon::now()->subMonth();
 
-        $periodStart = $startDate ?? $lastMonth->copy()->startOfMonth();
-        $periodEnd = $endDate ?? $lastMonth->copy()->endOfMonth();
+        $periodStart = $startDate ?: Carbon::createFromDate(2025, 4, 1);
+        $periodEnd = $endDate ?: Carbon::createFromDate(2025, 9, 30);
 
         $bd = $merchant->admin;
         $firstRoleName = $bd ? optional($bd->roles()->first())->name : '';
-        $giamDocKy = $bd ? trim(($bd->last_name ?? '') . ' ' . ($bd->first_name ?? '')) : '';
+        $ten_bd = $bd ? trim(($bd->first_name ?? '') . ' ' . ($bd->last_name ?? '')) : '';
 
         // Thông tin chung
         $data = [
@@ -163,7 +183,7 @@ class MerchantEmailService
             'ten_ngan_hang' => $merchant->contract->bank_info ?? '',
             'chu_tai_khoan' => $merchant->contract->bank_account_name ?? '',
             'so_tai_khoan' => $merchant->contract->bank_account_number ?? '',
-            'giam_doc_ky' => $giamDocKy,
+            'ten_bd' => $ten_bd,
 
             'from_day' => $periodStart->format('d'),
             'from_month' => $periodStart->format('m'),
@@ -186,7 +206,8 @@ class MerchantEmailService
                 $address = $shop->address ?? '';
 
                 // Tính doanh thu tháng trước
-                $sumNumberOrder = Order::whereRaw('LOWER(rental_shop) = ?', [Str::lower($shop->shop_name)])->where('order_amount', '>', 0)
+                $sumNumberOrder = Order::whereRaw('LOWER(rental_shop) LIKE LOWER(?)', ['%' . $shop->shop_name . '%'])
+                    ->where('order_amount', '>', 0)
                     ->whereBetween('payment_time', [$periodStartDay, $periodEndDay])
                     ->count();
                 $shareRate = $shop->share_rate ?? 0;
@@ -207,7 +228,7 @@ class MerchantEmailService
                 $address = $shop->address ?? '';
 
                 // Tính doanh thu tháng trước
-                $revenue = Order::whereRaw('LOWER(rental_shop) = ?', [Str::lower($shop->shop_name)])
+                $revenue = Order::whereRaw('LOWER(rental_shop) LIKE LOWER(?)', ['%' . $shop->shop_name . '%'])
                     ->whereBetween('payment_time', [$periodStartDay, $periodEndDay])
                     ->sum('order_amount');
                 $shareRate = $shop->share_rate ?? 0;

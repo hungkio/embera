@@ -43,14 +43,15 @@ class ZaloService
             }
 
             // Chu kỳ giao dịch từ 01/04/năm hiện tại đến hiện tại
-            $currentYear = now()->year;
             $startDate = Carbon::createFromDate(2025, 4, 1);
-                    $endDate   = Carbon::create(2025, 8, 31);
-            $thangGiaodich = 'Từ 01/04/' . $currentYear . ' đến ' . $endDate->format('d/m/Y');
+                 $endDate   = Carbon::create(2025, 9, 30);
+                 $thangGiaodich = 'Từ 01/04/2025 đến 30/09/2025';
 
             // Chuẩn bị dữ liệu từ MerchantEmailService với khoảng thời gian
-            $data = $emailService->prepareData($merchant, $merchant->shops, $startDate, $endDate);
-            $shareType = $emailService->detectType($merchant->shops);
+             $shops = $merchant->shops()->where('shops.is_deleted', false)->get();
+             Log::info('DEBUG startDate', [$startDate, $endDate]);
+             $data = $emailService->prepareData($merchant, $shops, $startDate, $endDate);
+             $shareType = $emailService->detectType($shops);
 
             // Cấu trúc dữ liệu chung cho Zalo
             $templateData = [

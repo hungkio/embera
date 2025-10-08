@@ -48,6 +48,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Admin\OrderController;
 use App\Http\Controllers\Admin\PinController;
 use App\Http\Controllers\Admin\OrderUpdateController;
+use App\Http\Controllers\Admin\MerchantShareLogController;
 
 Route::prefix('admin')->name('admin.')->group(function () {
     Route::get('clear_cache', function (){
@@ -186,16 +187,27 @@ Route::prefix('admin')->name('admin.')->group(function () {
             Route::get('/contracts/{id}/send-email', [ContractController::class, 'sendEmail'])->name('contracts.sendEmail');
 
             Route::get('/contracts/{contract}/print', [ContractController::class, 'printContract'])->name('contracts.print');
-            Route::get('/contracts/print-multiple', [ContractController::class, 'printMultipleContracts'])->name('contracts.print-multiple');        // merchants
+            Route::get('/contracts/print-multiple', [ContractController::class, 'printMultipleContracts'])->name('contracts.print-multiple');
 
             Route::get('admin/contracts/{contract}', [ContractController::class, 'show'])->name('contracts.show');
 
+            // ⚠️ đặt trước tất cả routes có /merchants/{merchant}
+            Route::get('/share-logs', [MerchantShareLogController::class, 'index'])->name('share-logs.index');
+            Route::get('/share-logs/{id}', [MerchantShareLogController::class, 'detail'])->name('share-logs.detail');
+            // Merchant Share Logs
+            Route::prefix('share-logs')->name('share-logs.')->group(function () {
+                Route::get('/', [MerchantShareLogController::class, 'index'])->name('index');
+                Route::get('/{id}/detail', [MerchantShareLogController::class, 'detail'])->name('detail');
+            });
+
+            // merchants (đặt sau)
             Route::get('/merchants', [MerchantController::class, 'index'])->name('merchants.index');
             Route::get('/merchants/create', [MerchantController::class, 'create'])->name('merchants.create');
             Route::post('/merchants', [MerchantController::class, 'store'])->name('merchants.store');
             Route::get('/merchants/{merchant}/edit', [MerchantController::class, 'edit'])->name('merchants.edit');
             Route::put('/merchants/{merchant}', [MerchantController::class, 'update'])->name('merchants.update');
             Route::delete('/merchants/{merchant}', [MerchantController::class, 'destroy'])->name('merchants.destroy');
+
             Route::post('/merchants/bulk-delete', [MerchantController::class, 'bulkDelete'])->name('merchants.bulk-delete');
             Route::post('/merchants/{merchant}/status', [MerchantController::class, 'changeStatus'])->name('merchants.change.status');
             Route::post('/merchants/bulk-status', [MerchantController::class, 'bulkStatus'])->name('merchants.bulk-status');
@@ -204,9 +216,6 @@ Route::prefix('admin')->name('admin.')->group(function () {
 
             Route::post('/merchants/send-email', [MerchantController::class, 'sendEmail'])->name('merchants.send-email');
             Route::post('/merchants/send-zalo', [MerchantController::class, 'sendZalo'])->name('merchants.send-zalo');
-
-            Route::get('/merchants/share-logs', [MerchantController::class, 'shareLogs'])->name('merchants-history.index');
-            Route::get('/merchants/share-log/{id}', [MerchantController::class, 'shareLogDetail'])->name('merchants-history.detail');
 
             // AJAX routes for merchants and shops
             Route::get('ajax/merchants', [MerchantController::class, 'search'])->name('admin.ajax.merchants');

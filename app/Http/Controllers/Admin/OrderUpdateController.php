@@ -94,6 +94,7 @@ class OrderUpdateController
             'Moon Cafe (MB_HN_TH)' => 'Moon Cafe (MB-HN-TH)',
             'Coc Roastery (MB_HN_TH)' => 'Coc Roastery (MB-HN-TH)',
             '2A Coffee (MB - HN - BĐ)' => '2A Coffee (MB-HN-BĐ)',
+            'Lotus Lounge nhà ga T1 (MB - HN - NB)' => '	Lotus Lounge nhà ga T1 (MB-HN-NB)',
             'Lotus Lounge nhà ga T2 (MB - HN - NB)' => 'Lotus Lounge nhà ga T2 (MB-HN-NB)',
             'Ikigai Garden Cafe ( MB-HN-CG)' => 'Ikigai Garden Cafe (MB-HN-CG)',
             'Lõi cà phê ( MB-HN-CG)' => 'Lõi cà phê (MB-HN-CG)',
@@ -104,6 +105,17 @@ class OrderUpdateController
             'A Phú Bilard Shop' => 'A Phú Bilard Shop (MB-HN-DD)',
             'Center point poker club' => 'Center point poker club (MB-HN-TX)',
             'B96 Arena Pool' => 'B96 Arena Pool (MB-HN-HM)',
+            'Laboong Trần Bình (MB-HN-CG)' => '	La Boong Trần Bình (MB-HN-CG)',
+            'Nha Khoa Bạch Mai ( MB-HN-BTL)' => 'Nha Khoa Bạch Mai (MB-HN-BTL)',
+            'Koh Yam ( MB-HN-TH )' => 'Koh Yam (MB-HN-TH)',
+            'Ô Trống coffee ( MB-HN-CG)' => 'Ô Trống coffee (MB-HN-CG)',
+            'Paradise Pickleball Club' => 'Paradise Pickleball Club (MB-HN-LB)',
+            'D beauty center 1985' => 'D Beauty Center 1985 (MB-HN-HD)',
+            'AHA cafe đường thành (MB_HN_HK)' => 'AHA cafe đường thành (MB-HN-HK)',
+            'Timbaber ( MB-HN- HBT)' => 'Tim Babershop (MB-HN-HBT)',
+            'Ẩm Thực Quê' => '	Ẩm Thực Quê (MB-HN-LB)',
+            'Futa hà Sơn Bắc Vinh' => 'Futa hà Sơn Bắc Vinh (MB-NA-V)',
+            'Bia Cường Hói (MB - HN - Trích Sài)' => 'Bia Cường Hói (MB-HN-TH)',
         ];
 
         $updatedCount = 0;

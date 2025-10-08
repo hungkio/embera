@@ -148,7 +148,7 @@
                         <i class="fal fa-money-bill"></i>{{ __('Đối soát MB') }}</a>
                 </li>
                 <li class="nav-item">
-                    <a href="{{ route('admin.merchants-history.index') }}"
+                    <a href="{{ route('admin.share-logs.index') }}"
                        class="nav-link @if(request()->routeIs('admin.merchants-history.index')) active @endif">
                         <i class="fal fa-history"></i>
                         <span>{{ __("Lịch sử chia sẻ") }}</span>
