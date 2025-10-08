@@ -175,6 +175,67 @@ class OrderController
         $inFile = $request->file('input_file_in');
         $outFile = $request->file('input_file_out');
 
+        $incoming = Excel::toCollection(null, $inFile)[0];
+        $outgoing = Excel::toCollection(null, $outFile)[0];
+
+        $incomingData = collect();
+        foreach ($incoming->slice(1) as $row) {
+            $code = trim($row[2] ?? '');
+            if (!$code) continue;
+
+            $incomingData->push([
+                'code' => $code,
+                'date_in' => $this->parseDate($row[1] ?? ''),
+                'amount_in' => (float) $row[4],
+                'ft_code_in' => trim($row[7] ?? ''),
+            ]);
+        }
+
+        $outgoingData = collect();
+        foreach ($outgoing->slice(1) as $row) {
+
+            $outgoingData->push([
+                'code_ref' => trim($row[3] ?? ''), // Mã giao dịch gốc
+                'amount_out' => (float)$row[5],
+                'date_out' => $this->parseDate($row[1] ?? ''),
+                'ft_code_out' => trim($row[7] ?? ''),
+            ]);
+        }
+
+        foreach ($incomingData as $in) {
+            $match = $outgoingData->firstWhere('code_ref', $in['code']);
+
+            MBTransaction::updateOrCreate(
+                ['code_in' => $in['code']],
+                [
+                    'code_in' => $in['code'],
+                    'date_in' => $in['date_in'],
+                    'ft_code_in' => $in['ft_code_in'],
+                    'amount_in' => $in['amount_in'],
+
+                    'code_out' => $match['code_ref'] ?? null,
+                    'date_out' => $match['date_out'] ?? null,
+                    'ft_code_out' => $match['ft_code_out'] ?? null,
+                    'amount_out' => $match['amount_out'] ?? 0,
+
+                    'revenue' => $in['amount_in'] - ($match['amount_out'] ?? 0),
+                ]
+            );
+        }
+
+        return back()->with('success', 'Import dữ liệu thành công!');
+    }
+
+    public function importMBTransactionNew(Request $request)
+    {
+        $request->validate([
+            'input_file_in' => 'required|file|mimes:xlsx,xls,csv',
+            'input_file_out' => 'required|file|mimes:xlsx,xls,csv',
+        ]);
+
+        $inFile = $request->file('input_file_in');
+        $outFile = $request->file('input_file_out');
+
         // Đọc toàn bộ sheet
         $incomingSheet = Excel::toCollection(null, $inFile)[0];
         $outgoingSheet = Excel::toCollection(null, $outFile)[0];
