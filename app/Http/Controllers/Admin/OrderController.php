@@ -55,7 +55,7 @@ class OrderController
         }
 
         if ($request->filled('shop_name')) {
-            $query->where('rental_shop', $request->shop_name);
+            $query->whereIn('rental_shop', $request->shop_name);
         }
 
         if ($request->filled('shop_type')) {

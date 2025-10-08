@@ -65,7 +65,7 @@ class OrderDataTable extends BaseDatable
         }
 
         if (!empty($filters['shop_name'])) {
-            $query->where('rental_shop', $filters['shop_name']);
+            $query->whereIn('rental_shop', $filters['shop_name']);
         }
 
         if (!empty($filters['payment_channel'])) {

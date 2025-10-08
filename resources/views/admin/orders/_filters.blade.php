@@ -31,10 +31,10 @@
 
     <div class="col-md-3">
         <label for="shop_name">Cửa hàng</label>
-        <select name="shop_name" id="shop_name" class="form-select select2">
+        <select name="shop_name[]" id="shop_name" class="form-select select2" multiple>
             <option value="">-- Tất cả --</option>
             @foreach($shopNameList as $shop)
-                <option value="{{ $shop }}" {{ (request('shop_name') == $shop) ? 'selected' : '' }}>
+                <option value="{{ $shop }}" {{ (request('shop_name') ? in_array($shop, request('shop_name')) : false) ? 'selected' : '' }}>
                     {{ $shop }}
                 </option>
             @endforeach
