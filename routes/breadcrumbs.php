@@ -265,6 +265,12 @@ Breadcrumbs::for('admin.shops.edit', function (BreadcrumbsGenerator $trail, \App
     $trail->push(__('Chỉnh sửa'), route('admin.shops.edit', $shop));
 });
 
+// Home > Device Status
+Breadcrumbs::for('admin.device-status.index', function (BreadcrumbsGenerator $trail) {
+    $trail->parent('admin.dashboard');
+    $trail->push(__('Trạng thái thiết bị'), route('admin.device-status.index'), ['icon' => 'fal fa-plug']);
+});
+
 // BBNT Preview
 Breadcrumbs::for('admin.shops.bbnt.preview', function ($trail, $shop) {
     $trail->parent('admin.shops.index');

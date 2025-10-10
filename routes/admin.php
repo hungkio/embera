@@ -49,6 +49,7 @@ use App\Http\Controllers\Admin\OrderController;
 use App\Http\Controllers\Admin\PinController;
 use App\Http\Controllers\Admin\OrderUpdateController;
 use App\Http\Controllers\Admin\MerchantShareLogController;
+use App\Http\Controllers\Admin\DeviceStatusController;
 
 Route::prefix('admin')->name('admin.')->group(function () {
     Route::get('clear_cache', function (){
@@ -191,10 +192,9 @@ Route::prefix('admin')->name('admin.')->group(function () {
 
             Route::get('admin/contracts/{contract}', [ContractController::class, 'show'])->name('contracts.show');
 
-            // ⚠️ đặt trước tất cả routes có /merchants/{merchant}
+            // Merchant Share Logs
             Route::get('/share-logs', [MerchantShareLogController::class, 'index'])->name('share-logs.index');
             Route::get('/share-logs/{id}', [MerchantShareLogController::class, 'detail'])->name('share-logs.detail');
-            // Merchant Share Logs
             Route::prefix('share-logs')->name('share-logs.')->group(function () {
                 Route::get('/', [MerchantShareLogController::class, 'index'])->name('index');
                 Route::get('/{id}/detail', [MerchantShareLogController::class, 'detail'])->name('detail');
@@ -242,6 +242,11 @@ Route::prefix('admin')->name('admin.')->group(function () {
             Route::put('/shops/{shop}/bbnt', [ShopController::class, 'bbntUpdate'])->name('shops.bbnt.update');
             Route::put('shops/{shop}/bbnt', [ShopController::class, 'bbntUpdate'])->name('shops.bbnt.update');
             Route::get('shops/{shop}/bbnt/download', [ShopController::class, 'bbntDownload'])->name('shops.bbnt.download');
+
+            // Device Status
+            Route::get('/device-status', [DeviceStatusController::class, 'index'])->name('device-status.index');
+            Route::get('/device-status/data', [DeviceStatusController::class, 'data'])->name('device-status.data');
+            Route::post('/device-status/sync', [DeviceStatusController::class, 'syncNow'])->name('device-status.sync');
 
             // BANNER
             Route::group(['middleware' => ['banner']], function () {
