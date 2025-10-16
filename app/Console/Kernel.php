@@ -26,6 +26,9 @@ class Kernel extends ConsoleKernel
     {
 //          $schedule->command('app:send-mail')->everyMinute();
          $schedule->command('device:sync-status')->everyThirtyMinutes();
+         $schedule->job(new \App\Jobs\SendDailyRevenueReportJob)
+                 ->dailyAt('08:30')
+                 ->withoutOverlapping();
     }
 
     /**
