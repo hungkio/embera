@@ -141,6 +141,6 @@ class MerchantShareLogDataTable extends BaseDatable
         $source = app()->call([$this, 'query']);
         $source = $this->applyScopes($source);
 
-        return new \App\Exports\MerchantShareLogExportHandler($source->get());
+        return new \App\DataTables\Export\MerchantShareLogExportHandler($source->get());
     }
 }
