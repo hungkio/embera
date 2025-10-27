@@ -1,5 +1,25 @@
-<h3>BẢNG KÊ CHI TIẾT GIAO DỊCH THUÊ PIN NGÀY {{ date('d') }} THÁNG {{ date('m') }} NĂM {{ date('Y') }}</h3>
+{{-- ===== TIÊU ĐỀ ===== --}}
+<table width="100%">
+    <tr><td colspan="8" style="height:10px;"></td></tr>
 
+    <tr>
+        <td colspan="3"></td>
+        <td colspan="5" style="text-align:center; font-weight:bold; font-size:16px;">
+            BẢNG KÊ CHI TIẾT GIAO DỊCH THUÊ PIN NGÀY {{ date('d') }} THÁNG {{ date('m') }} NĂM {{ date('Y') }}
+        </td>
+    </tr>
+
+    <tr>
+        <td colspan="3"></td>
+        <td colspan="5" style="text-align:center; font-style:italic;">
+            Kèm theo hóa đơn số ………… ngày ……/……/……/2025
+        </td>
+    </tr>
+
+    <tr><td colspan="8" style="height:10px;"></td></tr>
+</table>
+
+{{-- ===== BẢNG DỮ LIỆU ===== --}}
 <table border="1" cellpadding="5" cellspacing="0" width="100%">
     <thead>
         <tr>
@@ -43,17 +63,17 @@
             <td><strong>{{ number_format($total, 0, '.', ',') }}</strong></td>
         </tr>
 
-        {{-- Thêm khoảng cách 2 dòng trống --}}
+        {{-- 2 dòng trống --}}
         <tr><td colspan="8" style="height:20px;"></td></tr>
         <tr><td colspan="8" style="height:20px;"></td></tr>
 
-        {{-- Dòng Bộ phận đối soát xác nhận (nằm sau Tổng) --}}
+        {{-- Bộ phận xác nhận --}}
         <tr>
-            <td colspan="4"></td> {{-- 4 cột trống bên trái --}}
+            <td colspan="4"></td>
             <td style="text-align:left; font-weight:bold; height:40px;">
                 Bộ phận đối soát xác nhận
             </td>
-            <td colspan="3"></td> {{-- các cột còn lại trống --}}
+            <td colspan="3"></td>
         </tr>
     </tbody>
 </table>

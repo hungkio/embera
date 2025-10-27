@@ -104,6 +104,16 @@
                         <span>{{ __('Pins') }}</span>
                     </a>
                 </li>
+                <!-- Devices (chỉ hiển thị cho người có quyền devices.view) -->
+                @can('device-status.view')
+                <li class="nav-item">
+                    <a href="{{ route('admin.device-status.index') }}"
+                       class="nav-link @if(request()->routeIs('admin.device-status*'))active @endif">
+                        <i class="fal fa-plug"></i>
+                        <span>{{ __('Trạng thái thiết bị') }}</span>
+                    </a>
+                </li>
+                @endcan
                 @endcan
                 <!-- System -->
                 @canany(['admins.view', 'menus.index', 'log-activities.index', 'admins.view', 'roles.view'])
