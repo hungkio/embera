@@ -204,7 +204,7 @@ class ContractImport implements ToCollection, WithCalculatedFormulas
                             'last_name'  => $lastName,
                             'email'      => $email,
                             'phone'      => $merchantPhone ?: '',
-                            'password'   => bcrypt('default_password'),
+                            'password'   => 123456,
                         ]);
                     }
 
@@ -225,7 +225,7 @@ class ContractImport implements ToCollection, WithCalculatedFormulas
                                 'username' => $merchantUsername,
                                 'email'    => $merchantEmail,
                                 'phone'    => $merchantPhone,
-                                'password' => bcrypt($merchantPassword ?: 'default_password'),
+                                'password' => $merchantPassword,
                                 'admin_id' => $admin->id,
                             ]);
                             $merchantId = $merchant->id;

@@ -44,7 +44,7 @@ class ZaloService
 
             // Chu kỳ giao dịch từ 01/04/năm hiện tại đến hiện tại
             $startDate = Carbon::createFromDate(2025, 4, 1);
-                 $endDate   = Carbon::create(2025, 9, 30);
+                 $endDate   = Carbon::create(2025, 10, 31);
                  $thangGiaodich = 'Từ 01/04/2025 đến 30/09/2025';
 
             // Chuẩn bị dữ liệu từ MerchantEmailService với khoảng thời gian
