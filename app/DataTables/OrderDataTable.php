@@ -148,6 +148,10 @@ class OrderDataTable extends BaseDatable
         $source = app()->call([$this, 'query']);
         $source = $this->applyScopes($source);
 
-        return new OrderExportHandler($source->get());
+        $date = null;
+        if ($this->request()->date_from == $this->request()->date_to) {
+            $date = $this->request()->date_from;
+        }
+        return new OrderExportHandler($source->get(), $date);
     }
 }

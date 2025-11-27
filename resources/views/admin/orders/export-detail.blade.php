@@ -5,7 +5,11 @@
     <tr>
         <td colspan="3"></td>
         <td colspan="5" style="text-align:center; font-weight:bold; font-size:16px;">
-            BẢNG KÊ CHI TIẾT GIAO DỊCH THUÊ PIN NGÀY {{ date('d') }} THÁNG {{ date('m') }} NĂM {{ date('Y') }}
+            @if($date)
+                BẢNG KÊ CHI TIẾT GIAO DỊCH THUÊ PIN NGÀY {{ \Illuminate\Support\Carbon::parse($date)->format('d') }} THÁNG {{ \Illuminate\Support\Carbon::parse($date)->format('m') }} NĂM {{ \Illuminate\Support\Carbon::parse($date)->format('Y') }}
+            @else
+                BẢNG KÊ CHI TIẾT GIAO DỊCH THUÊ PIN NGÀY {{ date('d') }} THÁNG {{ date('m') }} NĂM {{ date('Y') }}
+            @endif
         </td>
     </tr>
 

@@ -12,15 +12,17 @@ class OrderExportHandler implements WithMultipleSheets, ShouldAutoSize
 {
     use Exportable;
     protected $collection;
+    protected $date;
 
     /**
      * OrderExportHandler constructor.
      *
      * @param Collection $collection
      */
-    public function __construct(Collection $collection)
+    public function __construct(Collection $collection, $date = null)
     {
         $this->collection = $collection;
+        $this->date = $date;
     }
 
     /**
@@ -31,7 +33,7 @@ class OrderExportHandler implements WithMultipleSheets, ShouldAutoSize
     public function sheets(): array
     {
         return [
-            'Order Details' => new OrderDetailsSheet($this->collection),
+            'Order Details' => new OrderDetailsSheet($this->collection, $this->date),
             'Transaction Summary' => new TransactionSummarySheet($this->collection),
         ];
     }
@@ -43,16 +45,19 @@ class OrderExportHandler implements WithMultipleSheets, ShouldAutoSize
 class OrderDetailsSheet implements ShouldAutoSize, \Maatwebsite\Excel\Concerns\FromView
 {
     protected $collection;
+    protected $date = null;
 
-    public function __construct(Collection $collection)
+    public function __construct(Collection $collection, $date)
     {
         $this->collection = $collection;
+        $this->date = $date;
     }
 
     public function view(): View
     {
         return view('admin.orders.export-detail', [
-            'orders' => $this->collection
+            'orders' => $this->collection,
+            'date' => $this->date,
         ]);
     }
 }
@@ -72,7 +77,7 @@ class TransactionSummarySheet implements ShouldAutoSize, \Maatwebsite\Excel\Conc
     public function view(): View
     {
         return view('admin.orders.export-summary', [
-            'orders' => $this->collection
+            'orders' => $this->collection,
         ]);
     }
 }
