@@ -22,61 +22,66 @@
 {{ $dataTable->scripts() }}
 <script>
     document.addEventListener('DOMContentLoaded', function () {
-        document.querySelector('.sendmail')?.addEventListener('click', function () {
-            const selectedRows = document.querySelectorAll('tr.selected');
-            if (!selectedRows.length) {
+        $(document).on('click', '.sendmail', function () {
+            const rows = $('tr.selected');
+
+            if (!rows.length) {
                 alert('Vui lòng chọn ít nhất một merchant để gửi mail.');
                 return;
             }
 
-            const ids = Array.from(selectedRows).map(row => {
-                const idStr = row.id; // ví dụ: merchant_5
-                return idStr.replace('merchant_', '');
-            });
+            const ids = rows.map(function () {
+                return $(this).attr('id').replace('merchant_', '');
+            }).get();
 
-            fetch('{{ route('admin.merchants.send-email') }}', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
+            $.ajax({
+                url: "{{ route('admin.merchants.send-email') }}",
+                type: 'POST',
+                data: {
+                    ids: ids,
+                    _token: '{{ csrf_token() }}'
                 },
-                body: JSON.stringify({ ids })
-            })
-        .then(res => res.json())
-            .then(data => {
-                alert(data.message || 'Gửi mail thành công');
-            })
-            .catch(() => alert('Gửi mail thất bại'));
+                success: function (res) {
+                    alert(res.message || 'Gửi mail thành công');
+                },
+                error: function () {
+                    alert('Gửi mail thất bại');
+                }
+            });
         });
     });
 
     document.addEventListener('DOMContentLoaded', () => {
-        document.querySelector('.sendzalo')?.addEventListener('click', () => {
-            const rows = document.querySelectorAll('tr.selected');
+        $(document).on('click', '.sendzalo', function () {
+            const rows = $('tr.selected');
+
             if (!rows.length) {
                 alert('Vui lòng chọn ít nhất một merchant.');
                 return;
             }
-            const ids = Array.from(rows).map(r => r.id.replace('merchant_', ''));
-            fetch("{{ route('admin.merchants.send-zalo') }}", {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
+
+            const ids = rows.map(function () {
+                return $(this).attr('id').replace('merchant_', '');
+            }).get();
+
+            $.ajax({
+                url: "{{ route('admin.merchants.send-zalo') }}",
+                type: 'POST',
+                data: {
+                    ids: ids,
+                    _token: '{{ csrf_token() }}'
                 },
-                body: JSON.stringify({ ids }),
-            })
-            .then(response => response.json())
-            .then(json => {
-                if (json.success) {
-                    alert(json.message);
-                } else {
-                    alert(json.message || 'Gửi Zalo thất bại.');
+                success: function (json) {
+                    if (json.success) {
+                        alert(json.message);
+                    } else {
+                        alert(json.message || 'Gửi Zalo thất bại.');
+                    }
+                },
+                error: function (xhr, status, error) {
+                    console.error(error);
+                    alert('Đã xảy ra lỗi khi gửi Zalo.');
                 }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                alert('Đã xảy ra lỗi khi gửi Zalo.');
             });
         });
     });
