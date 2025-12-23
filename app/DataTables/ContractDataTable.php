@@ -93,7 +93,9 @@ class ContractDataTable extends BaseDatable
     public function query(Contract $model)
     {
         return $model->newQuery()
-            ->with(['merchant', 'shops', 'admin'])
+            ->with(['merchant', 'shops' => function ($q) {
+                $q->where('shops.is_deleted', false);
+            }, 'admin'])
             ->leftJoin('admins', 'contracts.admin_id', '=', 'admins.id')
             ->select('contracts.*')
             ->where('contracts.is_deleted', 0)
