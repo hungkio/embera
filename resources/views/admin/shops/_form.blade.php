@@ -139,6 +139,9 @@
                                 <option value="(VND-1h)5-7000-52000" {{ old(
                                 'strategy', $shop->strategy ?? '') === '(VND-1h)5-7000-52000' ?
                                 'selected' : '' }}>(VND-1h) 5-7000-52000</option>
+                                <option value="(VND-1h)10-10000-52000" {{ old(
+                                'strategy', $shop->strategy ?? '') === '(VND-1h)10-10000-52000' ?
+                                'selected' : '' }}>(VND-1h) 10-10000-52000</option>
                             </select>
                             @error('strategy')
                             <span class="form-text text-danger">{{ $message }}</span>

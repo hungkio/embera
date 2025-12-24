@@ -21,6 +21,14 @@ class ShopDataTable extends BaseDatable
                 $url = route('admin.contracts.show', $shop->contract->id);
                 $num = e($shop->contract->contract_number);
                 return "<a href=\"{$url}\" target=\"_blank\">{$num}</a>";
+            })
+            ->addColumn('merchant', function (Shop $shop) {
+                if (!$shop->contract && !@$shop->contract->merchant) {
+                    return '';
+                }
+                $url = route('admin.merchants.update', $shop->contract->merchant->id);
+                $num = e($shop->contract->merchant->username);
+                return "<a href=\"{$url}\" target=\"_blank\">{$num}</a>";
             })->addColumn('action', function (Shop $shop) {
                 return view('admin.shops._tableAction', ['id' => $shop->id])->render();
             })
@@ -29,20 +37,20 @@ class ShopDataTable extends BaseDatable
                     $q->where('contract_number', 'like', "%$keyword%");
                 });
             })
-            ->editColumn('shop_name', fn(Shop $shop) => $shop->shop_name)
-            ->editColumn('address', fn(Shop $shop) => $shop->address)
-            ->editColumn('shop_type', fn(Shop $shop) => $shop->shop_type)
+            ->editColumn('shop_name', fn (Shop $shop) => $shop->shop_name)
+            ->editColumn('address', fn (Shop $shop) => $shop->address)
+            ->editColumn('shop_type', fn (Shop $shop) => $shop->shop_type)
             ->editColumn('share_rate', function (Shop $shop) {
                 return $shop->share_rate_type === 'fixed'
                     ? number_format($shop->share_rate, 0) . ' VNĐ'
                     : number_format($shop->share_rate, 0) . ' %';
             })
-            ->editColumn('share_rate_type', fn(Shop $shop) => $shop->share_rate_type === 'fixed' ? 'Doanh thu (VNĐ)' : 'Phần trăm (%)'
+            ->editColumn('share_rate_type', fn (Shop $shop) => $shop->share_rate_type === 'fixed' ? 'Doanh thu (VNĐ)' : 'Phần trăm (%)'
             )
-            ->editColumn('strategy', fn(Shop $shop) => $shop->strategy ?? '-')
-            ->editColumn('area', fn(Shop $shop) => $shop->area ?? '-')
-            ->editColumn('city', fn(Shop $shop) => $shop->city ?? '-')
-            ->editColumn('region', fn(Shop $shop) => $shop->region ?? '-')
+            ->editColumn('strategy', fn (Shop $shop) => $shop->strategy ?? '-')
+            ->editColumn('area', fn (Shop $shop) => $shop->area ?? '-')
+            ->editColumn('city', fn (Shop $shop) => $shop->city ?? '-')
+            ->editColumn('region', fn (Shop $shop) => $shop->region ?? '-')
             ->editColumn('device_json', function (Shop $shop) {
                 if (!$shop->device_json) return '-';
 
@@ -113,13 +121,14 @@ class ShopDataTable extends BaseDatable
                     $query->where('is_bound', false);
                 }
             })
-            ->addColumn('is_deleted', fn(Shop $shop) => $shop->is_deleted ? 'Đã xóa' : 'Hoạt động')
-            ->filterColumn('is_deleted', fn($query, $keyword) => $query->where('is_deleted', $keyword === 'Đã xóa' ? 1 : 0))
+            ->addColumn('is_deleted', fn (Shop $shop) => $shop->is_deleted ? 'Đã xóa' : 'Hoạt động')
+            ->filterColumn('is_deleted', fn ($query, $keyword) => $query->where('is_deleted', $keyword === 'Đã xóa' ? 1 : 0))
             ->rawColumns([
                 'action',
                 'device_json',
                 'is_bound',
                 'contract',
+                'merchant',
             ]);
     }
 
@@ -127,16 +136,19 @@ class ShopDataTable extends BaseDatable
     {
         return $model->newQuery()
             ->with('contract')
-            ->when(request('show_deleted') === 'yes', fn($q) => $q->where('is_deleted', 1))
-            ->when(request('show_deleted') !== 'yes', fn($q) => $q->where('is_deleted', 0));
+            ->when(request('show_deleted') === 'yes', fn ($q) => $q->where('is_deleted', 1))
+            ->when(request('show_deleted') !== 'yes', fn ($q) => $q->where('is_deleted', 0));
     }
 
     protected function getColumns(): array
     {
         return [
-            Column::checkbox(''),
+            Column::computed('action')->title('Tác vụ')->exportable(false)->printable(false)->width(60)->addClass('text-center'),
             Column::make('contract')->title('Số hợp đồng'),
+            Column::make('merchant')->title('Đối tác'),
             Column::make('shop_name')->title('Tên cửa hàng'),
+            Column::make('is_bound')->title('Bind thiết bị'),
+            Column::make('device_json')->title('Thiết bị'),
             Column::make('address')->title('Địa chỉ'),
             Column::make('shop_type')->title('Loại cửa hàng'),
             Column::make('share_rate')->title('Lợi nhuận'),
@@ -145,9 +157,6 @@ class ShopDataTable extends BaseDatable
             Column::make('area')->title('Khu vực'),
             Column::make('city')->title('Thành phố'),
             Column::make('region')->title('Vùng'),
-            Column::make('is_bound')->title('Bind thiết bị'),
-            Column::make('device_json')->title('Thiết bị'),
-            Column::computed('action')->title('Tác vụ')->exportable(false)->printable(false)->width(60)->addClass('text-center'),
         ];
     }
 
@@ -160,9 +169,6 @@ class ShopDataTable extends BaseDatable
     {
         return [
             Button::make('create')->addClass('btn btn-success')->text('<i class="fal fa-plus-circle mr-2"></i>Tạo mới'),
-            Button::make('bulkDelete')->addClass('btn bg-danger')->text('<i class="fal fa-trash-alt mr-2"></i>Xóa'),
-            Button::make('export')->addClass('btn bg-blue')->text('<i class="fal fa-download mr-2"></i>Xuất'),
-            Button::make('print')->addClass('btn bg-blue')->text('<i class="fal fa-print mr-2"></i>In'),
             Button::make('reset')->addClass('btn bg-blue')->text('<i class="fal fa-undo mr-2"></i>Thiết lập lại'),
         ];
     }

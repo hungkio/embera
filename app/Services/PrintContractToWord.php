@@ -58,11 +58,13 @@ class PrintContractToWord
                 foreach ($shops as $index => $shop) {
                     $row = $index + 1;
 
+                    $rate = $shop->share_rate ?? 0;
+                    $share_rate_type = ($shop->share_rate_type == 'fixed') ? 'VNĐ' : '%';
                     $processor->setValue("stt#{$row}", $row);
                     $displayName = trim(preg_replace('/\s*\(.*?\)$/', '', $shop->shop_name ?? ''));
                     $processor->setValue("shop_name#{$row}", $displayName);
                     $processor->setValue("address#{$row}", $shop->address ?? '');
-                    $processor->setValue("share_rate#{$row}", $shop->share_rate ?? 0); // Add share_rate
+                    $processor->setValue("share_rate#{$row}",  $rate . $share_rate_type); // Add share_rate
 
                     $deviceMap = [
                         'CB8' => 0,
