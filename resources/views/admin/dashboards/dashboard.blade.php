@@ -114,19 +114,6 @@
     <div class="col-md-6 col-lg-3 d-flex">
         <div class="card dashboard-card text-center h-100 flex-fill">
             <div class="card-body">
-                <h6>Doanh thu mục tiêu</h6>
-                <h4>{{ formatNumber($targetRevenue) }} ₫</h4>
-                <small>
-                    Hoàn thành: <strong>{{ $percentRevenue }}%</strong><br>
-                    Còn thiếu: <span class="text-danger">{{ formatNumber($revenueRemaining) }} ₫</span>
-                </small>
-            </div>
-        </div>
-    </div>
-
-    <div class="col-md-6 col-lg-3 d-flex">
-        <div class="card dashboard-card text-center h-100 flex-fill">
-            <div class="card-body">
                 <h6>Giá trị trung bình đơn ({{ $startDate->format('d/m/Y') }} - {{ $endDate->format('d/m/Y') }})</h6>
                 <h4>{{ formatNumber($avgOrderValue) }} ₫</h4>
                 <small>Khoảng ngày đã chọn</small>
@@ -142,11 +129,7 @@
             </div>
         </div>
     </div>
-</div>
 
-
-<!-- II. Các chỉ số khác -->
-<div class="row g-3 mt-2">
     <div class="col-md-3">
         <div class="card dashboard-card text-center h-100">
             <div class="card-body">
@@ -155,6 +138,20 @@
             </div>
         </div>
     </div>
+</div>
+
+
+<!-- II. Các chỉ số khác -->
+<div class="row g-3 mt-2">
+    <div class="col-md-6 col-lg-3 d-flex">
+        <div class="card dashboard-card text-center h-100 flex-fill">
+            <div class="card-body">
+                <h6>Tổng số lượng đối tác</h6>
+                <h4>{{ formatNumber($merchants) }}</h4>
+            </div>
+        </div>
+    </div>
+
     <div class="col-md-3">
         <div class="card dashboard-card text-center h-100">
             <div class="card-body">
@@ -176,6 +173,44 @@
             <div class="card-body">
                 <h6>Đã ký nhưng chưa lắp đặt</h6>
                 <h4>{{ $signedNotInstalled }}</h4>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-md-6">
+        <div class="card dashboard-card">
+            <div class="card-body text-center">
+                <h6>Tình trạng lắp đặt máy</h6>
+                <div id="deviceBoundChart" style="height:400px;"></div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card dashboard-card">
+            <div class="card-body text-center">
+                <h6>Tỷ lệ máy online / Máy đã lắp</h6>
+                <div id="deviceOnlineChart" style="height:400px;"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-md-6">
+        <div class="card dashboard-card">
+            <div class="card-body text-center">
+                <h6>Tỷ lệ khởi tạo đơn hàng ({{ $startDate->format('d/m/Y') }} - {{ $endDate->format('d/m/Y') }})</h6>
+                <div id="initOrderSuccessChart" style="height:400px;"></div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card dashboard-card">
+            <div class="card-body text-center">
+                <h6>Tỷ lệ hoàn tiền tự động ({{ $startDate->format('d/m/Y') }} - {{ $endDate->format('d/m/Y') }})</h6>
+                <div id="refundOrderChart" style="height:400px;"></div>
             </div>
         </div>
     </div>
@@ -250,17 +285,6 @@
       <div class="card-body">
         <h6>Tăng trưởng doanh thu theo tháng</h6>
         <div id="monthlyGrowthChart" class="chart-center"></div>
-      </div>
-    </div>
-  </div>
-</div>
-
-<div class="row mt-4">
-  <div class="col-md-12">
-    <div class="card dashboard-card">
-      <div class="card-body text-center">
-        <h6>Tình trạng lắp đặt máy</h6>
-        <div id="deviceBoundChart" style="height:400px;"></div>
       </div>
     </div>
   </div>
@@ -916,6 +940,137 @@ echarts.init(document.getElementById('deviceBoundChart')).setOption({
       ]
     }
   ]
+});
+
+// --- Device Online Status ---
+echarts.init(document.getElementById('deviceOnlineChart')).setOption({
+  tooltip: {
+    trigger: 'item',
+    formatter: '{b}: {c} máy ({d}%)'
+  },
+  legend: {
+    orient: 'horizontal',
+    bottom: 10,
+    data: ['Online', 'Offline']
+  },
+  series: [
+    {
+      name: 'Tình trạng máy',
+      type: 'pie',
+      radius: ['40%', '70%'],
+      avoidLabelOverlap: false,
+      itemStyle: {
+        borderRadius: 8,
+        borderColor: '#fff',
+        borderWidth: 2
+      },
+      label: {
+        show: true,
+        position: 'outside',
+        formatter: '{b}\n{d}%'
+      },
+      emphasis: {
+        label: {
+          show: true,
+          fontSize: 18,
+          fontWeight: 'bold'
+        }
+      },
+      labelLine: { show: true },
+      data: [
+        { value: {{ $device_online }}, name: 'Online' },
+        { value: {{ $device_offline }}, name: 'Offline' }
+      ]
+    }
+  ]
+});
+
+// --- Device Online Status ---
+echarts.init(document.getElementById('initOrderSuccessChart')).setOption({
+    tooltip: {
+        trigger: 'item',
+        formatter: '{b}: {c} đơn hàng ({d}%)'
+    },
+    legend: {
+        orient: 'horizontal',
+        bottom: 10,
+        data: ['Thành công', 'Thất bại']
+    },
+    color: ['#95cb78', '#ea3144'],
+    series: [
+        {
+            name: 'Tỷ lệ đơn hàng khởi tạo',
+            type: 'pie',
+            radius: ['40%', '70%'],
+            avoidLabelOverlap: false,
+            itemStyle: {
+                borderRadius: 8,
+                borderColor: '#fff',
+                borderWidth: 2
+            },
+            label: {
+                show: true,
+                position: 'outside',
+                formatter: '{b}\n{d}%'
+            },
+            emphasis: {
+                label: {
+                    show: true,
+                    fontSize: 18,
+                    fontWeight: 'bold'
+                }
+            },
+            labelLine: { show: true },
+            data: [
+                { value: {{ $totalOrder-$totalErrorOrder }}, name: 'Thành công' },
+                { value: {{ $totalErrorOrder }}, name: 'Thất bại' }
+            ]
+        }
+    ]
+});
+
+// --- Device Online Status ---
+echarts.init(document.getElementById('refundOrderChart')).setOption({
+    tooltip: {
+        trigger: 'item',
+        formatter: '{b}: {c} đơn hàng ({d}%)'
+    },
+    legend: {
+        orient: 'horizontal',
+        bottom: 10,
+        data: ['Thành công', 'Thất bại']
+    },
+    color: ['#95cb78', '#ea3144'],
+    series: [
+        {
+            name: 'Tỷ lệ đơn hàng hoàn tiền tự động',
+            type: 'pie',
+            radius: ['40%', '70%'],
+            avoidLabelOverlap: false,
+            itemStyle: {
+                borderRadius: 8,
+                borderColor: '#fff',
+                borderWidth: 2
+            },
+            label: {
+                show: true,
+                position: 'outside',
+                formatter: '{b}\n{d}%'
+            },
+            emphasis: {
+                label: {
+                    show: true,
+                    fontSize: 18,
+                    fontWeight: 'bold'
+                }
+            },
+            labelLine: { show: true },
+            data: [
+                { value: {{ $totalOrder-$totalErrorRefund }}, name: 'Thành công' },
+                { value: {{ $totalErrorRefund }}, name: 'Thất bại' }
+            ]
+        }
+    ]
 });
 
 </script>

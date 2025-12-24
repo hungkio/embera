@@ -1,6 +1,6 @@
 @extends('admin.layouts.master')
 
-@section('title', __('Tạo Merchant'))
+@section('title', __('Tạo Đối tác'))
 
 @section('page-header')
 <x-page-header>

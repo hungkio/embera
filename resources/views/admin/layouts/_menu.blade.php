@@ -75,6 +75,13 @@
                     </a>
                 </li>
                 <li class="nav-item">
+                    <a href="{{ route('admin.merchants.index') }}"
+                       class="nav-link @if(request()->routeIs('admin.merchants.index'))active @endif">
+                        <i class="fal fa-user-tie"></i>
+                        <span>{{ __("Đối tác") }}</span>
+                    </a>
+                </li>
+                <li class="nav-item">
                     <a href="{{ route('admin.contracts.index') }}"
                        class="nav-link @if(request()->routeIs('admin.contracts*'))active @endif">
                         <i class="fal fa-file-contract"></i>
@@ -82,17 +89,10 @@
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a href="{{ route('admin.merchants.index') }}"
-                       class="nav-link @if(request()->routeIs('admin.merchants.index'))active @endif">
-                        <i class="fal fa-user-tie"></i>
-                        <span>{{ __("Merchant") }}</span>
-                    </a>
-                </li>
-                <li class="nav-item">
                     <a href="{{ route('admin.shops.index') }}"
                        class="nav-link @if(request()->routeIs('admin.shops.index'))active @endif">
                         <i class="fal fa-store"></i>
-                        <span>{{ __("Shop") }}</span>
+                        <span>{{ __("Cửa hàng") }}</span>
                     </a>
                 </li>
                 <!-- Pins (chỉ hiển thị cho người có quyền pins.view) -->

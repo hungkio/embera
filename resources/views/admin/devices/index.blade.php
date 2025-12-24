@@ -42,6 +42,24 @@
 @endpush
 
 @section('page-content')
+    <form method="GET" action="{{ route('admin.device-status.index') }}" class="row g-3 mb-4 align-items-end filters">
+        <div class="col-md-3">
+            <label for="shop_name">Cửa hàng</label>
+            <select name="shop_name[]" id="shop_name" class="form-select select2" multiple>
+                <option value="">-- Tất cả --</option>
+                @foreach($shopNameList as $shop)
+                    <option value="{{ $shop }}" {{ (request('shop_name') ? in_array($shop, request('shop_name')) : false) ? 'selected' : '' }}>
+                        {{ $shop }}
+                    </option>
+                @endforeach
+            </select>
+        </div>
+        <div class="col-md-12 text-end mt-3">
+            <button type="submit" class="btn btn-primary">
+                <i class="bi bi-funnel-fill"></i> Lọc dữ liệu
+            </button>
+        </div>
+    </form>
     <x-card title="Danh sách trạng thái thiết bị">
         <div class="table-responsive">
             {!! $dataTable->table([
@@ -96,6 +114,10 @@
         function hideTableLoading() {
             $('#device-status-datatable').removeClass('table-loading');
         }
+
+        $('.filters .select2').select2({
+            // width: '100%',
+        });
     });
     </script>
 @endpush

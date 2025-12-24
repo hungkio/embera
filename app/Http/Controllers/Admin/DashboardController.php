@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Admin;
 
+use App\Models\Merchant;
 use App\Models\Order;
+use App\Models\TblOrder;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use App\Models\Contract;
@@ -32,13 +34,7 @@ class DashboardController
 
         // --- KPI theo khoảng ngày ---
         $targetRevenue = setting('target_revenue', 0);
-
-        $totalRevenue = Order::whereBetween('return_time', [$startDate, $endDate])
-            ->sum('order_amount');
-
-        $percentRevenue = $targetRevenue > 0 ? round(($totalRevenue / $targetRevenue) * 100, 2) : 0;
-        $revenueRemaining = max(0, $targetRevenue - $totalRevenue);
-
+        $totalRevenue = Order::where('return_time', '>=' , $startDate)->where('return_time', '<=', $endDate)->sum('order_amount');
         $avgOrderValue = Order::whereBetween('return_time', [$startDate, $endDate])
             ->avg('order_amount') ?? 0;
 
@@ -60,11 +56,6 @@ class DashboardController
         $revenueChangePercent = $prevTotalRevenue > 0
             ? round((($totalRevenue - $prevTotalRevenue) / $prevTotalRevenue) * 100, 2)
             : 0;
-
-        // --- Prorated target percent ---
-        $daysInMonth = now()->daysInMonth;
-        $proratedPercent = round(($daysPassed / $daysInMonth) * 100, 2);
-        $completionDiff = round($percentRevenue - $proratedPercent, 2);
 
         // --- Hợp đồng ---
         $activeContracts = Contract::active()->where('expired_date', '>', now())->whereHas('shops')->count();
@@ -474,8 +465,6 @@ class DashboardController
         $shops = \App\Models\Shop::where('is_deleted', false)->get(['device_json', 'is_bound']);
 
         $totalBoundDevices = 0;
-        $totalUnboundDevices = 0;
-
         foreach ($shops as $shop) {
             if (!is_array($shop->device_json)) continue;
 
@@ -486,17 +475,20 @@ class DashboardController
                 $deviceCount += isset($device['quantity']) ? (int)$device['quantity'] : 1;
             }
 
-            // Phân loại theo is_bound
-            if ($shop->is_bound) {
-                $totalBoundDevices += $deviceCount;
-            } else {
-                $totalUnboundDevices += $deviceCount;
-            }
+            $totalBoundDevices += $deviceCount;
         }
 
-        $totalDevices = $totalBoundDevices + $totalUnboundDevices;
-        $boundDevicePercent = $totalDevices > 0 ? round(($totalBoundDevices / $totalDevices) * 100, 2) : 0;
-        $unboundDevicePercent = 100 - $boundDevicePercent;
+        $devices = \App\Models\DeviceStatus::all()->count();
+        $device_online = \App\Models\DeviceStatus::where('status', 'online')->count();
+        $device_offline = $totalBoundDevices - $device_online;
+
+        $totalUnboundDevices = $devices - $totalBoundDevices;
+
+        $merchants = Merchant::count();
+
+        $totalOrder = Order::where('return_time', '>=' , $startDate)->where('return_time', '<=', $endDate)->count();
+        $totalErrorOrder = TblOrder::where('created_at', '>=' , $startDate)->where('created_at', '<=', $endDate)->whereNull('battery_code')->count();
+        $totalErrorRefund = TblOrder::where('created_at', '>=' , $startDate)->where('created_at', '<=', $endDate)->where('note', 'like', 'FT%')->count();
 
         // --- Return view ---
         return view('admin.dashboards.dashboard', compact(
@@ -505,10 +497,10 @@ class DashboardController
 
 
             // KPI (filtered)
-            'targetRevenue', 'totalRevenue', 'percentRevenue', 'revenueRemaining',
+            'targetRevenue', 'totalRevenue',
             'avgOrderValue', 'avgRevenuePerDay', 'avgRentalHours',
-            'prevTotalRevenue', 'revenueChangePercent',
-            'proratedPercent', 'completionDiff','totalBoundDevices','totalUnboundDevices','boundDevicePercent','unboundDevicePercent',
+            'prevTotalRevenue', 'revenueChangePercent', 'totalBoundDevices','totalUnboundDevices',
+            'device_online', 'device_offline', 'merchants', 'totalErrorOrder', 'totalOrder', 'totalErrorRefund',
 
             // Contracts
             'activeContracts', 'expiringContractsCount', 'signedNotInstalled',

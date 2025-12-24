@@ -108,7 +108,7 @@ class MerchantEmailService
         $totalOrders = $shops->sum(function ($shop) use ($periodStartLog, $periodEndLog) {
             return Order::whereRaw('LOWER(rental_shop) LIKE LOWER(?)', ['%' . $shop->shop_name . '%'])
                 ->where('order_amount', '>', 0)
-                ->whereBetween('payment_time', [$periodStartLog, $periodEndLog])
+                ->whereBetween('return_time', [$periodStartLog, $periodEndLog])
                 ->count();
         });
 
@@ -162,7 +162,7 @@ class MerchantEmailService
         $lastMonth = Carbon::now()->subMonth();
 
         $periodStart = $startDate ?: Carbon::createFromDate(2025, 4, 1);
-        $periodEnd = $endDate ?: Carbon::createFromDate(2025, 9, 30);
+        $periodEnd = $endDate ?: Carbon::createFromDate(2025, 11, 30);
 
         $bd = $merchant->admin;
         $firstRoleName = $bd ? optional($bd->roles()->first())->name : '';
@@ -195,6 +195,7 @@ class MerchantEmailService
 
         $shops_data = [];
         $totalRevenue = 0;    // Tổng doanh thu
+        $totalOrder = 0;    // Tổng doanh thu
         $totalPayment = 0;    // Tổng tiền chia
 
         foreach ($shops as $key => $shop) {
@@ -208,11 +209,11 @@ class MerchantEmailService
                 // Tính doanh thu tháng trước
                 $sumNumberOrder = Order::whereRaw('LOWER(rental_shop) LIKE LOWER(?)', ['%' . $shop->shop_name . '%'])
                     ->where('order_amount', '>', 0)
-                    ->whereBetween('payment_time', [$periodStartDay, $periodEndDay])
+                    ->whereBetween('return_time', [$periodStartDay, $periodEndDay])
                     ->count();
                 $shareRate = $shop->share_rate ?? 0;
 
-                $totalRevenue += $sumNumberOrder;
+                $totalOrder += $sumNumberOrder;
                 $totalPayment += $sumNumberOrder * $shareRate;
 
                 $shops_data[] = [
@@ -229,7 +230,7 @@ class MerchantEmailService
 
                 // Tính doanh thu tháng trước
                 $revenue = Order::whereRaw('LOWER(rental_shop) LIKE LOWER(?)', ['%' . $shop->shop_name . '%'])
-                    ->whereBetween('payment_time', [$periodStartDay, $periodEndDay])
+                    ->whereBetween('return_time', [$periodStartDay, $periodEndDay])
                     ->sum('order_amount');
                 $shareRate = $shop->share_rate ?? 0;
                 $payment = $revenue * ($shareRate / 100);
@@ -253,6 +254,7 @@ class MerchantEmailService
         // Gán lại vào mảng data
         $data['shop_data'] = $shops_data;
         $data['tong_thanh_toan'] = number_format($totalRevenue, 0, ',', '.') . ' VNĐ';      // Tổng doanh thu
+        $data['tong_dong_hang'] = $totalOrder;      // Tổng đơn hàng
         $data['tong_thanh_toan_share'] = number_format($totalPayment, 0, ',', '.') . ' VNĐ';     // Tổng tiền chia
         $data['tong_thanh_toan_text'] = $this->number_to_vietnamese($totalPayment);
 

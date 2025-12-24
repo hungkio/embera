@@ -9,7 +9,7 @@
                     <x-card class="shadow-sm">
                         <fieldset class="p-4">
                             <legend class="border-bottom pb-2 mb-4 font-weight-bold text-primary">
-                                {{ __('Thông tin merchant') }}
+                                {{ __('Thông tin đối tác') }}
                             </legend>
 
                             <div class="form-group row">
@@ -69,6 +69,26 @@
                                 </div>
                             </div>
 
+                        </fieldset>
+                    </x-card>
+                    <x-card class="shadow-sm">
+                        <fieldset class="p-4">
+                            <legend class="border-bottom pb-2 mb-4 font-weight-bold text-primary">
+                                {{ __('Thông tin liên quan') }}
+                            </legend>
+
+                            <x-text-field
+                                name="email"
+                                type="email"
+                                :label="__('Email')"
+                                :value="$merchant->email ?? old('email')"
+                            />
+
+                            <x-text-field
+                                name="phone"
+                                :label="__('Số điện thoại')"
+                                :value="$merchant->phone ?? old('phone')"
+                            />
                         </fieldset>
                     </x-card>
 

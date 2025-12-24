@@ -63,9 +63,9 @@ class ZaloService
             // Chọn template và bổ sung params riêng
             if ($shareType === 'fixed') {
                 $templateId = $templateFixedId;
-                $templateData['number_of_order'] = (int) str_replace(['.', ' VNĐ'], '', $data['shop_data'][0]['doanh_thu'] ?? 0);
-                $templateData['share_money'] = (int) str_replace(['.', ' VNĐ'], '', $data['shop_data'][0]['thanh_toan'] ?? 0);
-                $templateData['share_percent'] = (int) str_replace(['.', ' VNĐ'], '', $data['shop_data'][0]['chia_se'] ?? 0);
+                $templateData['number_of_order'] = (int) ($data['tong_dong_hang'] ?? 0);
+                $templateData['share_money'] = (int) str_replace(['.', ' VNĐ'], '', $data['tong_thanh_toan_share'] ?? 0);
+                $templateData['share_percent'] = (int) str_replace(['.', ' VNĐ'], '', $data['chia_se'] ?? 0);
             } else {
                 $templateId = $templatePercentageId;
                 $templateData['total'] = (int) str_replace(['.', ' VNĐ'], '', $data['tong_thanh_toan'] ?? 0);

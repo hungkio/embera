@@ -6,7 +6,12 @@ use Illuminate\Database\Eloquent\Model;
 
 class DeviceStatus extends Model
 {
-    protected $table = 'device_status';
-    protected $fillable = ['equip_id', 'status'];
+    protected $table = 'tbl_devices';
+    protected $fillable = ['code', 'status'];
     public $timestamps = true;
+
+    public function shop()
+    {
+        return $this->belongsTo(TblShop::class, 'shop_code', 'code');
+    }
 }

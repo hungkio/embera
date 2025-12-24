@@ -221,7 +221,7 @@ Breadcrumbs::for('admin.contracts.show', function (BreadcrumbsGenerator $trail, 
 // Home > Merchants
 Breadcrumbs::for('admin.merchants.index', function (BreadcrumbsGenerator $trail) {
     $trail->parent('admin.dashboard');
-    $trail->push(__('Merchant'), route('admin.merchants.index'), ['icon' => 'fal fa-user-tie']);
+    $trail->push(__('Đối tác'), route('admin.merchants.index'), ['icon' => 'fal fa-user-tie']);
 });
 
 // Home > Merchants > Create
