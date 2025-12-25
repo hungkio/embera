@@ -18,6 +18,11 @@ class DeviceStatusDataTable extends BaseDatable
                     ? '<span class="badge bg-success">Online</span>'
                     : '<span class="badge bg-danger">Offline</span>'
                 )
+                ->filterColumn('shop', function ($query, $keyword) {
+                    $query->whereHas('shop', function ($q) use ($keyword) {
+                        $q->where('name', 'like', "%$keyword%");
+                    });
+                })
                 ->addColumn('shop', fn (DeviceStatus $device) => $device->shop->name ?? '')
                 ->editColumn('updated_at', fn ($d) => $d->updated_at ?->setTimezone('Asia/Ho_Chi_Minh')->format('d/m/Y H:i') ?? '-')
             ->rawColumns(['status']);

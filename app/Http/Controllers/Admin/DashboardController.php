@@ -6,7 +6,9 @@ namespace App\Http\Controllers\Admin;
 
 use App\Models\Merchant;
 use App\Models\Order;
+use App\Models\TblDevice;
 use App\Models\TblOrder;
+use App\Models\TblShop;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use App\Models\Contract;
@@ -462,22 +464,8 @@ class DashboardController
         $monthlyTotals = array_column($monthlyRevenue, 'total');
 
         // --- Thống kê số lượng máy đã lắp / chưa lắp ---
-        $shops = \App\Models\Shop::where('is_deleted', false)->get(['device_json', 'is_bound']);
 
-        $totalBoundDevices = 0;
-        foreach ($shops as $shop) {
-            if (!is_array($shop->device_json)) continue;
-
-            // Đếm tổng số máy trong shop
-            $deviceCount = 0;
-            foreach ($shop->device_json as $device) {
-                // Nếu trong device có field 'quantity' thì cộng số lượng, ngược lại = 1
-                $deviceCount += isset($device['quantity']) ? (int)$device['quantity'] : 1;
-            }
-
-            $totalBoundDevices += $deviceCount;
-        }
-
+        $totalBoundDevices = TblDevice::whereNotNull('shop_code')->count();
         $devices = \App\Models\DeviceStatus::all()->count();
         $device_online = \App\Models\DeviceStatus::where('status', 'online')->count();
         $device_offline = $totalBoundDevices - $device_online;
