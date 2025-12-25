@@ -91,6 +91,9 @@ class OrderDataTable extends BaseDatable
         if (@$filters['area']) {
             $query->where('area', $filters['area']);
         }
+        if (@$filters['merchant_name']) {
+            $query->where('merchant_name', $filters['merchant_name']);
+        }
 
         return $query;
     }

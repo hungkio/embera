@@ -29,6 +29,7 @@
             'staffList' => $staffList,
             'shopTypeList' => $shopTypeList,
             'shopNameList' => $shopNameList,
+            'merchantList' => $merchantList,
             'regionList' => $regionList,
             'cityList' => $cityList,
             'areaList' => $areaList,

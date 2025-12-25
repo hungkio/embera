@@ -63,16 +63,19 @@ class OrderController
         }
 
         if ($request->filled('region')) {
-            $query->where('shops.region', $request->region);
+            $query->where('orders.region', $request->region);
         }
         if ($request->filled('city')) {
-            $query->where('shops.city', $request->city);
+            $query->where('orders.city', $request->city);
         }
         if ($request->filled('area')) {
-            $query->where('shops.area', $request->area);
+                $query->where('orders.area', $request->area);
         }
         if ($request->filled('payment_channel')) {
             $query->where('payment_channels', $request->payment_channel);
+        }
+        if ($request->filled('merchant_name')) {
+            $query->where('orders.merchant_name', $request->merchant_name);
         }
         if ($request->order_amount) {
             if ($request->order_amount == 1) {

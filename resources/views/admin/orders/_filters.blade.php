@@ -4,6 +4,29 @@
         <input type="text" name="date_range" id="date_range" class="form-control"
                value="{{ request('date_range') }}" required autocomplete="off" />
     </div>
+    <div class="col-md-3">
+        <label for="order_amount">Doanh thu mỗi đơn hàng</label>
+        <select name="order_amount" id="order_amount" class="form-select select2">
+            <option value="">-- Tất cả --</option>
+            <option value="1" {{ (request('order_amount') == 1) ? 'selected' : '' }}>
+                Lớn hơn 0
+            </option>
+            <option value="2" {{ (request('order_amount') == 2) ? 'selected' : '' }}>
+                Bằng 0
+            </option>
+        </select>
+    </div>
+    <div class="col-md-3">
+        <label for="shop_name">Đối tác</label>
+        <select name="merchant_name[]" id="merchant_name" class="form-select select2" multiple>
+            <option value="">-- Tất cả --</option>
+            @foreach($merchantList as $merchant)
+                <option value="{{ $merchant }}" {{ (request('merchant_name') ? in_array($merchant, request('merchant_name')) : false) ? 'selected' : '' }}>
+                    {{ $merchant }}
+                </option>
+            @endforeach
+        </select>
+    </div>
 
     <div class="col-md-3">
         <label for="staff">Nhân viên</label>
@@ -88,19 +111,6 @@
             @endforeach
         </select>
     </div>
-    <div class="col-md-3">
-        <label for="order_amount">Doanh thu mỗi đơn hàng</label>
-        <select name="order_amount" id="order_amount" class="form-select select2">
-            <option value="">-- Tất cả --</option>
-                <option value="1" {{ (request('order_amount') == 1) ? 'selected' : '' }}>
-                    Lớn hơn 0
-                </option>
-            <option value="2" {{ (request('order_amount') == 2) ? 'selected' : '' }}>
-                Bằng 0
-            </option>
-        </select>
-    </div>
-
 
     <div class="col-md-12 text-end mt-3">
         <button type="submit" class="btn btn-primary">
