@@ -279,6 +279,7 @@ class ContractController
     public function import(Request $request)
     {
         try {
+//            Excel::toCollection(null, $request->file)->dd();// check có bao nhiêu sheet và có sheet ẩn hay không
             Excel::import(new ContractImport, $request->file);
             if ($request->ajax()) {
                 return response()->json([

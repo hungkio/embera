@@ -60,7 +60,7 @@ class ContractImport implements ToCollection, WithCalculatedFormulas
      */
     private array $abbrToCode = [
         'HN'   => '01', // Hà Nội
-        'CB'   => '04', // Cao Bằng
+        'CB'   => '04', // Cao Bằngx
         'TQ'   => '08', // Tuyên Quang
         'ĐB'   => '11', // Điện Biên
         'LC'   => '12', // Lai Châu
@@ -97,6 +97,7 @@ class ContractImport implements ToCollection, WithCalculatedFormulas
 
     public function collection(Collection $rows)
     {
+        $rows = $rows->filter(fn ($r) => collect($r)->filter()->isNotEmpty());
         $statuses = [
             'đã ký'   => 2,
             'chưa ký' => 1,
@@ -144,13 +145,14 @@ class ContractImport implements ToCollection, WithCalculatedFormulas
                     $businessReg     = trim($firstRow[13] ?? '');
                     $customerCccd    = trim($firstRow[14] ?? '');
                     $location        = trim($firstRow[15] ?? '');
-                    $title           = trim($firstRow[17] ?? '');
-                    $ceoSign         = trim($firstRow[18] ?? '');
-                    $shopType        = trim($firstRow[19] ?? '');
-                    $merchantName    = trim($firstRow[20] ?? '');
-                    $shareRate       = trim($firstRow[21] ?? '');
-                    $merchantUsername= trim($firstRow[25] ?? '');
-                    $merchantPassword= trim($firstRow[26] ?? '');
+                    $title           = trim($firstRow[16] ?? '');
+                    $ceoSign         = trim($firstRow[17] ?? '');
+                    $shopType        = trim($firstRow[18] ?? '');
+                    $merchantName    = trim($firstRow[19] ?? '');
+                    $shareRate       = trim($firstRow[20] ?? '');
+
+                    $merchantUsername= trim($firstRow[23] ?? '');
+                    $merchantPassword= trim($firstRow[25] ?? '');
 
                     if (!$shopName || !$contractNumber) {
                         Log::warning("Skipping group for shop/contract: '{$shopName}' / '{$contractNumber}' due to missing required fields.");
@@ -168,7 +170,7 @@ class ContractImport implements ToCollection, WithCalculatedFormulas
                     $lastName  = implode(' ', $nameParts) ?? '';
 
                     if (!$firstName || !$lastName) {
-                        Log::warning("Skipping row for shop '{$shopName}' due to invalid admin name format.");
+                        Log::warning("Skipping row for shop '{$shopName}' due to invalid admin name format. $firstName - $lastName");
                         return;
                     }
 
@@ -203,7 +205,7 @@ class ContractImport implements ToCollection, WithCalculatedFormulas
                             'first_name' => $firstName,
                             'last_name'  => $lastName,
                             'email'      => $email,
-                            'phone'      => $merchantPhone ?: '',
+                            'phone'      => $merchantPhone ?? '',
                             'password'   => 123456,
                         ]);
                     }
@@ -235,9 +237,9 @@ class ContractImport implements ToCollection, WithCalculatedFormulas
                     $devices  = [];
                     $maxPins  = 0;
                     foreach ($items as $row) {
-                        $deviceCode = trim($row[22] ?? '');
-                        $deviceName = trim($row[23] ?? '');
-                        $pin        = (int)($row[24] ?? 0);
+                        $deviceCode = trim($row[24] ?? '');
+                        $deviceName = trim($row[21] ?? '');
+                        $pin        = (int)($row[22] ?? 0);
 
                         if ($deviceCode && $deviceName) {
                             $devices[] = [
@@ -317,7 +319,7 @@ class ContractImport implements ToCollection, WithCalculatedFormulas
                         ]
                     );
 
-                    Log::info("Successfully processed shop: {$shopName}");
+//                    Log::info("Successfully processed shop: {$shopName}");
                 }, 5);  // Tăng attempts để retry deadlock
             }
         } catch (\Illuminate\Database\DeadlockException $e) {
@@ -341,7 +343,7 @@ class ContractImport implements ToCollection, WithCalculatedFormulas
                 return Carbon::createFromFormat('d/m/Y', $value) ?: Carbon::parse($value);
             }
         } catch (\Exception $e) {
-            Log::warning('Date parse error: ' . $e->getMessage());
+            Log::warning('Date parse error: ' . $e->getMessage(). "value: $value");
             return null;
         }
     }

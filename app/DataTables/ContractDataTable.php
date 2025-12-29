@@ -49,6 +49,11 @@ class ContractDataTable extends BaseDatable
             ->filterColumn('admin_id', function ($query, $keyword) {
                 $query->whereRaw("LOWER(CONCAT(admins.first_name, ' ', admins.last_name)) like ?", ["%" . strtolower($keyword) . "%"]);
             })
+            ->filterColumn('merchant', function ($query, $keyword) {
+                $query->whereHas('merchant', function ($q) use ($keyword) {
+                    $q->where('username', 'like', "%$keyword%");
+                });
+            })
             ->editColumn('business_registration', fn(Contract $c) => e($c->business_registration ?? '-'))
             ->filterColumn('bank_account_number', fn($query, $keyword) => $query->where('bank_account_number', 'like', "%$keyword%"))
             ->filterColumn('bank_account_name', fn($query, $keyword) => $query->where('bank_account_name', 'like', "%$keyword%"))

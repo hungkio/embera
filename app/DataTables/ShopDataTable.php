@@ -26,7 +26,11 @@ class ShopDataTable extends BaseDatable
                 if (!$shop->contract && !@$shop->contract->merchant) {
                     return '';
                 }
-                $url = route('admin.merchants.update', $shop->contract->merchant->id);
+                if (@$shop->contract->merchant) {
+                    $url = route('admin.merchants.update', $shop->contract->merchant->id);
+                } else {
+                    return '';
+                }
                 $num = e($shop->contract->merchant->username);
                 return "<a href=\"{$url}\" target=\"_blank\">{$num}</a>";
             })->addColumn('action', function (Shop $shop) {
@@ -36,6 +40,9 @@ class ShopDataTable extends BaseDatable
                 $query->whereHas('contract', function ($q) use ($keyword) {
                     $q->where('contract_number', 'like', "%$keyword%");
                 });
+            })
+            ->filterColumn('merchant', function ($query, $keyword) {
+                $query->where('merchants.username', 'like', "%{$keyword}%");
             })
             ->editColumn('shop_name', fn (Shop $shop) => $shop->shop_name)
             ->editColumn('address', fn (Shop $shop) => $shop->address)
@@ -135,9 +142,11 @@ class ShopDataTable extends BaseDatable
     public function query(Shop $model)
     {
         return $model->newQuery()
-            ->with('contract')
-            ->when(request('show_deleted') === 'yes', fn ($q) => $q->where('is_deleted', 1))
-            ->when(request('show_deleted') !== 'yes', fn ($q) => $q->where('is_deleted', 0));
+            ->with(['contract'])
+            ->leftJoin('contracts', 'contracts.id', '=', 'shops.contract_id')
+            ->leftJoin('merchants', 'merchants.id', '=', 'contracts.merchant_id')
+            ->when(request('show_deleted') === 'yes', fn ($q) => $q->where('shops.is_deleted', 1))
+            ->when(request('show_deleted') !== 'yes', fn ($q) => $q->where('shops.is_deleted', 0));
     }
 
     protected function getColumns(): array
