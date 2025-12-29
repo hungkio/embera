@@ -31,22 +31,25 @@ class MerchantShareLogService
             ? $shopsData->map(fn($r) => $parse($r['chia_se']))->avg()
             : ($totalRevenue > 0 ? round(($totalShareMoney / $totalRevenue) * 100, 0) : 0);
 
-        // Ghi log
-        MerchantShareLog::create([
-            'merchant_id'    => $merchant->id,
-            'year'           => $data['from_year'] ?? now()->year,
-            'month'          => $data['from_month'] ?? now()->month,
-            'contract_no'    => $data['hop_dong_so'] ?? null,
-            'customer_name'  => $data['ben_b'] ?? null,
-            'date'           => now()->toDateString(),
-            'number_of_order'=> $totalOrders,
-            'share_percent'  => $sharePercentValue,
-            'total'          => $totalRevenue,
-            'share_money'    => $totalShareMoney,
-            'type'           => $type, // 'zalo' hoặc 'email'
-            'share_type'     => $shareType,
-            'status'         => in_array($status, ['sent', 'failed']) ? $status : ($status ? 'failed' : 'sent'),
+        if ($totalShareMoney) {
+            // Ghi log
+            MerchantShareLog::create([
+                'merchant_id'    => $merchant->id,
+                'year'           => $data['from_year'] ?? now()->year,
+                'month'          => $data['from_month'] ?? now()->month,
+                'contract_no'    => $data['hop_dong_so'] ?? null,
+                'customer_name'  => $data['ben_b'] ?? null,
+                'date'           => now()->toDateString(),
+                'number_of_order'=> $totalOrders,
+                'share_percent'  => $sharePercentValue,
+                'total'          => $totalRevenue,
+                'share_money'    => $totalShareMoney,
+                'type'           => $type, // 'zalo' hoặc 'email'
+                'share_type'     => $shareType,
+                'status'         => in_array($status, ['sent', 'failed']) ? $status : ($status ? 'failed' : 'sent'),
 
-        ]);
+            ]);
+        }
+
     }
 }

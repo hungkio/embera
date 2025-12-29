@@ -27,14 +27,14 @@ class ShopDataTable extends BaseDatable
                     return '';
                 }
                 if (@$shop->contract->merchant) {
-                    $url = route('admin.merchants.update', $shop->contract->merchant->id);
+                    $url = route('admin.merchants.edit', $shop->contract->merchant->id);
                 } else {
                     return '';
                 }
                 $num = e($shop->contract->merchant->username);
                 return "<a href=\"{$url}\" target=\"_blank\">{$num}</a>";
             })->addColumn('action', function (Shop $shop) {
-                return view('admin.shops._tableAction', ['id' => $shop->id])->render();
+                return $shop ? view('admin.shops._tableAction', ['id' => $shop->id])->render() : '';
             })
             ->filterColumn('contract', function ($query, $keyword) {
                 $query->whereHas('contract', function ($q) use ($keyword) {
@@ -145,6 +145,7 @@ class ShopDataTable extends BaseDatable
             ->with(['contract'])
             ->leftJoin('contracts', 'contracts.id', '=', 'shops.contract_id')
             ->leftJoin('merchants', 'merchants.id', '=', 'contracts.merchant_id')
+            ->select('shops.*')
             ->when(request('show_deleted') === 'yes', fn ($q) => $q->where('shops.is_deleted', 1))
             ->when(request('show_deleted') !== 'yes', fn ($q) => $q->where('shops.is_deleted', 0));
     }

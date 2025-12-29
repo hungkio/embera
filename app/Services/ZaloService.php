@@ -64,19 +64,23 @@ class ZaloService
             if ($shareType === 'fixed') {
                 $templateId = $templateFixedId;
                 $templateData['number_of_order'] = (int) ($data['tong_dong_hang'] ?? 0);
-                $templateData['share_money'] = (int) str_replace(['.', ' VNĐ'], '', $data['tong_thanh_toan_share'] ?? 0);
+                $templateData['share_money'] = $chia_se = (int) str_replace(['.', ' VNĐ'], '', $data['tong_thanh_toan_share'] ?? 0);
                 $templateData['share_percent'] = (int) str_replace(['.', ' VNĐ'], '', $data['chia_se'] ?? 0);
             } else {
                 $templateId = $templatePercentageId;
                 $templateData['total'] = (int) str_replace(['.', ' VNĐ'], '', $data['tong_thanh_toan'] ?? 0);
-                $templateData['share_money'] = (int) str_replace(['.', ' VNĐ'], '', $data['tong_thanh_toan_share'] ?? 0);
+                $templateData['share_money'] = $chia_se = (int) str_replace(['.', ' VNĐ'], '', $data['tong_thanh_toan_share'] ?? 0);
                 $templateData['share_percent'] = (float) str_replace(['%'], '', $data['shop_data'][0]['chia_se'] ?? 0);
             }
 
             try {
-                $response = sendZaloZNS($phone, $templateId, $templateData);
-                $results[$id] = ['success' => true, 'response' => $response['message'] ?? ''];
-                Log::info("Zalo ZNS sent successfully for merchant {$id}", ['phone' => $phone, 'templateId' => $templateId, 'response' => $response]);
+                if ($chia_se) {
+                    $response = sendZaloZNS($phone, $templateId, $templateData);
+                    $results[$id] = ['success' => true, 'response' => $response['message'] ?? ''];
+                    Log::info("Zalo ZNS sent successfully for merchant {$id}", ['phone' => $phone, 'templateId' => $templateId, 'response' => $response]);
+                } else {
+                    $results[$id] = ['success' => true, 'response' => 'Không gửi doanh thu do không có số tiền chia sẻ'];
+                }
             } catch (\Throwable $e) {
                 Log::error("Zalo ZNS failed for merchant {$id}: {$e->getMessage()}");
                 $results[$id] = ['success' => false, 'error' => $e->getMessage()];

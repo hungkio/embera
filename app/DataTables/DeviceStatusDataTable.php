@@ -66,6 +66,7 @@ class DeviceStatusDataTable extends BaseDatable
             Button::make('reload')
                 ->addClass('btn bg-primary')
                 ->text('<i class="fal fa-sync-alt mr-2"></i>' . __('Làm mới')),
+            Button::make('export')->addClass('btn btn-primary')->text('<i class="fal fa-download mr-2"></i>'.__('Xuất')),
         ];
     }
 
