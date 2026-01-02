@@ -2,6 +2,7 @@
 
 namespace App\DataTables\Export;
 
+use Carbon\Carbon;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Collection;
 use Maatwebsite\Excel\Concerns\Exportable;
@@ -32,10 +33,20 @@ class OrderExportHandler implements WithMultipleSheets, ShouldAutoSize
      */
     public function sheets(): array
     {
-        return [
-            'Order Details' => new OrderDetailsSheet($this->collection, $this->date),
-            'Transaction Summary' => new TransactionSummarySheet($this->collection),
-        ];
+        $groupedByDate = $this->collection->groupBy(function ($item) {
+            return Carbon::parse($item['return_time'])->toDateString();
+        })->sortKeys();
+
+        $data = [];
+        foreach ($groupedByDate as $date => $collection) {
+            $data[$date] = new OrderDetailsSheet($collection, $date);
+        }
+
+        return $data ?? null;
+//        return [
+//            'Order Details' => new OrderDetailsSheet($this->collection, $this->date),
+//            'Transaction Summary' => new TransactionSummarySheet($this->collection),
+//        ];
     }
 }
 
