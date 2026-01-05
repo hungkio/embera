@@ -476,7 +476,7 @@ class DashboardController
 
         $totalOrder = Order::where('return_time', '>=' , $startDate)->where('return_time', '<=', $endDate)->count();
         $totalErrorOrder = TblOrder::where('created_at', '>=' , $startDate)->where('created_at', '<=', $endDate)->whereNull('battery_code')->count();
-        $totalErrorRefund = TblOrder::where('created_at', '>=' , $startDate)->where('created_at', '<=', $endDate)->where('note', 'like', 'FT%')->count();
+        $totalErrorRefund = TblOrder::where('created_at', '>=' , $startDate)->where('created_at', '<=', $endDate)->where('note', 'like', 'FT%')->orWhere('status', 'refund_failed')->count();
 
         // --- Return view ---
         return view('admin.dashboards.dashboard', compact(
