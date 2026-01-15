@@ -45,9 +45,9 @@ class MerchantEmailService
             return;
         }
 
-        // Chu kỳ giao dịch từ 01/04/năm hiện tại đến hiện tại 1/4 - 30/9
+        // Chu kỳ giao dịch từ 01/04/năm hiện tại đến hiện tại 1/4 - 30/1
         $startDate = Carbon::createFromDate(2025, 4, 1);
-        $endDate   = Carbon::create(2025, 9, 30);
+        $endDate   = Carbon::create(2026, 1, 30);
 
         // Dùng $shops đã lấy phía trên
         $data = $this->prepareData($merchant, $shops, $startDate, $endDate);
@@ -162,7 +162,7 @@ class MerchantEmailService
         $lastMonth = Carbon::now()->subMonth();
 
         $periodStart = $startDate ?: Carbon::createFromDate(2025, 4, 1);
-        $periodEnd = $endDate ?: Carbon::createFromDate(2025, 11, 30);
+        $periodEnd = $endDate ?: Carbon::createFromDate(2026, 1, 30);
 
         $bd = $merchant->admin;
         $firstRoleName = $bd ? optional($bd->roles()->first())->name : '';
