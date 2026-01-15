@@ -8,6 +8,82 @@ use Carbon\Carbon;
 
 class ZaloService
 {
+    public function sendZaloContract(array $merchantIds, MerchantEmailService $emailService): array
+        {
+            $results = [];
+
+            // 1. Lấy ID template từ .env (hoặc dùng số cứng 527244)
+            $templateId = env('OA_TEMPLATE_CONTRACT', 527244);
+
+            // 2. Load merchants kèm contract và shops
+            // Cần load shops để hàm prepareData hoạt động được
+            $merchants = Merchant::with([
+                'contract',
+                'shops' => function ($query) {
+                    $query->where('shops.is_deleted', false);
+                }
+            ])->whereIn('id', $merchantIds)->get();
+
+            foreach ($merchants as $merchant) {
+                $id = $merchant->id;
+                $rawPhone = $merchant->phone;
+
+                // --- Validate Phone (Giống hệt hàm cũ) ---
+                if (!$rawPhone || !preg_match('/^(0|\+84)(\d{9})$/', $rawPhone)) {
+                    $results[$id] = ['success' => false, 'error' => 'Invalid or missing phone number'];
+                    Log::warning("Merchant ID {$id} skipped: Invalid phone number");
+                    continue;
+                }
+                $phone = '84' . ltrim($rawPhone, '0');
+
+                // --- Validate Contract ---
+                if (!$merchant->contract) {
+                    $results[$id] = ['success' => false, 'error' => 'Missing contract'];
+                    continue;
+                }
+
+                // --- CHUẨN BỊ DỮ LIỆU ĐỂ LẤY TÊN "BÊN B" ---
+                try {
+                    $shops = $merchant->shops()->where('shops.is_deleted', false)->get();
+
+                    // Gọi prepareData: Dù template này không cần doanh thu, nhưng ta cần hàm này
+                    // để nó trích xuất tên 'ben_b' (Tên pháp nhân/Tên cửa hàng chuẩn)
+                    // Truyền ngày giả lập để hàm không lỗi
+
+                    // Lấy tên Bên B (ưu tiên), nếu không có mới lấy username
+                    // Logic này đảm bảo tin nhắn: "Kính gửi Quý Đối tác Công ty ABC" thay vì "user123"
+                    $tenDoiTac = $merchant->contract->customer_name ?? '';
+
+                    // Cắt tên nếu quá dài (Zalo giới hạn)
+                    if (mb_strlen($tenDoiTac) > 30) {
+                        $tenDoiTac = mb_substr($tenDoiTac, 0, 27) . '...';
+                    }
+
+                    $templateData = [
+                        'customer_name' => $tenDoiTac,
+                        'ma_hop_dong'   => $merchant->contract->contract_number ?? 'Đang cập nhật'
+                    ];
+
+                    // --- GỬI ZALO (Code cũ) ---
+                    $response = sendZaloZNS($phone, $templateId, $templateData);
+
+                    if ($response && isset($response['error']) && $response['error'] == 0) {
+                        $results[$id] = ['success' => true, 'response' => $response['message'] ?? 'Sent'];
+                        Log::info("Zalo Contract sent merchant {$id}", ['phone' => $phone, 'data' => $templateData]);
+                    } else {
+                        $msg = $response['message'] ?? 'Zalo Error';
+                        $results[$id] = ['success' => false, 'error' => $msg];
+                        Log::error("Zalo fail merchant {$id}: {$msg}");
+                    }
+
+                } catch (\Throwable $e) {
+                    $results[$id] = ['success' => false, 'error' => $e->getMessage()];
+                    Log::error("Zalo Exception merchant {$id}: {$e->getMessage()}");
+                }
+            }
+
+            return $results;
+        }
     public function sendToMerchants(array $merchantIds, string $configKeyFixed, string $configKeyPercentage, MerchantEmailService $emailService): array
     {
         $results = [];

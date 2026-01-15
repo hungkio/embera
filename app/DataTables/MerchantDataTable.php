@@ -89,9 +89,10 @@ class MerchantDataTable extends BaseDatable
                 ->text('<i class="fal fa-envelope mr-2"></i> Gửi Mail'),
             Button::make('selected')
                 ->addClass('btn bg-blue btn-send-zalo sendzalo')
-                ->text('<i class="fal fa-comment-dots mr-2"></i> Gửi Zalo')
-
-
+                ->text('<i class="fal fa-comment-dots mr-2"></i> Gửi Zalo'),
+            Button::make('selected')
+                 ->addClass('btn bg-purple btn-send-zalo-contract sendzalo-contract') // Class khác một chút để bắt JS
+                 ->text('<i class="fal fa-file-contract mr-2"></i> Gửi Zalo Hợp Đồng')
         ];
     }
 
