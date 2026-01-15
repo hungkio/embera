@@ -216,6 +216,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
 
             Route::post('/merchants/send-email', [MerchantController::class, 'sendEmail'])->name('merchants.send-email');
             Route::post('/merchants/send-zalo', [MerchantController::class, 'sendZalo'])->name('merchants.send-zalo');
+            Route::post('merchants/send-zalo-contract', [MerchantController::class, 'sendZaloContract'])->name('merchants.send-zalo-contract');
 
             // AJAX routes for merchants and shops
             Route::get('ajax/merchants', [MerchantController::class, 'search'])->name('admin.ajax.merchants');

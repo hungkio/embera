@@ -166,6 +166,61 @@ class MerchantController
         }
     }
 
+    public function sendZaloContract(
+            Request $request,
+            ZaloService $zaloService,
+            MerchantEmailService $emailService // <--- Inject thêm Service này
+        ) {
+            try {
+                $merchantIds = $request->input('ids', []);
+
+                if (empty($merchantIds) || !is_array($merchantIds)) {
+                    return response()->json(['success' => false, 'message' => 'Vui lòng chọn ít nhất một merchant.'], 422);
+                }
+
+                // Truyền cả $emailService sang bên ZaloService
+                $results = $zaloService->sendZaloContract($merchantIds, $emailService);
+
+                // Xử lý kết quả trả về
+                $successCount = 0;
+                $errors = [];
+
+                foreach ($results as $merchantId => $res) {
+                    if ($res['success']) {
+                        $successCount++;
+                    } else {
+                        $name = Merchant::find($merchantId)->username ?? $merchantId;
+                        $errors[] = "{$name}: " . $res['error'];
+                    }
+                }
+
+                if ($successCount > 0 && empty($errors)) {
+                    return response()->json([
+                        'success' => true,
+                        'message' => "Gửi Zalo thành công cho {$successCount} merchant."
+                    ]);
+                } elseif ($successCount > 0) {
+                    return response()->json([
+                        'success' => true,
+                        'message' => "Gửi thành công {$successCount}, thất bại " . count($errors) . ".",
+                        'errors' => $errors
+                    ]);
+                } else {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Gửi thất bại toàn bộ.',
+                        'errors' => $errors
+                    ], 422);
+                }
+
+            } catch (\Throwable $e) {
+                \Log::error($e);
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Lỗi hệ thống: ' . $e->getMessage()
+                ], 500);
+            }
+        }
 
     /**
      * Gửi tin nhắn Zalo và ghi log chia sẻ
