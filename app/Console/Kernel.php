@@ -18,28 +18,34 @@ class Kernel extends ConsoleKernel
 
     /**
      * Define the application's command schedule.
-     *
-     * @param  \Illuminate\Console\Scheduling\Schedule  $schedule
-     * @return void
      */
     protected function schedule(Schedule $schedule)
     {
-//          $schedule->command('app:send-mail')->everyMinute();
-         $schedule->command('device:sync-status')->everyThirtyMinutes();
-         $schedule->job(new \App\Jobs\SendDailyRevenueReportJob)
-                 ->dailyAt('08:30')
-                 ->withoutOverlapping();
+        // 🔁 Sync trạng thái online/offline thiết bị
+        $schedule->command('device:sync-status')
+            ->everyThirtyMinutes()
+            ->withoutOverlapping();
+
+        // 🔁 Sync trạng thái thuê pin cho MAP (5 phút)
+        $schedule->call(function () {
+                app(\App\Services\ShopRentalSyncService::class)->sync();
+            })
+            ->name('sync-shop-rental-stats')
+            ->everyFiveMinutes()
+            ->withoutOverlapping();
+
+        // 📊 Báo cáo doanh thu hàng ngày
+        $schedule->job(new \App\Jobs\SendDailyRevenueReportJob)
+            ->dailyAt('08:30')
+            ->withoutOverlapping();
     }
 
     /**
      * Register the commands for the application.
-     *
-     * @return void
      */
     protected function commands()
     {
-        $this->load(__DIR__.'/Commands');
-
+        $this->load(__DIR__ . '/Commands');
         require base_path('routes/console.php');
     }
 }

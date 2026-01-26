@@ -50,6 +50,8 @@ use App\Http\Controllers\Admin\PinController;
 use App\Http\Controllers\Admin\OrderUpdateController;
 use App\Http\Controllers\Admin\MerchantShareLogController;
 use App\Http\Controllers\Admin\DeviceStatusController;
+use App\Http\Controllers\Admin\DashboardMapController;
+use App\Http\Controllers\Admin\ShopLocationController;
 
 Route::prefix('admin')->name('admin.')->group(function () {
     Route::get('clear_cache', function (){
@@ -85,8 +87,13 @@ Route::prefix('admin')->name('admin.')->group(function () {
     // Route Dashboards
     Route::middleware('auth')
         ->group(function () {
+
+            Route::get('/map', [DashboardMapController::class, 'index'])->name('map.index');
+
             Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
             Route::get('/gen-site-map', [DashboardController::class, 'genSiteMap'])->name('site-map');
+            Route::get('/dashboard/map-shops', [DashboardMapController::class, 'shops'])->name('dashboard.map-shops');
+            Route::get('/dashboard/top-shops', [DashboardMapController::class, 'topShops'])->name('dashboard.top-shops');
 
             //Upload Tinymce
             Route::post('uploads-tinymce', UploadTinymceController::class)->name('public.upload-tinymce');
@@ -249,6 +256,9 @@ Route::prefix('admin')->name('admin.')->group(function () {
             Route::get('/device-status/data', [DeviceStatusController::class, 'data'])->name('device-status.data');
             Route::post('/device-status/sync', [DeviceStatusController::class, 'syncNow'])->name('device-status.sync');
 
+            Route::get('/shop-locations/import', [ShopLocationController::class, 'importForm']);
+            Route::post('/dashboard/import-shop-locations',[ShopLocationController::class, 'import'])->name('dashboard.importShopLocations');
+
             // BANNER
             Route::group(['middleware' => ['banner']], function () {
                 Route::post('/banners/bulk-delete', [BannerController::class, 'bulkDelete'])->name('banners.bulk-delete');
@@ -347,5 +357,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
                 // Route cho import Pins
                 Route::get('/pins/import', [PinController::class, 'importForm'])->name('pins.import.form');
                 Route::post('/pins/import', [PinController::class, 'import'])->name('pins.import');
+
+
         });
 });

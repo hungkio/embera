@@ -68,6 +68,13 @@
                     </a>
                 </li>
                 <li class="nav-item">
+                    <a href="{{ route('admin.map.index') }}"
+                         class="nav-link @if(request()->routeIs('admin.map*')) active @endif">
+                         <i class="fal fa-map-marked-alt"></i>
+                                        <span>{{ __("Bản đồ") }}</span>
+                                    </a>
+                                </li>
+                <li class="nav-item">
                     <a href="{{ route('admin.orders.index') }}"
                        class="nav-link @if(request()->routeIs('admin.orders*'))active @endif">
                         <i class="fal fa-image"></i>
