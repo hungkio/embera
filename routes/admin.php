@@ -84,6 +84,10 @@ Route::prefix('admin')->name('admin.')->group(function () {
     Route::get('email/verify/{id}/{hash}', [VerificationController::class, 'verify'])->name('verification.verify');
     Route::post('email/resend', [VerificationController::class, 'resend'])->name('verification.resend');
 
+    Route::get('dashboard/sync-shop-rental', function (ShopRentalSyncService $service) {
+        $service->sync();
+        return response()->json(['ok' => true]);
+    })->name('admin.dashboard.sync-shop-rental');
     // Route Dashboards
     Route::middleware('auth')
         ->group(function () {

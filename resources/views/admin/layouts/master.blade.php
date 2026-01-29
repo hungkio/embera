@@ -9,6 +9,7 @@
     <script src="{{ asset('/backend/global_assets/js/plugins/notifications/pnotify.min.js') }}"></script>
     <script src="{{ asset('/backend/global_assets/js/plugins/ui/sticky.min.js') }}"></script>
     <script src="{{ asset('/backend/vendor/datatables/buttons.server-side.js') }}"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 @endpush
 
 @section('navbar')

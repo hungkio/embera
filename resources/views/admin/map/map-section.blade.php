@@ -19,7 +19,8 @@
                                 Hiển thị số lượng pin đang được thuê trên tổng số hộc
                             </small>
                         </div>
-                        <button class="btn btn-sm btn-primary shadow-sm"
+                        <button type="button"
+                                class="btn btn-sm btn-primary shadow-sm"
                                 data-bs-toggle="modal"
                                 data-bs-target="#importShopLocationModal">
                             <i class="fa fa-upload me-1"></i> Import Vị trí
@@ -286,7 +287,7 @@
             const markersLayer = L.layerGroup().addTo(map);
             let shopsData = [];
 
-            function renderMarkers(list) {
+            window.renderMarkers = function (list) {
                 markersLayer.clearLayers();
                 if (!list || !list.length) return;
 

@@ -23,8 +23,7 @@ class DashboardMapController extends Controller
     public function shops(): JsonResponse
     {
         $shops = ShopLocation::query()
-            ->join('shop_rental_stats', 'shop_locations.shop_id', '=', 'shop_rental_stats.shop_id')
-            ->where('shop_rental_stats.total_slots', '>', 0)
+            ->join('shop_rental_stats', 'shop_locations.shop_id', '=', 'shop_rental_stats.shop_id') // ✅ inner join
             ->select([
                 'shop_locations.shop_id',
                 'shop_locations.shop_name',
@@ -33,10 +32,15 @@ class DashboardMapController extends Controller
                 'shop_rental_stats.renting_slots',
                 'shop_rental_stats.total_slots',
             ])
+            ->whereNotNull('shop_locations.lat')
+            ->whereNotNull('shop_locations.lng')
+            ->where('shop_locations.lat', '!=', 0)
+            ->where('shop_locations.lng', '!=', 0)
+            ->where('shop_rental_stats.total_slots', '>', 0) // nếu muốn chỉ hiện shop có hộc
             ->get()
             ->map(function ($s) {
                 return [
-                    'shop_id'   => (int) $s->shop_id,
+                    'shop_id'   => (string) $s->shop_id,      // ✅ GIỮ STRING
                     'shop_name' => $s->shop_name,
                     'lat'       => (float) $s->lat,
                     'lng'       => (float) $s->lng,
