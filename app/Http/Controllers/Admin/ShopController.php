@@ -12,6 +12,8 @@ use App\Models\Shop;
 use App\Services\BBNTExportService;
 use App\Services\BBNTService;
 use Illuminate\Http\Request;
+use Maatwebsite\Excel\Facades\Excel;
+use App\Exports\ShopsAllExport;
 
 class ShopController extends Controller
 {
@@ -120,8 +122,8 @@ class ShopController extends Controller
         if (isset($data['shop_name']) && preg_match('/\((.*?)\)/', $data['shop_name'], $matches)) {
             $parts = explode('-', $matches[1]);
             $data['region'] = $parts[0] ?? null;
-            $data['city']   = $parts[1] ?? null;
-            $data['area']   = $parts[2] ?? null;
+            $data['city'] = $parts[1] ?? null;
+            $data['area'] = $parts[2] ?? null;
         }
         return $data;
     }
@@ -206,5 +208,27 @@ class ShopController extends Controller
             'success' => true,
             'message' => $shop->is_bound ? 'Đã bind thiết bị.' : 'Đã bỏ bind.'
         ]);
+    }
+
+    public function exportAll()
+    {
+        $rows = Shop::query()
+            ->where('shops.is_deleted', 0)
+            ->leftJoin('contracts', 'contracts.id', '=', 'shops.contract_id')
+            ->leftJoin('merchants', 'merchants.id', '=', 'contracts.merchant_id')
+            ->select([
+                'shops.shop_name',
+                'shops.address',
+                'shops.contract_id',
+                'contracts.contract_number',
+                'merchants.username as merchant_username',
+            ])
+            ->orderBy('shops.shop_name')
+            ->get();
+
+        return Excel::download(
+            new ShopsAllExport($rows),
+            'shops_all_' . now()->format('Ymd_His') . '.xlsx'
+        );
     }
 }

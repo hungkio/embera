@@ -12,10 +12,8 @@ use App\Models\TblOrder;
 use Carbon\Carbon;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\Request;
-use Illuminate\View\View;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Imports\OrderImport;
-use Illuminate\Support\Facades\DB;
 
 class OrderController
 {
@@ -71,7 +69,7 @@ class OrderController
             $query->where('orders.city', $request->city);
         }
         if ($request->filled('area')) {
-                $query->where('orders.area', $request->area);
+            $query->where('orders.area', $request->area);
         }
         if ($request->filled('payment_channel')) {
             $query->where('payment_channels', $request->payment_channel);
@@ -105,7 +103,7 @@ class OrderController
                 $sharing_revenue = $merchant_share_rate * $group->count();
             } else {
                 $sharing = (number_format((float)$merchant_share_rate, 0) ?? 0) . '%';
-                $sharing_revenue = $merchant_share_rate/100 * $revenue;
+                $sharing_revenue = $merchant_share_rate / 100 * $revenue;
             }
 
             return [
@@ -185,13 +183,13 @@ class OrderController
 
         $incomingData = collect();
         foreach ($incoming->slice(1) as $row) {
-            $amount_in = (float) $row[8];
+            $amount_in = (float)$row[8];
             if (!$amount_in) {
                 continue;
             }
             $incomingData->push([
                 'date_in' => $this->parseDate($row[3] ?? ''),
-                'amount_in' => (float) $row[8],
+                'amount_in' => (float)$row[8],
                 'ft_code_in' => trim($row[17] ?? ''),
             ]);
         }
@@ -252,19 +250,19 @@ class OrderController
 
         $incomingData = $incoming->map(function ($row) {
             return [
-                'code'       => trim($row[2] ?? ''),
-                'date_in'    => $this->parseDate($row[1] ?? ''),
-                'amount_in'  => (float) str_replace(',', '', (string) ($row[4] ?? 0)),
+                'code' => trim($row[2] ?? ''),
+                'date_in' => $this->parseDate($row[1] ?? ''),
+                'amount_in' => (float)str_replace(',', '', (string)($row[4] ?? 0)),
                 'ft_code_in' => trim($row[11] ?? ''),
             ];
         })->filter(fn($in) => $in['code'] && $in['ft_code_in']);
 
         $outgoingData = $outgoing->map(function ($row) {
             return [
-                'code_ref'   => trim($row[3] ?? ''),
-                'amount_out' => (float) str_replace(',', '', (string) ($row[5] ?? 0)),
-                'date_out'   => $this->parseDate($row[1] ?? ''),
-                'ft_code_out'=> trim($row[8] ?? ''),
+                'code_ref' => trim($row[3] ?? ''),
+                'amount_out' => (float)str_replace(',', '', (string)($row[5] ?? 0)),
+                'date_out' => $this->parseDate($row[1] ?? ''),
+                'ft_code_out' => trim($row[8] ?? ''),
                 'ft_code_in' => trim($row[9] ?? ''),
             ];
         });
@@ -281,17 +279,17 @@ class OrderController
             MBTransaction::updateOrCreate(
                 ['code_in' => $in['code']],
                 [
-                    'code_in'     => $in['code'],
-                    'date_in'     => $in['date_in'],
-                    'ft_code_in'  => $in['ft_code_in'],
-                    'amount_in'   => $in['amount_in'],
+                    'code_in' => $in['code'],
+                    'date_in' => $in['date_in'],
+                    'ft_code_in' => $in['ft_code_in'],
+                    'amount_in' => $in['amount_in'],
 
-                    'code_out'    => $match['code_ref'] ?? null,
-                    'date_out'    => $match['date_out'] ?? null,
+                    'code_out' => $match['code_ref'] ?? null,
+                    'date_out' => $match['date_out'] ?? null,
                     'ft_code_out' => $match['ft_code_out'] ?? null,
-                    'amount_out'  => $match['amount_out'] ?? 0,
+                    'amount_out' => $match['amount_out'] ?? 0,
 
-                    'revenue'     => $in['amount_in'] - ($match['amount_out'] ?? 0),
+                    'revenue' => $in['amount_in'] - ($match['amount_out'] ?? 0),
                 ]
             );
         }
@@ -299,22 +297,23 @@ class OrderController
         return back()->with('success', 'Import dữ liệu thành công!');
     }
 
-   private function parseDate($value)
-   {
-       if (empty($value)) return null;
+    private function parseDate($value)
+    {
+        if (empty($value)) return null;
 
-       try {
-           return Carbon::createFromFormat('d/m/Y H:i:s', $value);
-       } catch (\Exception $e) {
-           try {
-               return Carbon::createFromFormat('d/m/Y', $value);
-           } catch (\Exception $e) {
-               return null;
-           }
-       }
-   }
+        try {
+            return Carbon::createFromFormat('d/m/Y H:i:s', $value);
+        } catch (\Exception $e) {
+            try {
+                return Carbon::createFromFormat('d/m/Y', $value);
+            } catch (\Exception $e) {
+                return null;
+            }
+        }
+    }
 
-    public function mergeTransaction(MBTransactionDataTable $dataTable, Request $request) {
+    public function mergeTransaction(MBTransactionDataTable $dataTable, Request $request)
+    {
         $dateRange = $request->get('date_range');
         if ($dateRange && str_contains($dateRange, ' - ')) {
             list($date_from, $date_to) = explode(' - ', $dateRange);
@@ -356,11 +355,11 @@ class OrderController
         }
 
         $orders = TblOrder::leftJoin('tbl_transactions as t', 't.order_code', '=', 'tbl_orders.code')
-                                ->select([
-                                    'tbl_orders.amount', 'tbl_orders.refund_amount', 'tbl_orders.rental_time',
-                                    \DB::raw("MAX(CASE WHEN t.tx_type = 'receive' THEN t.provider_tx_id END) AS ft_in"),
-                                    \DB::raw("MAX(CASE WHEN t.tx_type = 'refund' THEN t.provider_tx_id END) AS ft_out"),
-                                ])
+            ->select([
+                'tbl_orders.amount', 'tbl_orders.refund_amount', 'tbl_orders.rental_time',
+                \DB::raw("MAX(CASE WHEN t.tx_type = 'receive' THEN t.provider_tx_id END) AS ft_in"),
+                \DB::raw("MAX(CASE WHEN t.tx_type = 'refund' THEN t.provider_tx_id END) AS ft_out"),
+            ])
             ->when($orderCode, fn($q) => $q->where('provider_tx_id', $orderCode))
             ->whereBetween('tbl_orders.created_at', [$from, $to])
             ->groupBy(['tbl_orders.amount', 'tbl_orders.refund_amount', 'tbl_orders.rental_time'])
@@ -386,7 +385,7 @@ class OrderController
                 ];
             }
 
-            $orderAmount = (int) ($order->amount - $order->refund_amount);
+            $orderAmount = (int)($order->amount - $order->refund_amount);
             if ((int)$orderAmount !== (int)$mb->revenue) {
                 return [
                     'code' => $mb->ft_code_in,
@@ -394,7 +393,7 @@ class OrderController
                     'reason' => 'Lệch số tiền',
                     'revenue' => $mb->revenue,
                     'order_amount' => $orderAmount,
-                    'payment_time' => $order->rental_time? formatDate($order->rental_time) : '',
+                    'payment_time' => $order->rental_time ? formatDate($order->rental_time) : '',
                     'date_in' => formatDate($mb->date_in),
                     'ft_in' => $mb->ft_code_in,
                     'ft_out' => $mb->ft_code_out,
@@ -407,7 +406,7 @@ class OrderController
                 'reason' => 'Khớp',
                 'revenue' => $mb->revenue,
                 'order_amount' => $orderAmount,
-                'payment_time' => $order->rental_time? formatDate($order->rental_time) : '',
+                'payment_time' => $order->rental_time ? formatDate($order->rental_time) : '',
                 'date_in' => formatDate($mb->date_in),
                 'ft_in' => $mb->ft_code_in,
                 'ft_out' => $mb->ft_code_out,
@@ -424,7 +423,7 @@ class OrderController
                     'reason' => 'Không tìm thấy giao dịch MB',
                     'amount_in' => null,
                     'order_amount' => $orderAmount,
-                    'payment_time' => $order->rental_time? formatDate($order->rental_time) : '',
+                    'payment_time' => $order->rental_time ? formatDate($order->rental_time) : '',
                     'date_in' => null,
                     'ft_in' => null,
                     'ft_out' => null,
@@ -438,5 +437,13 @@ class OrderController
         ]);
     }
 
+    public function exportFull(OrderDataTable $dataTable)
+    {
+        $export = $dataTable->buildExcelFileFull();
+
+        $fileName = 'Orders_Full_' . now()->format('Ymd_His') . '.xlsx';
+
+        return Excel::download($export, $fileName);
+    }
 
 }

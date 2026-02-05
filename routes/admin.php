@@ -54,7 +54,7 @@ use App\Http\Controllers\Admin\DashboardMapController;
 use App\Http\Controllers\Admin\ShopLocationController;
 
 Route::prefix('admin')->name('admin.')->group(function () {
-    Route::get('clear_cache', function (){
+    Route::get('clear_cache', function () {
         \Illuminate\Support\Facades\Artisan::call('config:cache');
         \Illuminate\Support\Facades\Artisan::call('cache:clear');
         \Illuminate\Support\Facades\Artisan::call('config:clear');
@@ -183,6 +183,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
             Route::post('/orders/{banner}/status', [OrderController::class, 'changeStatus'])->name('orders.change.status');
             Route::post('/orders/bulk-status', [OrderController::class, 'bulkStatus'])->name('orders.bulk.status');
             Route::post('/orders/import', [OrderController::class, 'import'])->name('orders.import');
+            Route::get('/orders/export-full', [OrderController::class, 'exportFull'])->name('orders.export-full');
 
             // contracts
             Route::get('/contracts', [ContractController::class, 'index'])->name('contracts.index');
@@ -248,6 +249,8 @@ Route::prefix('admin')->name('admin.')->group(function () {
             Route::post('/shops/{shop}/toggle-bind', [ShopController::class, 'toggleBind'])
                 ->name('admin.shops.toggleBind');
             Route::get('/shops/revenue', [App\Http\Controllers\Admin\ShopController::class, 'revenue'])->name('shops.revenue');
+            Route::get('/admin/shops/export-all', [ShopController::class, 'exportAll'])->name('shops.export_all');
+
 
             // BBNT export cho Shop
             Route::get('/shops/{shop}/bbnt-preview', [ShopController::class, 'bbntPreview'])->name('shops.bbnt.preview');
@@ -261,7 +264,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
             Route::post('/device-status/sync', [DeviceStatusController::class, 'syncNow'])->name('device-status.sync');
 
             Route::get('/shop-locations/import', [ShopLocationController::class, 'importForm']);
-            Route::post('/dashboard/import-shop-locations',[ShopLocationController::class, 'import'])->name('dashboard.importShopLocations');
+            Route::post('/dashboard/import-shop-locations', [ShopLocationController::class, 'import'])->name('dashboard.importShopLocations');
 
             // BANNER
             Route::group(['middleware' => ['banner']], function () {
@@ -342,25 +345,25 @@ Route::prefix('admin')->name('admin.')->group(function () {
 
             //import PINS
             // Route cho danh sách Pins
-                Route::get('/pins', [PinController::class, 'index'])->name('pins.index');
+            Route::get('/pins', [PinController::class, 'index'])->name('pins.index');
 
-                // Route cho tạo mới Pins
-                Route::get('/pins/create', [PinController::class, 'create'])->name('pins.create');
-                Route::post('/pins', [PinController::class, 'store'])->name('pins.store');
+            // Route cho tạo mới Pins
+            Route::get('/pins/create', [PinController::class, 'create'])->name('pins.create');
+            Route::post('/pins', [PinController::class, 'store'])->name('pins.store');
 
-                // Route cho xem chi tiết Pins
-                Route::get('/pins/{pin}', [PinController::class, 'show'])->name('pins.show');
+            // Route cho xem chi tiết Pins
+            Route::get('/pins/{pin}', [PinController::class, 'show'])->name('pins.show');
 
-                // Route cho chỉnh sửa Pins
-                Route::get('/pins/{pin}/edit', [PinController::class, 'edit'])->name('pins.edit');
-                Route::put('/pins/{pin}', [PinController::class, 'update'])->name('pins.update');
+            // Route cho chỉnh sửa Pins
+            Route::get('/pins/{pin}/edit', [PinController::class, 'edit'])->name('pins.edit');
+            Route::put('/pins/{pin}', [PinController::class, 'update'])->name('pins.update');
 
-                // Route cho xóa Pins
-                Route::delete('/pins/{pin}', [PinController::class, 'destroy'])->name('pins.destroy');
+            // Route cho xóa Pins
+            Route::delete('/pins/{pin}', [PinController::class, 'destroy'])->name('pins.destroy');
 
-                // Route cho import Pins
-                Route::get('/pins/import', [PinController::class, 'importForm'])->name('pins.import.form');
-                Route::post('/pins/import', [PinController::class, 'import'])->name('pins.import');
+            // Route cho import Pins
+            Route::get('/pins/import', [PinController::class, 'importForm'])->name('pins.import.form');
+            Route::post('/pins/import', [PinController::class, 'import'])->name('pins.import');
 
 
         });

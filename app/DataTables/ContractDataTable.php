@@ -153,6 +153,7 @@ class ContractDataTable extends BaseDatable
             Button::make('bulkDelete')->addClass('btn bg-danger')->text('<i class="fal fa-trash-alt mr-2"></i>' . __('Xóa')),
             Button::make('reset')->addClass('btn bg-blue')->text('<i class="fal fa-undo mr-2"></i>' . __('Thiết lập lại')),
             Button::make('selected')->addClass('btn bg-teal-400 import')->text('<i class="icon-compose mr-2"></i>' . __('Import')),
+            Button::make('export')->addClass('btn btn-primary')->text('<i class="fal fa-download mr-2"></i>' . __('Xuất')),
         ];
     }
 
