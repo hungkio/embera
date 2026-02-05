@@ -71,7 +71,6 @@ class ContractController
         $shops = Shop::with('merchant')->get();
         $merchants = \App\Models\Merchant::where('is_deleted', false)
             ->pluck('username', 'id'); // ✅ chỉ lấy merchant chưa bị xóa
-
         return view('admin.contracts.create', compact('shops', 'merchants'));
     }
 

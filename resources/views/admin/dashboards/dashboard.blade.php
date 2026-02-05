@@ -2,75 +2,94 @@
 @section('title', __('Trang chủ'))
 
 @push('css')
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.css" />
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 <style>
-    .dashboard-card {
-        border-radius: 12px;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-        margin-bottom: 20px;
-    }
-    .dashboard-card .card-body {
-        padding: 20px;
-    }
-    .dashboard-card h6 {
-        font-size: 14px;
-        font-weight: 600;
-        color: #666;
-        margin-bottom: 10px;
-        white-space: normal;
-        word-break: break-word;
-        text-align: center;
-    }
-    .dashboard-card h4 {
-        font-size: 22px;
-        font-weight: bold;
-        color: #333;
-    }
-    .chart-center {
-        width: 100%;   /* hoặc 2000px tùy ý */
-        height: 400px;
-    }
-    .chart-wrapper {
-        overflow-x: auto;   /* bật scroll ngang nếu chart quá rộng */
-    }
-    .chart-download-btn {
-        position: absolute;
-        top: 6px;
-        right: 8px;
-        border: none;
-        background: transparent;
-        color: #666;
-        cursor: pointer;
-        font-size: 16px;
-        padding: 2px 6px;
-        transition: color 0.2s;
-    }
-    .chart-download-btn:hover {
-        color: #000;
+    /* --- CẤU HÌNH BIẾN MÀU --- */
+    :root {
+        --card-radius: 10px;
+        --shadow-sm: 0 2px 6px rgba(0,0,0,0.02);
+        --shadow-hover: 0 5px 15px rgba(0,0,0,0.05);
+        --text-muted: #878a99;
+        --text-dark: #495057;
+        --primary: #405189; /* Màu chủ đạo */
     }
 
-    /* Tooltip hiệu ứng mượt */
-    .chart-download-btn::after {
-        content: attr(data-tooltip);
+    /* --- DASHBOARD CARD --- */
+    .dashboard-card {
+        border: none;
+        border-radius: var(--card-radius);
+        box-shadow: var(--shadow-sm);
+        background: #fff;
+        margin-bottom: 20px;
+        transition: all 0.25s ease;
+        height: 100%;
+        overflow: hidden;
+    }
+
+    .dashboard-card:hover {
+        box-shadow: var(--shadow-hover);
+        transform: translateY(-3px);
+    }
+
+    .dashboard-card .card-body {
+        padding: 20px;
+        position: relative;
+    }
+
+    /* --- TYPOGRAPHY --- */
+    .dashboard-card h6 {
+        font-size: 14px;
+        font-weight: 700;
+        color: var(--text-dark);
+        letter-spacing: 0.3px;
+        margin-bottom: 10px;
+        line-height: 1.4;
+    }
+
+    .dashboard-card h4 {
+        font-size: 22px; /* Giảm từ 26px xuống 22px nhìn sang hơn */
+        font-weight: 700;
+        color: var(--text-dark);
+        margin-bottom: 2px;
+    }
+
+    .dashboard-card small {
+        font-size: 11px;
+        display: block;
+        margin-top: 4px;
+    }
+
+    /* --- NÚT DOWNLOAD --- */
+    .chart-download-btn {
         position: absolute;
-        top: -28px;
-        right: 0;
-        background: rgba(0,0,0,0.8);
-        color: #fff;
+        top: 15px;
+        right: 15px;
+        width: 28px;
+        height: 28px;
+        border: 1px solid #f0f0f0;
+        background: #fff;
+        color: #b0b0b0;
+        border-radius: 6px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.2s;
+        z-index: 10;
         font-size: 12px;
-        padding: 4px 8px;
-        border-radius: 4px;
-        white-space: nowrap;
-        opacity: 0;
-        pointer-events: none;
-        transform: translateY(4px);
-        transition: all 0.2s ease;
     }
-    .chart-download-btn:hover::after {
-        opacity: 1;
-        transform: translateY(0);
+
+    .chart-download-btn:hover {
+        background: var(--primary);
+        color: #fff;
+        border-color: var(--primary);
+        box-shadow: 0 3px 6px rgba(64, 81, 137, 0.2);
     }
+
+    /* Chart Utilities */
+    .chart-center { width: 100%; height: 320px; }
 </style>
 @endpush
 
@@ -83,6 +102,9 @@
 @stop
 
 @section('page-content')
+
+<!-- Realtime Notifications Container -->
+<div id="realtime-notify"></div>
 
 <!-- Filter -->
 <div class="mb-4" style="max-width:400px;">
@@ -216,7 +238,6 @@
     </div>
 </div>
 
-<!-- Charts -->
 <div class="row mt-4"><div class="col-md-12"><div class="card dashboard-card"><div class="card-body">
     <h6>Doanh thu theo ngày</h6>
     <button class="chart-download-btn" data-chart="dailyRevenueChart">
@@ -296,7 +317,9 @@
 <script src="https://cdn.jsdelivr.net/npm/moment@2.29.4/moment.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/echarts@5/dist/echarts.min.js"></script>
-
+<script src="https://js.pusher.com/8.2/pusher.min.js"></script>
+<script src="https://unpkg.com/laravel-echo@1.15.3/dist/echo.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 <script>
 // === Tự động thêm nút tải xuống cho tất cả biểu đồ ===
 document.querySelectorAll('[id$="Chart"], [id^="regionChart_"]').forEach(chartEl => {
@@ -382,6 +405,46 @@ $(function () {
         window.location.href = '?start_date=' + range[0] + '&end_date=' + range[1];
     });
 });
+
+// --- Realtime Listener ---
+document.addEventListener('DOMContentLoaded', function() {
+    if (window.Echo) {
+        window.Echo.channel('dashboard.orders')
+            .listen('OrderRented', (e) => {
+                showRealtimeNotify(e);
+            });
+    } else {
+        console.warn('Echo not loaded. Check bootstrap.js');
+    }
+});
+
+function showRealtimeNotify(event) {
+    const notifyContainer = document.getElementById('realtime-notify');
+    const popup = document.createElement('div');
+    popup.className = 'notify-popup';
+    popup.innerHTML = `
+        <span class="notify-close" onclick="this.parentElement.remove()">&times;</span>
+        <h5>Đơn mới #${event.order_number} - Đang thuê</h5>
+        <p>Merchant: ${event.merchant_name}<br>Shop: ${event.rental_shop}</p>
+        <div id="mini-map-${event.id}"class="mini-map"></div>
+    `;
+    notifyContainer.appendChild(popup);
+
+    // Tạo mini map
+    setTimeout(() => {
+        const mapElement = document.getElementById(`mini-map-${event.id}`);
+        if (mapElement) {
+            const map = L.map(mapElement.id).setView([event.lat, event.lng], 15);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+            L.marker([event.lat, event.lng]).addTo(map)
+                .bindPopup('Vị trí hiện tại - Đang thuê!')
+                .openPopup();
+        }
+    }, 100);
+
+    // Auto remove sau 10s
+    setTimeout(() => popup.remove(), 10000);
+}
 
 // --- Daily Revenue ---
 // Build data items with per-point label position
@@ -666,7 +729,7 @@ const sorted = revenueNames.map((name, idx) => ({
 
 echarts.init(document.getElementById('revenueByAdminChart')).setOption({
     grid: {
-        left: 10,   // chừa thêm để tên hiển thị thoải mái
+        left: 10,
         right: 30,
         top: 30,
         bottom: 30,
@@ -1073,5 +1136,135 @@ echarts.init(document.getElementById('refundOrderChart')).setOption({
     ]
 });
 
+// --- Device Online Status ---
+echarts.init(document.getElementById('deviceOnlineChart')).setOption({
+  tooltip: {
+    trigger: 'item',
+    formatter: '{b}: {c} máy ({d}%)'
+  },
+  legend: {
+    orient: 'horizontal',
+    bottom: 10,
+    data: ['Online', 'Offline']
+  },
+  series: [
+    {
+      name: 'Tình trạng máy',
+      type: 'pie',
+      radius: ['40%', '70%'],
+      avoidLabelOverlap: false,
+      itemStyle: {
+        borderRadius: 8,
+        borderColor: '#fff',
+        borderWidth: 2
+      },
+      label: {
+        show: true,
+        position: 'outside',
+        formatter: '{b}\n{d}%'
+      },
+      emphasis: {
+        label: {
+          show: true,
+          fontSize: 18,
+          fontWeight: 'bold'
+        }
+      },
+      labelLine: { show: true },
+      data: [
+        { value: {{ $device_online ?? 0 }}, name: 'Online' },
+        { value: {{ $device_offline ?? 0 }}, name: 'Offline' }
+      ]
+    }
+  ]
+});
+
+// --- Device Online Status ---
+echarts.init(document.getElementById('initOrderSuccessChart')).setOption({
+    tooltip: {
+        trigger: 'item',
+        formatter: '{b}: {c} đơn hàng ({d}%)'
+    },
+    legend: {
+        orient: 'horizontal',
+        bottom: 10,
+        data: ['Thành công', 'Thất bại']
+    },
+    color: ['#95cb78', '#ea3144'],
+    series: [
+        {
+            name: 'Tỷ lệ đơn hàng khởi tạo',
+            type: 'pie',
+            radius: ['40%', '70%'],
+            avoidLabelOverlap: false,
+            itemStyle: {
+                borderRadius: 8,
+                borderColor: '#fff',
+                borderWidth: 2
+            },
+            label: {
+                show: true,
+                position: 'outside',
+                formatter: '{b}\n{d}%'
+            },
+            emphasis: {
+                label: {
+                    show: true,
+                    fontSize: 18,
+                    fontWeight: 'bold'
+                }
+            },
+            labelLine: { show: true },
+            data: [
+                { value: {{ ($totalOrder ?? 0) - ($totalErrorOrder ?? 0) }}, name: 'Thành công' },
+                { value: {{ $totalErrorOrder ?? 0 }}, name: 'Thất bại' }
+            ]
+        }
+    ]
+});
+
+// --- Device Online Status ---
+echarts.init(document.getElementById('refundOrderChart')).setOption({
+    tooltip: {
+        trigger: 'item',
+        formatter: '{b}: {c} đơn hàng ({d}%)'
+    },
+    legend: {
+        orient: 'horizontal',
+        bottom: 10,
+        data: ['Thành công', 'Thất bại']
+    },
+    color: ['#95cb78', '#ea3144'],
+    series: [
+        {
+            name: 'Tỷ lệ đơn hàng hoàn tiền tự động',
+            type: 'pie',
+            radius: ['40%', '70%'],
+            avoidLabelOverlap: false,
+            itemStyle: {
+                borderRadius: 8,
+                borderColor: '#fff',
+                borderWidth: 2
+            },
+            label: {
+                show: true,
+                position: 'outside',
+                formatter: '{b}\n{d}%'
+            },
+            emphasis: {
+                label: {
+                    show: true,
+                    fontSize: 18,
+                    fontWeight: 'bold'
+                }
+            },
+            labelLine: { show: true },
+            data: [
+                { value: {{ ($totalOrder ?? 0) - ($totalErrorOrder ?? 0) }}, name: 'Thành công' },
+                { value: {{ $totalErrorOrder ?? 0 }}, name: 'Thất bại' }
+            ]
+        }
+    ]
+});
 </script>
 @endpush

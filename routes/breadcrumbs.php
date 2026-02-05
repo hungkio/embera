@@ -428,3 +428,9 @@ Breadcrumbs::for('admin.pins.edit', function (BreadcrumbsGenerator $trail, Pin $
     $trail->push($pin->imei, '#');
     $trail->push(__('Chỉnh sửa'), route('admin.pins.edit', $pin));
 });
+
+// Home > Map
+Breadcrumbs::for('admin.map.index', function (BreadcrumbsGenerator $trail) {
+    $trail->parent('admin.dashboard');
+    $trail->push(__('Bản đồ'), route('admin.map.index'), ['icon' => 'fal fa-map-marked-alt']);
+});

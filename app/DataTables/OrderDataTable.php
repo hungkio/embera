@@ -8,6 +8,8 @@ use App\Models\Order;
 use Carbon\Carbon;
 use Yajra\DataTables\Html\Button;
 use Yajra\DataTables\Html\Column;
+use Illuminate\Support\Facades\Schema;
+use App\DataTables\Export\OrdersFullExport;
 
 class OrderDataTable extends BaseDatable
 {
@@ -139,9 +141,20 @@ class OrderDataTable extends BaseDatable
     protected function getTableButton(): array
     {
         return [
-            Button::make('bulkDelete')->addClass('btn btn-danger')->text('<i class="fal fa-trash-alt mr-2"></i>'.__('Delete')),
-            Button::make('export')->addClass('btn btn-primary')->text('<i class="fal fa-download mr-2"></i>'.__('Export')),
-            Button::make('reset')->addClass('btn bg-primary')->text('<i class="fal fa-undo mr-2"></i>'.__('Reset')),
+            Button::make('bulkDelete')->addClass('btn btn-danger')->text('<i class="fal fa-trash-alt mr-2"></i>' . __('Delete')),
+            Button::make('export')->addClass('btn btn-primary')->text('<i class="fal fa-download mr-2"></i>' . __('Export')),
+            Button::raw()
+                ->addClass('btn btn-success')
+                ->text('<i class="fal fa-file-excel mr-2"></i>Export Full')
+                ->attr([
+                    'data-export-full-url' => route('admin.orders.export-full'),
+                ])
+                ->action("function (e, dt, node, config) {
+                var url = $(node).attr('data-export-full-url');
+                var query = window.location.search || '';
+                window.location.href = url + query;
+            }"),
+            Button::make('reset')->addClass('btn bg-primary')->text('<i class="fal fa-undo mr-2"></i>' . __('Reset')),
         ];
     }
 
@@ -156,5 +169,17 @@ class OrderDataTable extends BaseDatable
             $date = $this->request()->date_from;
         }
         return new OrderExportHandler($source->get(), $date);
+    }
+
+    public function buildExcelFileFull()
+    {
+        $this->request()->merge(['length' => -1]);
+
+        $source = app()->call([$this, 'query']);
+        $source = $this->applyScopes($source); // ✅ gọi được vì đang ở trong class
+
+        $columns = Schema::getColumnListing((new \App\Models\Order)->getTable());
+
+        return new OrdersFullExport($source, $columns);
     }
 }

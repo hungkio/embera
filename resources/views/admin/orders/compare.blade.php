@@ -60,7 +60,6 @@
         <table id="reconcile-table" class="table table-bordered table-striped">
             <thead>
             <tr>
-                <th>Mã giao dịch</th>
                 <th>Thời gian thanh toán đơn hàng</th>
                 <th>Thời gian thanh toán MB</th>
                 <th>FT In</th>
@@ -154,7 +153,6 @@
                         dataSrc: 'data' // quan trọng: map đúng với key response
                     },
                     columns: [
-                        { data: 'code' },
                         { data: 'payment_time', defaultContent: '' },
                         { data: 'date_in', defaultContent: '' },
                         { data: 'ft_in', defaultContent: '' },

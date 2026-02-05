@@ -47,7 +47,6 @@ public function query(MBTransaction $model)
 {
     return [
         Column::checkbox(''),
-        Column::make('code_in')->title('Mã GD nạp'),
         Column::make('date_in')->title('Thời gian nạp'),
         Column::make('ft_code_in')->title('FT nạp'),
         Column::make('amount_in')->title('Tiền nạp'),

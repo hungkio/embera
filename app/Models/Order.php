@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Domain\Model;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
+use App\Events\OrderRented;  // Event mới cho realtime
 
 class Order extends Model implements HasMedia
 {
@@ -46,7 +47,9 @@ class Order extends Model implements HasMedia
         'service_provider_share_ratio', // Service Provider share ratio
         'merchant_share_ratio', // Merchant share ratio
         'charging_strategy', // Charging strategy,
-        'region', 'city', 'area'
+        'region', 'city', 'area',
+        // Thêm fields cho vị trí (nếu chưa có, dùng rental_shop_address để parse lat/lng nếu cần)
+        'location_lat', 'location_lng'  // Giả sử có, hoặc parse từ address
     ];
 
     protected $hidden = [
@@ -61,5 +64,14 @@ class Order extends Model implements HasMedia
         return $this->belongsTo(Shop::class); // dùng shop_id mặc định
     }
 
-
+    // Booted method để broadcast realtime khi order mới với status 'renting' hoặc tương tự
+    protected static function booted()
+    {
+        static::created(function ($order) {
+            // Giả sử status 'active' hoặc 'renting' nghĩa là "đang thuê"
+            if (in_array($order->order_status, ['active', 'renting'])) {
+                broadcast(new OrderRented($order))->toOthers();
+            }
+        });
+    }
 }
