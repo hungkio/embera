@@ -15,6 +15,7 @@ use Illuminate\Http\Request;
 use Illuminate\View\View;
 use Illuminate\Support\Facades\Storage;
 use Auth;
+use Carbon\Carbon;
 
 class MerchantController
 {
@@ -129,6 +130,15 @@ class MerchantController
             return response()->json(['message' => 'Vui lòng chọn ít nhất một merchant để gửi mail.'], 422);
         }
 
+        // ✅ validate date range
+        $request->validate([
+            'start_date' => ['required', 'date'],
+            'end_date' => ['required', 'date', 'after_or_equal:start_date'],
+        ]);
+
+        $start = Carbon::parse($request->start_date)->startOfDay();
+        $end = Carbon::parse($request->end_date)->endOfDay();
+
         $merchants = Merchant::with(['contract', 'shops'])->whereIn('id', $merchantIds)->get();
 
         $success = 0;
@@ -138,8 +148,10 @@ class MerchantController
             $hasEmail = !empty(trim($merchant->email));
             $hasShop = $merchant->shops->isNotEmpty();
 
-            $data = $emailService->prepareData($merchant, $merchant->shops ?? []);
-            $emailService->sendMail($merchant, $data);
+            // ✅ dùng date range
+            $data = $emailService->prepareData($merchant, $merchant->shops ?? [], $start, $end);
+            // ✅ cần sửa sendMail nhận start/end (xem note bên dưới)
+            $emailService->sendMail($merchant, $data, $start, $end);
 
             if ($hasEmail && $hasShop) {
                 $success++;
@@ -167,119 +179,131 @@ class MerchantController
     }
 
     public function sendZaloContract(
-            Request $request,
-            ZaloService $zaloService,
-            MerchantEmailService $emailService // <--- Inject thêm Service này
-        ) {
-            try {
-                $merchantIds = $request->input('ids', []);
+        Request              $request,
+        ZaloService          $zaloService,
+        MerchantEmailService $emailService // <--- Inject thêm Service này
+    )
+    {
+        try {
+            $merchantIds = $request->input('ids', []);
 
-                if (empty($merchantIds) || !is_array($merchantIds)) {
-                    return response()->json(['success' => false, 'message' => 'Vui lòng chọn ít nhất một merchant.'], 422);
-                }
+            if (empty($merchantIds) || !is_array($merchantIds)) {
+                return response()->json(['success' => false, 'message' => 'Vui lòng chọn ít nhất một merchant.'], 422);
+            }
 
-                // Truyền cả $emailService sang bên ZaloService
-                $results = $zaloService->sendZaloContract($merchantIds, $emailService);
+            // Truyền cả $emailService sang bên ZaloService
+            $results = $zaloService->sendZaloContract($merchantIds, $emailService);
 
-                // Xử lý kết quả trả về
-                $successCount = 0;
-                $errors = [];
+            // Xử lý kết quả trả về
+            $successCount = 0;
+            $errors = [];
 
-                foreach ($results as $merchantId => $res) {
-                    if ($res['success']) {
-                        $successCount++;
-                    } else {
-                        $name = Merchant::find($merchantId)->username ?? $merchantId;
-                        $errors[] = "{$name}: " . $res['error'];
-                    }
-                }
-
-                if ($successCount > 0 && empty($errors)) {
-                    return response()->json([
-                        'success' => true,
-                        'message' => "Gửi Zalo thành công cho {$successCount} merchant."
-                    ]);
-                } elseif ($successCount > 0) {
-                    return response()->json([
-                        'success' => true,
-                        'message' => "Gửi thành công {$successCount}, thất bại " . count($errors) . ".",
-                        'errors' => $errors
-                    ]);
+            foreach ($results as $merchantId => $res) {
+                if ($res['success']) {
+                    $successCount++;
                 } else {
-                    return response()->json([
-                        'success' => false,
-                        'message' => 'Gửi thất bại toàn bộ.',
-                        'errors' => $errors
-                    ], 422);
+                    $name = Merchant::find($merchantId)->username ?? $merchantId;
+                    $errors[] = "{$name}: " . $res['error'];
                 }
+            }
 
-            } catch (\Throwable $e) {
-                \Log::error($e);
+            if ($successCount > 0 && empty($errors)) {
+                return response()->json([
+                    'success' => true,
+                    'message' => "Gửi Zalo thành công cho {$successCount} merchant."
+                ]);
+            } elseif ($successCount > 0) {
+                return response()->json([
+                    'success' => true,
+                    'message' => "Gửi thành công {$successCount}, thất bại " . count($errors) . ".",
+                    'errors' => $errors
+                ]);
+            } else {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Lỗi hệ thống: ' . $e->getMessage()
-                ], 500);
+                    'message' => 'Gửi thất bại toàn bộ.',
+                    'errors' => $errors
+                ], 422);
             }
+
+        } catch (\Throwable $e) {
+            \Log::error($e);
+            return response()->json([
+                'success' => false,
+                'message' => 'Lỗi hệ thống: ' . $e->getMessage()
+            ], 500);
         }
+    }
 
     /**
      * Gửi tin nhắn Zalo và ghi log chia sẻ
      */
-     public function sendZalo(
-            Request $request,
-            ZaloService $zaloService,
-            MerchantEmailService $emailService,
-            MerchantShareLogService $logService // <-- Inject Service vào đây!
-        )
-        {
-            $merchantIds = $request->input('ids', []);
-            if (empty($merchantIds) || !is_array($merchantIds)) {
-                return response()->json(['message' => 'Vui lòng chọn ít nhất một merchant để gửi Zalo.'], 422);
-            }
+    public function sendZalo(
+        Request                 $request,
+        ZaloService             $zaloService,
+        MerchantEmailService    $emailService,
+        MerchantShareLogService $logService
+    )
+    {
+        $merchantIds = $request->input('ids', []);
+        if (empty($merchantIds) || !is_array($merchantIds)) {
+            return response()->json(['message' => 'Vui lòng chọn ít nhất một merchant để gửi Zalo.'], 422);
+        }
 
-            // Gửi Zalo đến danh sách merchant
-            $results = $zaloService->sendToMerchants(
-                $merchantIds,
-                'zalo.template_fixed',
-                'zalo.template_percentage',
-                $emailService
-            );
+        // ✅ validate date range
+        $request->validate([
+            'start_date' => ['required', 'date'],
+            'end_date' => ['required', 'date', 'after_or_equal:start_date'],
+        ]);
 
-            $successCount = 0;
-            $errors = [];
+        $start = Carbon::parse($request->start_date)->startOfDay();
+        $end = Carbon::parse($request->end_date)->endOfDay();
 
-            foreach ($results as $merchantId => $result) {
-                $merchant = Merchant::find($merchantId);
-                if (!$merchant) continue;
+        // ✅ truyền date range xuống service (cần sửa signature sendToMerchants - xem note)
+        $results = $zaloService->sendToMerchants(
+            $merchantIds,
+            'zalo.template_fixed',
+            'zalo.template_percentage',
+            $emailService,
+            $start,
+            $end
+        );
 
-                $shops = $merchant->shops()->where('shops.is_deleted', false)->get();
-                $data = $emailService->prepareData($merchant, $shops);
-                $shareType = $emailService->detectType($shops);
+        $successCount = 0;
+        $errors = [];
 
-                // Trạng thái: sent hoặc error message
-                $status = $result['success'] ? 'sent' : 'failed';
-                $logService->logShare($merchant, $data, $shareType, 'zalo', $status);
+        foreach ($results as $merchantId => $result) {
+            $merchant = Merchant::find($merchantId);
+            if (!$merchant) continue;
 
-                if (!$result['success']) {
-                    $errors[] = "Merchant ID {$merchantId}: " . ($result['error'] ?? 'Unknown error');
-                } else {
-                    $successCount++;
-                }
-            }
+            $shops = $merchant->shops()->where('shops.is_deleted', false)->get();
 
+            // ✅ prepareData theo range để log đúng
+            $data = $emailService->prepareData($merchant, $shops, $start, $end);
+            $shareType = $emailService->detectType($shops);
 
-            if ($successCount > 0 && empty($errors)) {
-                return response()->json(['message' => "Gửi Zalo thành công cho {$successCount} merchant."]);
-            } elseif ($successCount > 0) {
-                return response()->json([
-                    'message' => "Gửi Zalo thành công cho {$successCount} merchant, nhưng có lỗi với một số merchant.",
-                    'errors' => $errors
-                ], 207);
+            $status = $result['success'] ? 'sent' : 'failed';
+            $logService->logShare($merchant, $data, $shareType, 'zalo', $status);
+
+            if (!$result['success']) {
+                $errors[] = "Merchant ID {$merchantId}: " . ($result['error'] ?? 'Unknown error');
             } else {
-                return response()->json([
-                    'message' => 'Gửi Zalo thất bại.',
-                    'errors' => $errors
-                ], 422);
+                $successCount++;
             }
         }
+
+        if ($successCount > 0 && empty($errors)) {
+            return response()->json(['message' => "Gửi Zalo thành công cho {$successCount} merchant."]);
+        } elseif ($successCount > 0) {
+            return response()->json([
+                'message' => "Gửi Zalo thành công cho {$successCount} merchant, nhưng có lỗi với một số merchant.",
+                'errors' => $errors
+            ], 207);
+        } else {
+            return response()->json([
+                'message' => 'Gửi Zalo thất bại.',
+                'errors' => $errors
+            ], 422);
+        }
+    }
 }

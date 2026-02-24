@@ -15,7 +15,7 @@ use Illuminate\Support\Str;
 
 class MerchantEmailService
 {
-    public function sendMail(Merchant $merchant, array $data): void
+    public function sendMail(Merchant $merchant, array $data, ?Carbon $startDate = null, ?Carbon $endDate = null): void
     {
         $status = 'sent'; // mặc định là thành công
         $failReason = null;
@@ -46,10 +46,10 @@ class MerchantEmailService
         }
 
         // Chu kỳ giao dịch từ 01/04/năm hiện tại đến hiện tại 1/4 - 30/1
-        $startDate = Carbon::createFromDate(2025, 4, 1);
-        $endDate   = Carbon::create(2026, 1, 30);
+        $startDate = $startDate ?: Carbon::createFromDate(2025, 1, 15);
+        $endDate = $endDate ?: Carbon::createFromDate(2026, 1, 31);
 
-        // Dùng $shops đã lấy phía trên
+        // rồi gọi prepareData
         $data = $this->prepareData($merchant, $shops, $startDate, $endDate);
 
         // Xác định template
