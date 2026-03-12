@@ -55,6 +55,70 @@ class MerchantController
             ->with('success', 'Thêm Merchant thành công');
     }
 
+    public function createShareLog(
+        Request                 $request,
+        MerchantShareLogService $logService,
+        MerchantEmailService    $emailService
+    )
+    {
+        $request->validate([
+            'merchant_ids' => 'required|array|min:1',
+            'merchant_ids.*' => 'exists:merchants,id',
+            'start_date' => ['required', 'date'],
+            'end_date' => ['required', 'date', 'after_or_equal:start_date'],
+        ]);
+
+        $start = Carbon::parse($request->start_date)->startOfDay();
+        $end = Carbon::parse($request->end_date)->endOfDay();
+
+        $merchantIds = $request->input('merchant_ids');
+        $createdCount = 0;
+
+        foreach ($merchantIds as $id) {
+            $merchant = Merchant::find($id);
+            if (!$merchant) {
+                \Log::warning("Merchant ID {$id} không tồn tại");
+                continue;
+            }
+
+            \Log::info("Bắt đầu tạo log cho merchant {$id} - {$merchant->username}", [
+                'start' => $start->toDateTimeString(),
+                'end' => $end->toDateTimeString(),
+            ]);
+
+            $shops = $merchant->shops()->where('shops.is_deleted', 0)->get();
+            \Log::info("Số shop của merchant {$id}: " . $shops->count());
+
+            $data = $emailService->prepareData($merchant, $shops, $start, $end);
+
+            \Log::info("Dữ liệu prepareData cho merchant {$id}", [
+                'shop_data_count' => count($data['shop_data'] ?? []),
+                'total_orders' => $data['tong_dong_hang'] ?? 'không có',
+            ]);
+
+            if (empty($data['shop_data'])) {
+                \Log::warning("Merchant {$id} không có dữ liệu shop_data trong kỳ");
+                continue;
+            }
+
+            $shareType = $emailService->detectType($shops);
+
+            try {
+                $logService->logShare($merchant, $data, $shareType, 'manual', 'sent');
+                $createdCount++;
+                \Log::info("Tạo log THÀNH CÔNG cho merchant {$id}");
+            } catch (\Exception $e) {
+                \Log::error("Tạo log THẤT BẠI merchant {$id}: " . $e->getMessage());
+            }
+        }
+
+        return response()->json([
+            'success' => true,
+            'created_count' => $createdCount,
+            'message' => "Đã tạo $createdCount bản ghi log"
+        ]);
+    }
+
     /**
      * Trang chỉnh sửa merchant
      */
@@ -276,7 +340,9 @@ class MerchantController
             $merchant = Merchant::find($merchantId);
             if (!$merchant) continue;
 
-            $shops = $merchant->shops()->where('shops.is_deleted', false)->get();
+            $shops = $merchant->shops()
+                ->where('shops.is_deleted', 0)  // hoặc false tùy kiểu dữ liệu
+                ->get();
 
             // ✅ prepareData theo range để log đúng
             $data = $emailService->prepareData($merchant, $shops, $start, $end);

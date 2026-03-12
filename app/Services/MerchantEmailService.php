@@ -159,23 +159,21 @@ class MerchantEmailService
     public function prepareData(Merchant $merchant, $shops = [], Carbon $startDate = null, Carbon $endDate = null): array
     {
         $today = now();
-        $lastMonth = Carbon::now()->subMonth();
 
-        $periodStart = $startDate ?: Carbon::createFromDate(2025, 4, 1);
-        $periodEnd = $endDate ?: Carbon::createFromDate(2026, 1, 30);
+        $periodStart = $startDate ?: Carbon::createFromDate(2025, 1, 15)->startOfDay();
+        $periodEnd = $endDate ?: Carbon::createFromDate(2026, 1, 31)->endOfDay();
 
         $bd = $merchant->admin;
         $firstRoleName = $bd ? optional($bd->roles()->first())->name : '';
         $ten_bd = $bd ? trim(($bd->first_name ?? '') . ' ' . ($bd->last_name ?? '')) : '';
 
-        // Thông tin chung
         $data = [
             'hom_nay_ngay' => $today->format('d'),
             'hom_nay_thang' => $today->format('m'),
             'hom_nay_nam' => $today->format('Y'),
 
             'hop_dong_so' => $merchant->contract->contract_number ?? '',
-            'ben_b' => $merchant->contract->customer_name ?? '',
+            'ben_b' => $merchant->contract->customer_name ?? $merchant->username ?? '',
             'chuc_vu' => $firstRoleName,
             'so_dien_thoai' => $bd->phone ?? '',
             'email' => $bd->email ?? '',
@@ -194,69 +192,87 @@ class MerchantEmailService
         ];
 
         $shops_data = [];
-        $totalRevenue = 0;    // Tổng doanh thu
-        $totalOrder = 0;    // Tổng doanh thu
-        $totalPayment = 0;    // Tổng tiền chia
+        $totalRevenue = 0;
+        $totalOrder = 0;
+        $totalPayment = 0;
 
         foreach ($shops as $key => $shop) {
             $periodStartDay = $periodStart->copy()->startOfDay();
             $periodEndDay = $periodEnd->copy()->endOfDay();
 
-            if ($shop->share_rate_type == 'fixed') {
-                $displayShopName = trim(Str::before($shop->shop_name ?? '', '('));
-                $address = $shop->address ?? '';
+            $displayShopName = trim(Str::before($shop->shop_name ?? '', '('));
+            $address = $shop->address ?? '';
 
-                // Tính doanh thu tháng trước
-                $sumNumberOrder = Order::whereRaw('LOWER(rental_shop) LIKE LOWER(?)', ['%' . $shop->shop_name . '%'])
-                    ->where('order_amount', '>', 0)
-                    ->whereBetween('return_time', [$periodStartDay, $periodEndDay])
-                    ->count();
-                $shareRate = $shop->share_rate ?? 0;
+            // Pattern LIKE: loại bỏ dấu ngoặc, khoảng trắng thừa
+            $shopNameClean = trim(preg_replace('/\s*\([^)]*\)/', '', $shop->shop_name ?? ''));
+            $shopNameClean = strtolower($shopNameClean);
+
+            Log::debug("Query order cho shop {$shop->shop_name}", [
+                'shop_name_clean' => $shopNameClean,
+                'pattern' => '%' . $shopNameClean . '%',
+            ]);
+
+            $query = Order::whereRaw('TRIM(LOWER(rental_shop)) LIKE ?', ['%' . $shopNameClean . '%'])
+                ->whereBetween('return_time', [$periodStartDay, $periodEndDay])
+                ->where('order_status', 'Complete');
+
+            // Tính chung cho cả fixed và percentage
+            $revenue = $query->clone()->sum('order_amount');  // DOANH THU TIỀN THẬT
+            $sumNumberOrder = $query->clone()->where('order_amount', '>', 0)->count();  // SỐ ĐƠN THẬT
+
+            if ($shop->share_rate_type == 'fixed') {
+                $shareRate = $shop->share_rate ?? 3000;  // fixed 3.000 VNĐ/đơn
+                $payment = $sumNumberOrder * $shareRate;
 
                 $totalOrder += $sumNumberOrder;
-                $totalPayment += $sumNumberOrder * $shareRate;
+                $totalRevenue += $revenue;  // cộng tiền thật
+                $totalPayment += $payment;
 
                 $shops_data[] = [
                     'stt' => $key + 1,
                     'shop_name' => $displayShopName,
                     'dia_chi_shop' => $address,
-                    'doanh_thu' => number_format($sumNumberOrder, 0, ',', '.'),
+                    'doanh_thu' => number_format($revenue, 0, ',', '.') . ' VNĐ',  // hiển thị tiền thật
                     'chia_se' => number_format($shareRate, 0, ',', '.') . ' VNĐ',
-                    'thanh_toan' => number_format($sumNumberOrder * $shareRate, 0, ',', '.') . ' VNĐ',
+                    'thanh_toan' => number_format($payment, 0, ',', '.') . ' VNĐ',
                 ];
             } else {
-                $displayShopName = trim(Str::before($shop->shop_name ?? '', '('));
-                $address = $shop->address ?? '';
-
-                // Tính doanh thu tháng trước
-                $revenue = Order::whereRaw('LOWER(rental_shop) LIKE LOWER(?)', ['%' . $shop->shop_name . '%'])
-                    ->whereBetween('return_time', [$periodStartDay, $periodEndDay])
-                    ->sum('order_amount');
-                $shareRate = $shop->share_rate ?? 0;
-                $payment = $revenue * ($shareRate / 100);
+                $shareRate = $shop->share_rate ?? 0.35;  // 35% mặc định nếu không có
+                $payment = $revenue * $shareRate;
 
                 $totalRevenue += $revenue;
                 $totalPayment += $payment;
 
-                Log::info("Shop: {$shop->shop_name} — Revenue: {$revenue} — Share rate: {$shareRate} — Payment: {$payment}");
-
                 $shops_data[] = [
                     'stt' => $key + 1,
                     'shop_name' => $displayShopName,
                     'dia_chi_shop' => $address,
-                    'doanh_thu' => number_format($revenue, 0, ',', '.'),
-                    'chia_se' => number_format($shareRate, 0, '.', '') . '%',
+                    'doanh_thu' => number_format($revenue, 0, ',', '.') . ' VNĐ',
+                    'chia_se' => number_format($shareRate * 100, 0) . '%',
                     'thanh_toan' => number_format($payment, 0, ',', '.') . ' VNĐ',
+                    'share_rate' => $shareRate,  // THÊM DÒNG NÀY
                 ];
             }
         }
 
-        // Gán lại vào mảng data
         $data['shop_data'] = $shops_data;
-        $data['tong_thanh_toan'] = number_format($totalRevenue, 0, ',', '.') . ' VNĐ';      // Tổng doanh thu
-        $data['tong_dong_hang'] = $totalOrder;      // Tổng đơn hàng
-        $data['tong_thanh_toan_share'] = number_format($totalPayment, 0, ',', '.') . ' VNĐ';     // Tổng tiền chia
+        $data['tong_thanh_toan'] = number_format($totalRevenue, 0, ',', '.') . ' VNĐ';
+        $data['tong_dong_hang'] = $totalOrder;
+        $data['tong_thanh_toan_share'] = number_format($totalPayment, 0, ',', '.') . ' VNĐ';
         $data['tong_thanh_toan_text'] = $this->number_to_vietnamese($totalPayment);
+        $data['total_orders_real'] = $totalOrder;
+        // Log chung chung để kiểm tra
+        Log::info('PREPARE DATA - KẾT QUẢ CUỐI CÙNG MERCHANT ' . $merchant->id, [
+            'merchant_username' => $merchant->username,
+            'period' => $periodStart->toDateString() . ' -> ' . $periodEnd->toDateString(),
+            'shops_count' => $shops->count(),
+            'shop_data_count' => count($shops_data),
+            'tong_dong_hang' => $totalOrder,
+            'tong_thanh_toan' => $totalRevenue,
+            'tong_thanh_toan_share' => $totalPayment,
+            'sample_shop' => $shops_data[0] ?? 'Rỗng',
+
+        ]);
 
         return $data;
     }
