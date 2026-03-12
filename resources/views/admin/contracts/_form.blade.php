@@ -64,7 +64,8 @@
                                         <option value="">-- {{ __('Chọn tỉnh/TP') }} --</option>
                                         @foreach(\App\Models\Contract::provinces() as $code => $name)
                                         <option value="{{ $code }}"
-                                                {{ old('city', $contract->city) == $code ? 'selected' : '' }}>
+                                                {{ old(
+                                        'city', $contract->city) == $code ? 'selected' : '' }}>
                                         {{ $name }}
                                         </option>
                                         @endforeach
@@ -81,13 +82,16 @@
                                 <div class="col-lg-9">
                                     <select name="status" id="status" class="form-control" required>
                                         <option value="">-- {{ __('Trạng thái') }} --</option>
-                                        <option value="2" {{ old('status', $contract->status ?? '') == 2 ? 'selected' : '' }}>
+                                        <option value="2" {{ old(
+                                        'status', $contract->status ?? '') == 2 ? 'selected' : '' }}>
                                         {{ __('Đã ký') }}
                                         </option>
-                                        <option value="1" {{ old('status', $contract->status ?? '') == 1 ? 'selected' : '' }}>
+                                        <option value="1" {{ old(
+                                        'status', $contract->status ?? '') == 1 ? 'selected' : '' }}>
                                         {{ __('Chưa ký') }}
                                         </option>
-                                        <option value="0" {{ old('status', $contract->status ?? '') == 0 ? 'selected' : '' }}>
+                                        <option value="0" {{ old(
+                                        'status', $contract->status ?? '') == 0 ? 'selected' : '' }}>
                                         {{ __('Chỉ có BBNT') }}
                                         </option>
                                     </select>
@@ -149,7 +153,6 @@
                                 name="business_registration"
                                 :label="__('Giấy đăng ký kinh doanh/CCCD')"
                                 :value="old('business_registration', $contract->business_registration ?? '')"
-                                required
                             />
 
                             <x-text-field

@@ -93,6 +93,9 @@ class MerchantDataTable extends BaseDatable
 //            Button::make('selected')
 //                 ->addClass('btn bg-purple btn-send-zalo-contract sendzalo-contract') // Class khác một chút để bắt JS
 //                 ->text('<i class="fal fa-file-contract mr-2"></i> Gửi Zalo Tạm dừng hoạt động kinh doanh')
+            Button::make('selected')
+                ->addClass('btn btn-purple btn-create-log')   // class đặc trưng để js bắt
+                ->text('<i class="fal fa-file-plus mr-2"></i> Tạo log chia sẻ'),
         ];
     }
 

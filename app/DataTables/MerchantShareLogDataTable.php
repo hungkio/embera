@@ -27,22 +27,22 @@ class MerchantShareLogDataTable extends BaseDatable
             // Kỳ (MM/YYYY)
             ->addColumn('period', fn($log) => str_pad($log->month, 2, '0', STR_PAD_LEFT) . '/' . $log->year)
 
-            // Tổng thu nhập (ẩn nếu loại là fixed)
-            ->editColumn('total', fn($log) => $log->share_type === 'fixed'
-                ? ''
-                : number_format($log->total, 0, ',', '.') . ' VNĐ'
-            )
-
-            // Số đơn (từ number_of_order)
+            // SỬA: Luôn hiển thị Tổng thu nhập (doanh thu), dù fixed hay percentage
+            ->editColumn('total', fn($log) => number_format($log->total, 0, ',', '.') . ' VNĐ')
+            // Số đơn
             ->editColumn('number_of_order', fn($log) => $log->number_of_order ?? 0)
 
-            // Share (hiển thị VNĐ nếu fixed, % nếu percentage)
+            // Share (giữ nguyên: VNĐ nếu fixed, % nếu percentage)
             ->addColumn('share', function ($log) {
                 if ($log->share_type === 'fixed') {
-                    return number_format($log->share_percent, 0, ',', '.') . ' VNĐ';
+                    $value = (float)$log->share_percent;
+                    // Fix hiển thị cho dữ liệu cũ (3 → 3.000)
+                    if ($value > 0 && $value < 100) {
+                        $value *= 1000;
+                    }
+                    return number_format($value, 0, ',', '.') . ' VNĐ';
                 }
 
-                // Nếu <= 1 thì nhân 100
                 $pct = $log->share_percent > 1 ? $log->share_percent : $log->share_percent * 100;
                 return number_format($pct, 0) . '%';
             })
@@ -53,7 +53,7 @@ class MerchantShareLogDataTable extends BaseDatable
             // Loại chia sẻ
             ->addColumn('share_type', fn($log) => $log->share_type === 'fixed' ? 'Số đơn' : 'Phần trăm')
 
-            // Nguồn ghi (type)
+            // Nguồn ghi
             ->addColumn('type', fn($log) => $log->type === 'email' ? 'Email' : 'Zalo')
 
             // Ngày ghi log
@@ -62,14 +62,13 @@ class MerchantShareLogDataTable extends BaseDatable
             // Trạng thái
             ->editColumn('status', fn($log) => ucfirst($log->status ?? '-'))
 
-            // Cột tác vụ (Xem chi tiết)
+            // Cột tác vụ
             ->addColumn('action', function ($log) {
                 $viewUrl = route('admin.share-logs.detail', $log->id);
                 return '<a href="' . $viewUrl . '" class="btn btn-sm btn-info" title="Xem chi tiết">
-                            <i class="fal fa-eye"></i>
-                        </a>';
+                        <i class="fal fa-eye"></i>
+                    </a>';
             })
-
             ->rawColumns(['action']);
     }
 

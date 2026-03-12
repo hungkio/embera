@@ -213,6 +213,8 @@ Route::prefix('admin')->name('admin.')->group(function () {
             });
 
             // merchants (đặt sau)
+            Route::post('merchants/create-share-log', [MerchantController::class, 'createShareLog'])
+                ->name('merchants.create-share-log');
             Route::get('/merchants', [MerchantController::class, 'index'])->name('merchants.index');
             Route::get('/merchants/create', [MerchantController::class, 'create'])->name('merchants.create');
             Route::post('/merchants', [MerchantController::class, 'store'])->name('merchants.store');
