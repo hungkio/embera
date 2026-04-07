@@ -190,7 +190,7 @@
           <!-- Title -->
           <div class="form-group">
             <label>Tiêu đề <span class="text-danger">*</span></label>
-            <input type="text" name="title" value="BC doanh thu {{ date('d/m/Y') }}" class="form-control" required>
+            <input type="text" name="title" value="BC doanh thu {{ \Carbon\Carbon::yesterday()->format('d/m/Y') }}" class="form-control" required>
           </div>
 
           <!-- Content -->
