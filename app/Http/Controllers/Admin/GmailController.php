@@ -1,0 +1,154 @@
+<?php
+
+namespace App\Http\Controllers\Admin;
+
+use App\Domain\MailSetting\Models\MailSetting;
+use App\Models\GmailAccount;
+use App\Models\GmailAttachment;
+use App\Models\GmailMessage;
+use App\Services\GmailService;
+use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
+use Illuminate\Support\Arr;
+use Illuminate\Support\Str;
+use Illuminate\View\View;
+
+class GmailController
+{
+    use AuthorizesRequests;
+
+    public function index(Request $request): View
+    {
+        $this->authorize('view', MailSetting::class);
+
+        $account = $this->account();
+        $messages = $account?->messages()->paginate(20);
+        $selectedMessage = null;
+
+        if ($account && $request->filled('message')) {
+            $selectedMessage = $account->messages()->whereKey($request->integer('message'))->first();
+        }
+
+        if (!$selectedMessage && $messages && $messages->count() > 0) {
+            $selectedMessage = $messages->first();
+        }
+
+        return view('admin.gmail.index', [
+            'isConfigured' => app(GmailService::class)->isConfigured(),
+            'account' => $account,
+            'messages' => $messages,
+            'selectedMessage' => $selectedMessage,
+            'attachments' => $account
+                ? GmailAttachment::query()
+                    ->whereHas('message', fn ($query) => $query->where('gmail_account_id', $account->id))
+                    ->latest('id')
+                    ->get()
+                : collect(),
+        ]);
+    }
+
+    public function connect(GmailService $gmailService): RedirectResponse
+    {
+        $this->authorize('view', MailSetting::class);
+
+        $state = Str::random(40);
+        session(['gmail_oauth_state' => $state]);
+
+        return redirect()->away($gmailService->getAuthorizationUrl($state));
+    }
+
+    public function callback(Request $request, GmailService $gmailService): RedirectResponse
+    {
+        $this->authorize('view', MailSetting::class);
+
+        abort_unless(
+            $request->filled('code')
+                && hash_equals((string) session('gmail_oauth_state'), (string) $request->string('state')),
+            403
+        );
+
+        try {
+            $tokens = $gmailService->exchangeCodeForTokens((string) $request->string('code'));
+            $profile = $gmailService->fetchProfile($tokens['access_token']);
+            $account = GmailAccount::firstOrNew(['admin_id' => auth()->id()]);
+
+            $account->fill([
+                'email' => Arr::get($profile, 'emailAddress'),
+                'access_token' => $tokens['access_token'],
+                'refresh_token' => Arr::get($tokens, 'refresh_token', $account->refresh_token),
+                'token_type' => Arr::get($tokens, 'token_type'),
+                'scopes' => $gmailService->scopes(),
+                'expires_at' => now()->addSeconds((int) Arr::get($tokens, 'expires_in', 3600)),
+            ]);
+            $account->save();
+
+            $gmailService->syncRecentMessages($account);
+
+            flash()->success(__('Kết nối Gmail thành công.'));
+        } catch (\Throwable $exception) {
+            report($exception);
+            flash()->error($exception->getMessage());
+        } finally {
+            session()->forget('gmail_oauth_state');
+        }
+
+        return redirect()->route('admin.gmail.index');
+    }
+
+    public function sync(GmailService $gmailService): RedirectResponse
+    {
+        $this->authorize('view', MailSetting::class);
+
+        $account = $this->account();
+        abort_unless($account, 404);
+
+        try {
+            $synced = $gmailService->syncRecentMessages($account);
+            flash()->success(__('Đã đồng bộ :count email gần nhất.', ['count' => $synced]));
+        } catch (\Throwable $exception) {
+            report($exception);
+            flash()->error($exception->getMessage());
+        }
+
+        return redirect()->route('admin.gmail.index');
+    }
+
+    public function disconnect(): RedirectResponse
+    {
+        $this->authorize('view', MailSetting::class);
+
+        $account = $this->account();
+        abort_unless($account, 404);
+
+        GmailMessage::where('gmail_account_id', $account->id)->delete();
+        $account->delete();
+
+        flash()->success(__('Đã ngắt kết nối Gmail.'));
+
+        return redirect()->route('admin.gmail.index');
+    }
+
+    public function syncDailyCsv(GmailService $gmailService): RedirectResponse
+    {
+        $this->authorize('view', MailSetting::class);
+
+        $account = $this->account();
+        abort_unless($account, 404);
+
+        try {
+            $downloaded = $gmailService->syncDailyCsvAttachments($account);
+            flash()->success(__('Đã tải về :count file CSV từ email daily_.', ['count' => $downloaded]));
+        } catch (\Throwable $exception) {
+            report($exception);
+            flash()->error($exception->getMessage());
+        }
+
+        return redirect()->route('admin.gmail.index');
+    }
+
+    private function account(): ?GmailAccount
+    {
+        return GmailAccount::where('admin_id', auth()->id())->first();
+    }
+}

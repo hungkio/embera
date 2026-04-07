@@ -13,7 +13,7 @@ class Kernel extends ConsoleKernel
      * @var array
      */
     protected $commands = [
-        //
+        \App\Console\Commands\ImportDailyOrdersFromGmail::class,
     ];
 
     /**
@@ -37,6 +37,11 @@ class Kernel extends ConsoleKernel
         // 📊 Báo cáo doanh thu hàng ngày
         $schedule->job(new \App\Jobs\SendDailyRevenueReportJob)
             ->dailyAt('08:30')
+            ->withoutOverlapping();
+
+        $schedule->command('gmail:import-daily-orders')
+            ->dailyAt('09:00')
+            ->timezone('Asia/Ho_Chi_Minh')
             ->withoutOverlapping();
     }
 

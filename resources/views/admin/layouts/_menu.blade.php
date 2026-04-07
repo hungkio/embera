@@ -123,13 +123,13 @@
                 </li>
 {{--                @endcan--}}
                 <!-- System -->
-                @canany(['admins.view', 'menus.index', 'log-activities.index', 'admins.view', 'roles.view'])
+                @canany(['admins.view', 'menus.index', 'log-activities.index', 'admins.view', 'roles.view', 'mail-settings.view'])
                 <li class="nav-item-header">
                     <div class="text-uppercase font-size-xs line-height-xs">{{ __('Hệ thống') }}</div>
                     <i class="fal fa-horizontal-rule" title="{{ __('Hệ thống') }}"></i>
                 </li>
                 @endcan
-                @canany(['admins.view', 'roles.view'])
+                @canany(['admins.view', 'roles.view', 'mail-settings.view'])
                 <li class="nav-item nav-item-submenu {{ request()->routeIs('admin.admins*') || request()->routeIs('admin.roles*') ? 'nav-item-expanded nav-item-open' : null }}">
                     <a href="#" class="nav-link"><i class="fal fa-user"></i> <span>{{ __('Tài khoản') }}</span></a>
                     <ul class="nav nav-group-sub" data-submenu-title="{{ __('Tài khoản') }}">
@@ -171,6 +171,15 @@
                         <span>{{ __("Lịch sử chia sẻ") }}</span>
                     </a>
                 </li>
+                @can('mail-settings.view')
+                <li class="nav-item">
+                    <a href="{{ route('admin.gmail.index') }}"
+                       class="nav-link @if(request()->routeIs('admin.gmail*'))active @endif">
+                        <i class="fal fa-envelope-open-text"></i>
+                        <span>{{ __('Hộp thư Gmail') }}</span>
+                    </a>
+                </li>
+                @endcan
                 @endcan
             </ul>
         </div>
