@@ -17,7 +17,7 @@ class ImportDailyOrdersFromGmail extends Command
 {
     protected $signature = 'gmail:import-daily-orders {--date=}';
 
-    private const SYNC_SCAN_LIMIT = 200;
+    private const SYNC_SCAN_LIMIT = 5;
 
     protected $description = 'Tải file CSV daily từ Gmail, import vào orders và xóa file sau khi import thành công.';
 
@@ -42,7 +42,7 @@ class ImportDailyOrdersFromGmail extends Command
 
         foreach ($accounts as $account) {
             try {
-                $synced = $gmailService->syncRecentMessages($account, self::SYNC_SCAN_LIMIT);
+                $synced = $gmailService->syncRecentMessages($account, self::SYNC_SCAN_LIMIT, true);
                 Log::info('Da quet Gmail cho cron import orders', [
                     'gmail_account_id' => $account->id,
                     'email' => $account->email,

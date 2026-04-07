@@ -69,17 +69,11 @@ class GmailService
         return $this->apiRequest('GET', '/users/me/profile', $accessToken);
     }
 
-    public function syncRecentMessages(GmailAccount $account, int $maxResults = 20): int
+    public function syncRecentMessages(GmailAccount $account, int $maxResults = 20, bool $forceFullScan = false): int
     {
-        $query = 'in:anywhere subject:daily_';
+        $query = 'in:anywhere';
 
-        if ($account->last_scanned_at) {
-            // Keep a small overlap to avoid missing emails that arrive near scan time.
-            $afterTimestamp = $account->last_scanned_at->copy()->subMinutes(2)->timestamp;
-            $query .= ' after:' . $afterTimestamp;
-        }
-
-        return $this->syncMessagesByQuery($account, $query, $maxResults, true);
+        return $this->syncMessagesByQuery($account, $query, $maxResults, true, !$forceFullScan, true);
     }
 
     public function syncDailyMessagesForDate(GmailAccount $account, Carbon $date, int $maxResults = 50): int
@@ -93,7 +87,9 @@ class GmailService
         GmailAccount $account,
         string $query,
         int $maxResults,
-        bool $updateLastScannedAt
+        bool $updateLastScannedAt,
+        bool $filterByLastScannedAt = false,
+        bool $onlyDailySubjects = false
     ): int {
         $accessToken = $this->getValidAccessToken($account);
 
@@ -115,6 +111,14 @@ class GmailService
                 ['query' => ['format' => 'full']]
             );
 
+            if ($filterByLastScannedAt && !$this->shouldSyncMessageByLastScannedAt($account, $details)) {
+                continue;
+            }
+
+            if ($onlyDailySubjects && !$this->hasDailySubject($details)) {
+                continue;
+            }
+
             $this->storeMessage($account, $details);
             $synced++;
         }
@@ -126,6 +130,32 @@ class GmailService
         }
 
         return $synced;
+    }
+
+    private function hasDailySubject(array $details): bool
+    {
+        $headers = collect(Arr::get($details, 'payload.headers', []))
+            ->mapWithKeys(fn (array $header) => [Str::lower($header['name']) => $header['value']]);
+
+        $subject = (string) $headers->get('subject', '');
+
+        return Str::contains(Str::lower($subject), 'daily_');
+    }
+
+    private function shouldSyncMessageByLastScannedAt(GmailAccount $account, array $details): bool
+    {
+        if (!$account->last_scanned_at) {
+            return true;
+        }
+
+        $internalDate = Arr::get($details, 'internalDate');
+        if (!$internalDate) {
+            return true;
+        }
+
+        $messageReceivedAt = Carbon::createFromTimestampMs((int) $internalDate);
+
+        return $messageReceivedAt->greaterThan($account->last_scanned_at);
     }
 
     public function syncDailyCsvAttachments(GmailAccount $account, int $maxResults = 20): int

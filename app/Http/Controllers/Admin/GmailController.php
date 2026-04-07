@@ -83,7 +83,7 @@ class GmailController
             ]);
             $account->save();
 
-            $gmailService->syncRecentMessages($account);
+            $gmailService->syncRecentMessages($account, 5, true);
 
             flash()->success(__('Kết nối Gmail thành công.'));
         } catch (\Throwable $exception) {
@@ -104,7 +104,7 @@ class GmailController
         abort_unless($account, 404);
 
         try {
-            $synced = $gmailService->syncRecentMessages($account);
+            $synced = $gmailService->syncRecentMessages($account, 5, true);
             flash()->success(__('Đã đồng bộ :count email gần nhất.', ['count' => $synced]));
         } catch (\Throwable $exception) {
             report($exception);
