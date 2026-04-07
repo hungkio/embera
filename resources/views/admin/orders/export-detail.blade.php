@@ -16,7 +16,7 @@
     <tr>
         <td colspan="3"></td>
         <td colspan="5" style="text-align:center; font-style:italic;">
-            Kèm theo hóa đơn số ………… ngày ……/……/……/2025
+            Kèm theo hóa đơn số ………… ngày ……/……/……/{{ date('Y') }}
         </td>
     </tr>
 

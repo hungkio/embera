@@ -45,15 +45,23 @@
         </div>
     </div>
 
-    <!-- Bảng theo ngày -->
-    <div class="col-lg-2 col-md-6 mb-3">
-        <div class="card h-100">
-            <div class="card-header fw-bold">
-                📅 Doanh thu theo ngày
-                <button class="btn btn-sm btn-success float-right"
-                        onclick="exportTableToExcel('date-table', 'DoanhThu_TheoNgay')">Xuất doanh thu theo ngày
-                </button>
-            </div>
+
+    <ul class="nav nav-tabs mb-0" id="myTab" role="tablist">
+        <li class="nav-item">
+            <a class="nav-link active" id="home-tab" data-toggle="tab" href="#home" role="tab" aria-controls="home" aria-selected="true">📅 Doanh thu theo ngày</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" id="profile-tab" data-toggle="tab" href="#profile" role="tab" aria-controls="profile" aria-selected="false">🏪 Doanh thu theo cửa hàng</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" id="contact-tab" data-toggle="tab" href="#contact" role="tab" aria-controls="contact" aria-selected="false">👤 Doanh thu theo nhân viên</a>
+        </li>
+    </ul>
+    <div class="tab-content w-100" id="myTabContent">
+        <div class="tab-pane card fade show active" id="home" role="tabpanel" aria-labelledby="home-tab">
+            <button class="btn btn-sm m-2 btn-success float-right"
+                    onclick="exportTableToExcel('date-table', 'DoanhThu_TheoNgay')">Xuất doanh thu theo ngày
+            </button>
             <div class="card-body p-2">
                 <div class="scroll-box table-responsive" style="max-height: 800px; overflow-y: auto;">
                     <table class="table table-bordered table-sm mb-0" id="date-table">
@@ -79,18 +87,11 @@
                 </div>
             </div>
         </div>
-    </div>
-
-    <!-- Bảng theo shop -->
-    <div class="col-lg-8 col-md-6 mb-3">
-        <div class="card h-100">
-            <div class="card-header fw-bold">
-                🏪 Doanh thu theo cửa hàng
-                <button class="btn btn-sm btn-success float-right"
-                        onclick="exportTableToExcel('shop-table', 'DoanhThu_Shop')">
-                    Xuất doanh thu theo cửa hàng
-                </button>
-            </div>
+        <div class="tab-pane card fade" id="profile" role="tabpanel" aria-labelledby="profile-tab">
+            <button class="btn btn-sm m-2 btn-success float-right"
+                    onclick="exportTableToExcel('shop-table', 'DoanhThu_Shop')">
+                Xuất doanh thu theo cửa hàng
+            </button>
             <div class="card-body p-2">
                 <div class="scroll-box table-responsive" style="max-height: 800px; overflow-y: auto;">
                     <table class="table table-bordered table-sm mb-0" id="shop-table">
@@ -122,18 +123,11 @@
                 </div>
             </div>
         </div>
-    </div>
-
-    <!-- Bảng theo nhân viên -->
-    <div class="col-lg-2 col-md-6 mb-3">
-        <div class="card h-100">
-            <div class="card-header fw-bold">
-                👤 Doanh thu theo nhân viên
-                <button class="btn btn-sm btn-success float-right"
-                        onclick="exportTableToExcel('staff-table', 'DoanhThu_NhanVien')">
-                    Xuất doanh thu theo nhân viên
-                </button>
-            </div>
+        <div class="tab-pane card fade" id="contact" role="tabpanel" aria-labelledby="contact-tab">
+            <button class="btn btn-sm m-2 btn-success float-right"
+                    onclick="exportTableToExcel('staff-table', 'DoanhThu_NhanVien')">
+                Xuất doanh thu theo nhân viên
+            </button>
             <div class="card-body p-2">
                 <div class="scroll-box table-responsive" style="max-height: 800px; overflow-y: auto;">
                     <table class="table table-bordered table-sm mb-0" id="staff-table">
@@ -158,7 +152,6 @@
             </div>
         </div>
     </div>
-
 </div>
 @endif
 <div class="d-flex justify-content-between mb-3">
@@ -174,6 +167,52 @@
 <x-card>
     {{$dataTable->table()}}
 </x-card>
+
+<div class="modal fade" id="sendEmailModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      
+      <form id="formSendEmail">
+        @csrf
+        <div class="modal-header">
+          <h5 class="modal-title">Send Email</h5>
+          <button type="button" class="close" data-dismiss="modal">&times;</button>
+        </div>
+        
+        <div class="modal-body">
+          
+          <!-- Email -->
+          <div class="form-group">
+            <label>Email nhận <span class="text-danger">*</span></label>
+            <input type="email" name="email" value="goatn4b1@gmail.com" class="form-control" required>
+          </div>
+
+          <!-- Title -->
+          <div class="form-group">
+            <label>Tiêu đề <span class="text-danger">*</span></label>
+            <input type="text" name="title" value="BC doanh thu {{ date('d/m/Y') }}" class="form-control" required>
+          </div>
+
+          <!-- Content -->
+          <div class="form-group">
+            <label>Nội dung (nếu cần)</label>
+            <textarea name="content" class="form-control" rows="4"></textarea>
+          </div>
+          <div class="form-group">
+            <label>Dữ liệu đơn hàng</label>
+            <input type="file" name="original_data" class="form-control" accept=".xlsx,.xls,.csv">
+          </div>
+
+        </div>
+        
+        <div class="modal-footer">
+          <button type="submit" class="btn btn-primary">Send</button>
+        </div>
+      </form>
+      
+    </div>
+  </div>
+</div>
 
 @stop
 
@@ -246,6 +285,36 @@
                 ') }}'
             ].
                 ajax.reload();
+            }
+        });
+    });
+
+    $(document).on('click', '.btn-send-email', function () {
+        $('#sendEmailModal').modal('show');
+    });
+
+    $(document).on('submit', '#formSendEmail', function (e) {
+        e.preventDefault();
+
+        const form = this;
+        const formData = new FormData(form);
+        $('.filters').serializeArray().forEach(function (field) {
+            formData.append(field.name, field.value);
+        });
+
+        $.ajax({
+            url: '/admin/orders/export/send-email',
+            type: 'POST',
+            data: formData,
+            contentType: false,
+            processData: false,
+            success: function (res) {
+                alert('Gửi email thành công!');
+                $('#sendEmailModal').modal('hide');
+                $('#formSendEmail')[0].reset();
+            },
+            error: function (err) {
+                alert('Có lỗi xảy ra!');
             }
         });
     });

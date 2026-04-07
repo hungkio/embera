@@ -4,7 +4,7 @@
         <input type="text" name="date_range" id="date_range" class="form-control"
                value="{{ request('date_range') }}" required autocomplete="off" />
     </div>
-    <div class="col-md-3">
+    <div class="col-md-3 mt-0 mt-md-3">
         <label for="order_amount">Doanh thu mỗi đơn hàng</label>
         <select name="order_amount" id="order_amount" class="form-select select2">
             <option value="">-- Tất cả --</option>
@@ -16,7 +16,7 @@
             </option>
         </select>
     </div>
-    <div class="col-md-3">
+    <div class="col-md-3 mt-0 mt-md-3">
         <label for="shop_name">Đối tác</label>
         <select name="merchant_name[]" id="merchant_name" class="form-select select2" multiple>
             <option value="">-- Tất cả --</option>
@@ -28,7 +28,7 @@
         </select>
     </div>
 
-    <div class="col-md-3">
+    <div class="col-md-3 mt-0 mt-md-3">
         <label for="staff">Nhân viên</label>
         <select name="staff" id="staff" class="form-select select2">
             <option value="">-- Tất cả --</option>
@@ -40,7 +40,7 @@
         </select>
     </div>
 
-    <div class="col-md-3">
+    <div class="col-md-3 mt-0 mt-md-3">
         <label for="shop_type">Loại cửa hàng</label>
         <select name="shop_type" id="shop_type" class="form-select select2">
             <option value="">-- Tất cả --</option>
@@ -52,7 +52,7 @@
         </select>
     </div>
 
-    <div class="col-md-3">
+    <div class="col-md-3 mt-0 mt-md-3">
         <label for="shop_name">Cửa hàng</label>
         <select name="shop_name[]" id="shop_name" class="form-select select2" multiple>
             <option value="">-- Tất cả --</option>
@@ -64,7 +64,7 @@
         </select>
     </div>
 
-    <div class="col-md-3">
+    <div class="col-md-3 mt-0 mt-md-3">
         <label for="region">Miền</label>
         <select name="region" id="region" class="form-select select2">
             <option value="">-- Tất cả --</option>
@@ -76,7 +76,7 @@
         </select>
     </div>
 
-    <div class="col-md-3">
+    <div class="col-md-3 mt-0 mt-md-3">
         <label for="city">Thành phố</label>
         <select name="city" id="city" class="form-select select2">
             <option value="">-- Tất cả --</option>
@@ -88,7 +88,7 @@
         </select>
     </div>
 
-    <div class="col-md-3">
+    <div class="col-md-3 mt-0 mt-md-3">
         <label for="city">Khu vực</label>
         <select name="area" id="area" class="form-select select2">
             <option value="">-- Tất cả --</option>
@@ -100,7 +100,7 @@
         </select>
     </div>
 
-    <div class="col-md-3">
+    <div class="col-md-3 mt-0 mt-md-3">
         <label for="payment_channel">Kênh thanh toán</label>
         <select name="payment_channel" id="payment_channel" class="form-select select2">
             <option value="">-- Tất cả --</option>
