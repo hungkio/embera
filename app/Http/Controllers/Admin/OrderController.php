@@ -14,6 +14,9 @@ use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\Request;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Imports\OrderImport;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Storage;
+use App\DataTables\Export\OrderExportHandler;
 
 class OrderController
 {
@@ -439,6 +442,9 @@ class OrderController
 
     public function exportFull(OrderDataTable $dataTable)
     {
+        // Allow very large exports to run without PHP timeout.
+        set_time_limit(0);
+
         $export = $dataTable->buildExcelFileFull();
 
         $fileName = 'Orders_Full_' . now()->format('Ymd_His') . '.xlsx';
@@ -446,4 +452,75 @@ class OrderController
         return Excel::download($export, $fileName);
     }
 
+    public function sendEmailExport(Request $request, OrderDataTable $dataTable)
+    {
+        $request->validate([
+            'email'   => 'required|email',
+            'title'   => 'required|string',
+            'content' => 'nullable|string',
+        ]);
+
+        // ✅ lấy query giống hệt DataTable export
+        $query = $dataTable->getExportQuery();
+        $data = $query->get();
+
+        // ✅ tránh lỗi Excel khi không có data
+        if ($data->isEmpty()) {
+            $data = collect([
+                ['message' => 'Không có dữ liệu']
+            ]);
+        }
+
+        $fileName = 'Orders_' . now()->format('Ymd_His') . '.xlsx';
+        $filePath = 'exports/' . $fileName;
+
+        // tạo folder nếu chưa có
+        Storage::disk('local')->makeDirectory('exports');
+
+        // ✅ export đúng chuẩn
+        Excel::store(
+            new OrderExportHandler($data),
+            $filePath,
+            'local'
+        );
+
+        $fullPath = Storage::disk('local')->path($filePath);
+
+        // check file tồn tại
+        if (!file_exists($fullPath)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'File chưa được tạo: ' . $fullPath
+            ]);
+        }
+
+        // gửi mail
+        Mail::send([], [], function ($message) use ($request, $fullPath, $fileName) {
+            $message->to($request->email)
+                ->subject($request->title)
+                ->attach($fullPath, [
+                    'as' => $fileName,
+                ]);
+
+            if ($request->filled('content')) {
+                $message->setBody($request->content, 'text/html');
+            }
+
+            if ($request->hasFile('original_data') && $request->file('original_data')->isValid()) {
+                $uploadedFile = $request->file('original_data');
+                $message->attach($uploadedFile->getRealPath(), [
+                    'as' => $uploadedFile->getClientOriginalName(),
+                    'mime' => $uploadedFile->getMimeType(),
+                ]);
+            }
+        });
+
+        // xoá file sau khi gửi
+        Storage::disk('local')->delete($filePath);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Gửi email thành công!'
+        ]);
+    }
 }

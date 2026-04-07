@@ -51,6 +51,15 @@ class OrderDataTable extends BaseDatable
 
         $filters = $this->request->all();
 
+        if (empty($filters['date_from']) && empty($filters['date_to']) && !empty($filters['date_range'])) {
+            if (str_contains($filters['date_range'], ' - ')) {
+                [$filters['date_from'], $filters['date_to']] = explode(' - ', $filters['date_range']);
+            } else {
+                $filters['date_from'] = $filters['date_range'];
+                $filters['date_to'] = $filters['date_range'];
+            }
+        }
+
         if (!empty($filters['date_from']) && !empty($filters['date_to'])) {
             $query->whereBetween('return_time', [
                 Carbon::parse($filters['date_from'])->startOfDay(),
@@ -155,11 +164,41 @@ class OrderDataTable extends BaseDatable
                 window.location.href = url + query;
             }"),
             Button::make('reset')->addClass('btn bg-primary')->text('<i class="fal fa-undo mr-2"></i>' . __('Reset')),
+            Button::raw()->addClass('btn bg-primary btn-send-email')->text('<i class="fal fa-envelope mr-2"></i>' . __('Gửi Email Export')),
         ];
     }
 
     protected function buildExcelFile()
     {
+        $this->request()->merge(['length' => -1]);
+        $source = app()->call([$this, 'query']);
+        $source = $this->applyScopes($source);
+
+        $date = null;
+        if ($this->request()->date_from == $this->request()->date_to) {
+            $date = $this->request()->date_from;
+        }
+        return new OrderExportHandler($source->get(), $date);
+    }
+
+    public function getExportQuery()
+    {
+        $this->request()->merge(['length' => -1]);
+
+        $query = app()->call([$this, 'query']);
+        return $this->applyScopes($query);
+    }
+
+    public function buildExcelFileSendMail()
+    {
+        if (!$this->request()->date_from || !$this->request()->date_to) {
+            $today = now()->format('Y-m-d');
+
+            $this->request()->merge([
+                'date_from' => $today,
+                'date_to'   => $today,
+            ]);
+        }
         $this->request()->merge(['length' => -1]);
         $source = app()->call([$this, 'query']);
         $source = $this->applyScopes($source);

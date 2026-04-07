@@ -10,6 +10,7 @@ use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithMapping;
 use Maatwebsite\Excel\Concerns\WithColumnFormatting;
 use Maatwebsite\Excel\Concerns\WithCustomValueBinder;
+use Maatwebsite\Excel\Concerns\WithChunkReading;
 use PhpOffice\PhpSpreadsheet\Style\NumberFormat;
 use PhpOffice\PhpSpreadsheet\Cell\Cell;
 use PhpOffice\PhpSpreadsheet\Cell\DataType;
@@ -21,9 +22,9 @@ class OrdersFullExport extends DefaultValueBinder implements
     FromQuery,
     WithHeadings,
     WithMapping,
-    ShouldAutoSize,
     WithColumnFormatting,
-    WithCustomValueBinder
+    WithCustomValueBinder,
+    WithChunkReading
 {
     use Exportable;
 
@@ -37,6 +38,11 @@ class OrdersFullExport extends DefaultValueBinder implements
     public function query()
     {
         return $this->query->select($this->columns);
+    }
+
+    public function chunkSize(): int
+    {
+        return 500;
     }
 
     public function headings(): array

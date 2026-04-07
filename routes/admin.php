@@ -184,6 +184,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
             Route::post('/orders/bulk-status', [OrderController::class, 'bulkStatus'])->name('orders.bulk.status');
             Route::post('/orders/import', [OrderController::class, 'import'])->name('orders.import');
             Route::get('/orders/export-full', [OrderController::class, 'exportFull'])->name('orders.export-full');
+            Route::post('/orders/export/send-email', [OrderController::class, 'sendEmailExport'])->name('orders.export.send-email');
 
             // contracts
             Route::get('/contracts', [ContractController::class, 'index'])->name('contracts.index');
