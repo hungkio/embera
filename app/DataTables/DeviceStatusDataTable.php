@@ -9,22 +9,29 @@ use Yajra\DataTables\Html\Column;
 
 class DeviceStatusDataTable extends BaseDatable
 {
+    private const ADVANCED_EXCLUDED_SHOP_CODES = [
+        'VNS011A00607',
+        'VNSBABP00049',
+        'VNSBABP00048',
+        'VNS011A00003',
+    ];
+
     public function dataTable($query)
     {
         return datatables()
-                ->eloquent($query)
-                ->addIndexColumn()
-                ->editColumn('status', fn (DeviceStatus $device) => $device->status === 'online'
-                    ? '<span class="badge bg-success">Online</span>'
-                    : '<span class="badge bg-danger">Offline</span>'
-                )
-                ->filterColumn('shop', function ($query, $keyword) {
-                    $query->whereHas('shop', function ($q) use ($keyword) {
-                        $q->where('name', 'like', "%$keyword%");
-                    });
-                })
-                ->addColumn('shop', fn (DeviceStatus $device) => $device->shop->name ?? '')
-                ->editColumn('updated_at', fn ($d) => $d->updated_at ?->setTimezone('Asia/Ho_Chi_Minh')->format('d/m/Y H:i') ?? '-')
+            ->eloquent($query)
+            ->addIndexColumn()
+            ->editColumn('status', fn (DeviceStatus $device) => $device->status === 'online'
+                ? '<span class="badge bg-success">Online</span>'
+                : '<span class="badge bg-danger">Offline</span>'
+            )
+            ->filterColumn('shop', function ($query, $keyword) {
+                $query->whereHas('shop', function ($q) use ($keyword) {
+                    $q->where('name', 'like', "%$keyword%");
+                });
+            })
+            ->addColumn('shop', fn (DeviceStatus $device) => $device->shop->name ?? '')
+            ->editColumn('updated_at', fn ($d) => $d->updated_at?->setTimezone('Asia/Ho_Chi_Minh')->format('d/m/Y H:i') ?? '-')
             ->rawColumns(['status']);
     }
 
@@ -32,12 +39,29 @@ class DeviceStatusDataTable extends BaseDatable
     {
         $filters = $this->request->all();
         $query = $model->newQuery()->with('shop');
+
         if (!empty($filters['shop_name'])) {
             $query->whereHas('shop', function ($q) use ($filters) {
                 $q->whereIn('name', $filters['shop_name']);
             });
         }
-        return $query; // Hiển thị từ ID 1 trở đi
+
+        if (!empty($filters['shop_keyword'])) {
+            $query->whereHas('shop', function ($q) use ($filters) {
+                $q->where('name', 'like', '%' . $filters['shop_keyword'] . '%')
+                    ->orWhere('code', 'like', '%' . $filters['shop_keyword'] . '%');
+            });
+        }
+
+        if (($filters['filter_mode'] ?? 'default') === 'advanced') {
+            $query->whereNotIn('shop_code', self::ADVANCED_EXCLUDED_SHOP_CODES);
+        }
+
+        if (!empty($filters['status'])) {
+            $query->where('status', $filters['status']);
+        }
+
+        return $query;
     }
 
     protected function getColumns(): array
@@ -53,7 +77,7 @@ class DeviceStatusDataTable extends BaseDatable
     protected function getBuilderParameters(): array
     {
         return [
-            'order' => [1, 'desc'], // sắp xếp theo ID tăng dần
+            'order' => [1, 'desc'],
             'pageLength' => 25,
             'stateSave' => false,
             'destroy' => true,
@@ -66,7 +90,7 @@ class DeviceStatusDataTable extends BaseDatable
             Button::make('reload')
                 ->addClass('btn bg-primary')
                 ->text('<i class="fal fa-sync-alt mr-2"></i>' . __('Làm mới')),
-            Button::make('export')->addClass('btn btn-primary')->text('<i class="fal fa-download mr-2"></i>'.__('Xuất')),
+            Button::make('export')->addClass('btn btn-primary')->text('<i class="fal fa-download mr-2"></i>' . __('Xuất')),
         ];
     }
 
