@@ -14,6 +14,7 @@ class DeviceStatusDataTable extends BaseDatable
         'VNSBABP00049',
         'VNSBABP00048',
         'VNS011A00003',
+        'CNSE09727',
     ];
 
     public function dataTable($query)
@@ -54,7 +55,7 @@ class DeviceStatusDataTable extends BaseDatable
         }
 
         if (($filters['filter_mode'] ?? 'default') === 'advanced') {
-            $query->whereNotIn('shop_code', self::ADVANCED_EXCLUDED_SHOP_CODES);
+            $query->whereNotIn('code', self::ADVANCED_EXCLUDED_SHOP_CODES);
         }
 
         if (!empty($filters['status'])) {
