@@ -32,6 +32,7 @@ class DeviceStatusDataTable extends BaseDatable
                     $q->where('name', 'like', "%$keyword%");
                 });
             })
+            ->addColumn('shop_id', fn (DeviceStatus $device) => $device->shop_code ?? '')
             ->addColumn('shop', fn (DeviceStatus $device) => $device->shop->name ?? '')
             ->editColumn('updated_at', fn ($d) => $d->updated_at?->setTimezone('Asia/Ho_Chi_Minh')->format('d/m/Y H:i') ?? '-')
             ->rawColumns(['status']);
@@ -71,6 +72,7 @@ class DeviceStatusDataTable extends BaseDatable
         return [
             Column::make('code')->title('Mã thiết bị'),
             Column::make('status')->title('Trạng thái'),
+            Column::computed('shop_id')->title('Shop ID')->orderable(false)->searchable(false),
             Column::make('shop')->title('Cửa hàng'),
             Column::make('updated_at')->title('Thời gian cập nhật'),
         ];
