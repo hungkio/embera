@@ -117,7 +117,9 @@ class OrderController
                 'sharing_percent' => $sharing,
                 'sharing_revenue' => $sharing_revenue,
             ];
-        })->values();
+        })
+        ->sortByDesc('revenue')
+        ->values();
 
         $byEmployee = $orders->groupBy('employee_name')->map(function ($group) {
             return [
