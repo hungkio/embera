@@ -17,7 +17,7 @@ class DeviceRevenueReportController extends Controller
     private const WATCH_REVENUE = 100000;
     private const KPI_REVENUE = 200000;
     private const REPORT_PAYMENT_CHANNELS = ['balance', 'mbpay'];
-    private const EXCLUDED_ORDER_AMOUNTS = [240000, 360000];
+    private const EXCLUDED_ORDER_AMOUNTS = [240000, 364000];
 
     public function index(Request $request): JsonResponse
     {
