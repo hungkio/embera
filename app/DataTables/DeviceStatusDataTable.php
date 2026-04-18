@@ -9,6 +9,10 @@ use Yajra\DataTables\Html\Column;
 
 class DeviceStatusDataTable extends BaseDatable
 {
+    private const PRODUCT_TYPE_8_PIN = '8_pin';
+    private const PRODUCT_TYPE_8_PIN_SCREEN = '8_pin_screen';
+    private const PRODUCT_TYPE_32_PIN = '32_pin';
+
     private const ADVANCED_EXCLUDED_SHOP_CODES = [
         'VNS011A00607',
         'VNSBABP00049',
@@ -64,7 +68,30 @@ class DeviceStatusDataTable extends BaseDatable
             $query->where('status', $filters['status']);
         }
 
+        if (!empty($filters['product_type'])) {
+            $this->applyProductTypeFilter($query, $filters['product_type']);
+        }
+
         return $query;
+    }
+
+    private function applyProductTypeFilter($query, string $productType): void
+    {
+        if ($productType === self::PRODUCT_TYPE_8_PIN) {
+            $query->where('code', 'like', 'VN%')
+                ->where('code', 'not like', 'VNS%');
+            return;
+        }
+
+        if ($productType === self::PRODUCT_TYPE_8_PIN_SCREEN) {
+            $query->where('code', 'like', 'VNS%')
+                ->where('code', 'not like', 'VNSBABP%');
+            return;
+        }
+
+        if ($productType === self::PRODUCT_TYPE_32_PIN) {
+            $query->where('code', 'like', 'VNSBABP%');
+        }
     }
 
     protected function getColumns(): array

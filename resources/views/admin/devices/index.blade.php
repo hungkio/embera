@@ -56,6 +56,15 @@
                 <option value="offline" {{ request('status') === 'offline' ? 'selected' : '' }}>Offline</option>
             </select>
         </div>
+        <div class="col-md-2">
+            <label for="product_type">Sản phẩm</label>
+            <select name="product_type" id="product_type" class="form-control">
+                <option value="">-- Tất cả --</option>
+                <option value="8_pin" {{ request('product_type') === '8_pin' ? 'selected' : '' }}>VNxxxxx - 8 pin</option>
+                <option value="8_pin_screen" {{ request('product_type') === '8_pin_screen' ? 'selected' : '' }}>VNSxxxxx - 8 pin có màn</option>
+                <option value="32_pin" {{ request('product_type') === '32_pin' ? 'selected' : '' }}>VNSBABPxxxxx - 32 pin</option>
+            </select>
+        </div>
         <div class="col-md-3">
             <label for="shop_keyword">Cửa hàng</label>
             <input type="text" name="shop_keyword" id="shop_keyword" class="form-control" value="{{ request('shop_keyword') }}" placeholder="Nhập mã/tên cửa hàng, ví dụ MB-HN">
