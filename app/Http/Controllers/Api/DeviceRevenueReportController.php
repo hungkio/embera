@@ -16,6 +16,8 @@ class DeviceRevenueReportController extends Controller
     private const GOOD_REVENUE = 300000;
     private const WATCH_REVENUE = 100000;
     private const KPI_REVENUE = 200000;
+    private const REPORT_PAYMENT_CHANNELS = ['balance', 'mbpay'];
+    private const EXCLUDED_ORDER_AMOUNTS = [240000, 360000];
 
     public function index(Request $request): JsonResponse
     {
@@ -126,18 +128,20 @@ class DeviceRevenueReportController extends Controller
 
         $query = Order::query()
             ->whereNotNull('rental_equipment_id')
-            ->whereNotNull('return_time')
+            ->whereNotNull('payment_time')
             ->where('order_amount', '>', 0)
-            ->whereBetween('return_time', [$start, $end]);
+            ->whereNotIn('order_amount', self::EXCLUDED_ORDER_AMOUNTS)
+            ->whereIn('payment_channels', self::REPORT_PAYMENT_CHANNELS)
+            ->whereBetween('payment_time', [$start, $end]);
 
         $this->applyOrderFilters($query, $request);
 
         return $query
             ->groupBy('rental_equipment_id')
             ->selectRaw('rental_equipment_id')
-            ->selectRaw('SUM(CASE WHEN YEAR(return_time) = ? AND MONTH(return_time) = ? THEN order_amount ELSE 0 END) as doanh_thu_t1', [$months[0]->year, $months[0]->month])
-            ->selectRaw('SUM(CASE WHEN YEAR(return_time) = ? AND MONTH(return_time) = ? THEN order_amount ELSE 0 END) as doanh_thu_t2', [$months[1]->year, $months[1]->month])
-            ->selectRaw('SUM(CASE WHEN YEAR(return_time) = ? AND MONTH(return_time) = ? THEN order_amount ELSE 0 END) as doanh_thu_t3', [$months[2]->year, $months[2]->month])
+            ->selectRaw('SUM(CASE WHEN YEAR(payment_time) = ? AND MONTH(payment_time) = ? THEN order_amount ELSE 0 END) as doanh_thu_t1', [$months[0]->year, $months[0]->month])
+            ->selectRaw('SUM(CASE WHEN YEAR(payment_time) = ? AND MONTH(payment_time) = ? THEN order_amount ELSE 0 END) as doanh_thu_t2', [$months[1]->year, $months[1]->month])
+            ->selectRaw('SUM(CASE WHEN YEAR(payment_time) = ? AND MONTH(payment_time) = ? THEN order_amount ELSE 0 END) as doanh_thu_t3', [$months[2]->year, $months[2]->month])
             ->get()
             ->keyBy('rental_equipment_id')
             ->map(fn ($item) => [
@@ -176,9 +180,11 @@ class DeviceRevenueReportController extends Controller
     {
         $query = Order::query()
             ->whereNotNull('rental_equipment_id')
-            ->whereNotNull('return_time')
+            ->whereNotNull('payment_time')
             ->where('order_amount', '>', 0)
-            ->whereBetween('return_time', [$start->copy()->startOfDay(), $end->copy()->endOfDay()]);
+            ->whereNotIn('order_amount', self::EXCLUDED_ORDER_AMOUNTS)
+            ->whereIn('payment_channels', self::REPORT_PAYMENT_CHANNELS)
+            ->whereBetween('payment_time', [$start->copy()->startOfDay(), $end->copy()->endOfDay()]);
 
         $this->applyOrderFilters($query, $request);
 
@@ -192,13 +198,15 @@ class DeviceRevenueReportController extends Controller
     {
         $query = Order::query()
             ->whereNotNull('rental_equipment_id')
-            ->whereNotNull('return_time')
-            ->where('order_amount', '>', 0);
+            ->whereNotNull('payment_time')
+            ->where('order_amount', '>', 0)
+            ->whereNotIn('order_amount', self::EXCLUDED_ORDER_AMOUNTS)
+            ->whereIn('payment_channels', self::REPORT_PAYMENT_CHANNELS);
 
         $this->applyOrderFilters($query, $request);
 
         return $query
-            ->orderByDesc('return_time')
+            ->orderByDesc('payment_time')
             ->get()
             ->unique('rental_equipment_id')
             ->keyBy('rental_equipment_id');
