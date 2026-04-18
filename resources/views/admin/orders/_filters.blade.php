@@ -1,6 +1,6 @@
 <form method="GET" action="{{ route('admin.orders.index') }}" class="row g-3 mb-4 align-items-end filters">
     <div class="col-md-6">
-        <label for="date_range">Khoảng ngày thuê <span class="text-danger">*</span></label>
+        <label for="date_range">Khoảng ngày thanh toán <span class="text-danger">*</span></label>
         <input type="text" name="date_range" id="date_range" class="form-control"
                value="{{ request('date_range') }}" required autocomplete="off" />
     </div>

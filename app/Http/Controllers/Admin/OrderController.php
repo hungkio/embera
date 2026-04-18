@@ -22,6 +22,9 @@ class OrderController
 {
     use AuthorizesRequests;
 
+    private const ACCOUNTING_PAYMENT_CHANNELS = ['balance', 'mbpay'];
+    private const EXCLUDED_ACCOUNTING_ORDER_AMOUNTS = [24000, 240000, 360000];
+
     public function index(OrderDataTable $dataTable, Request $request)
     {
         $dateRange = $request->get('date_range');
@@ -38,17 +41,18 @@ class OrderController
         ]);
 
         // Danh sách dropdown filter mới
-        $employeeList = Order::distinct()->pluck('employee_name')->filter()->sort()->toArray();
-        $shopList = Order::distinct()->pluck('rental_shop')->filter()->sort()->toArray();
-        $shopType = Order::distinct()->pluck('rental_shop_type')->filter()->sort()->toArray();
-        $merchantList = Order::distinct()->pluck('merchant_name')->filter()->sort()->toArray();
-        $regionList = Order::distinct()->pluck('region')->filter()->sort()->toArray();
-        $cityList = Order::distinct()->pluck('city')->filter()->sort()->toArray();
-        $areaList = Order::distinct()->pluck('area')->filter()->sort()->toArray();
-        $paymentChannelList = Order::distinct()->pluck('payment_channels')->filter()->sort()->toArray();
+        $accountingOrders = $this->applyAccountingOrderScope(Order::query());
+        $employeeList = (clone $accountingOrders)->distinct()->pluck('employee_name')->filter()->sort()->toArray();
+        $shopList = (clone $accountingOrders)->distinct()->pluck('rental_shop')->filter()->sort()->toArray();
+        $shopType = (clone $accountingOrders)->distinct()->pluck('rental_shop_type')->filter()->sort()->toArray();
+        $merchantList = (clone $accountingOrders)->distinct()->pluck('merchant_name')->filter()->sort()->toArray();
+        $regionList = (clone $accountingOrders)->distinct()->pluck('region')->filter()->sort()->toArray();
+        $cityList = (clone $accountingOrders)->distinct()->pluck('city')->filter()->sort()->toArray();
+        $areaList = (clone $accountingOrders)->distinct()->pluck('area')->filter()->sort()->toArray();
+        $paymentChannelList = (clone $accountingOrders)->distinct()->pluck('payment_channels')->filter()->sort()->toArray();
 
-        $query = Order::query()
-            ->whereBetween('return_time', [
+        $query = $this->applyAccountingOrderScope(Order::query())
+            ->whereBetween('orders.payment_time', [
                 Carbon::parse($date_from)->startOfDay(),
                 Carbon::parse($date_to)->endOfDay(),
             ])->leftJoin('shops', 'shops.shop_name', '=', 'orders.rental_shop');
@@ -75,10 +79,10 @@ class OrderController
             $query->where('orders.area', $request->area);
         }
         if ($request->filled('payment_channel')) {
-            $query->where('payment_channels', $request->payment_channel);
+            $query->where('orders.payment_channels', $request->payment_channel);
         }
         if ($request->filled('merchant_name')) {
-            $query->where('orders.merchant_name', $request->merchant_name);
+            $query->whereIn('orders.merchant_name', array_filter((array) $request->merchant_name));
         }
         if ($request->order_amount) {
             if ($request->order_amount == 1) {
@@ -91,7 +95,7 @@ class OrderController
         }
 
         $orders = (clone $query)->select('orders.*', 'shops.share_rate_type', 'shops.share_rate')
-            ->orderByDesc('return_time')->get();
+            ->orderByDesc('orders.payment_time')->get();
         $totalRevenue = $orders->sum('order_amount');
 
         $byShop = $orders->groupBy('rental_shop')->map(function ($group) {
@@ -128,7 +132,7 @@ class OrderController
             ];
         })->values();
 
-        $byDate = $orders->groupBy(fn($o) => Carbon::parse($o->return_time)->format('Y-m-d'))
+        $byDate = $orders->groupBy(fn($o) => Carbon::parse($o->payment_time)->format('Y-m-d'))
             ->map(function ($group, $date) {
                 return [
                     'date' => $date,
@@ -156,6 +160,15 @@ class OrderController
                 'staff', 'shop_type', 'shop_name', 'region', 'city', 'payment_channel', 'date_from', 'date_to'
             ]),
         ]);
+    }
+
+    private function applyAccountingOrderScope($query)
+    {
+        return $query
+            ->whereNotNull('orders.payment_time')
+            ->where('orders.order_amount', '>', 0)
+            ->whereNotIn('orders.order_amount', self::EXCLUDED_ACCOUNTING_ORDER_AMOUNTS)
+            ->whereIn('orders.payment_channels', self::ACCOUNTING_PAYMENT_CHANNELS);
     }
 
     public function import(Request $request)

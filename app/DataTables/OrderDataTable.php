@@ -13,6 +13,9 @@ use App\DataTables\Export\OrdersFullExport;
 
 class OrderDataTable extends BaseDatable
 {
+    private const ACCOUNTING_PAYMENT_CHANNELS = ['balance', 'mbpay'];
+    private const EXCLUDED_ACCOUNTING_ORDER_AMOUNTS = [24000, 240000, 360000];
+
     public function dataTable($query)
     {
         return datatables()
@@ -47,7 +50,7 @@ class OrderDataTable extends BaseDatable
 
     public function query(Order $model)
     {
-        $query = $model->newQuery();
+        $query = $this->applyAccountingOrderScope($model->newQuery());
 
         $filters = $this->request->all();
 
@@ -61,7 +64,7 @@ class OrderDataTable extends BaseDatable
         }
 
         if (!empty($filters['date_from']) && !empty($filters['date_to'])) {
-            $query->whereBetween('return_time', [
+            $query->whereBetween('payment_time', [
                 Carbon::parse($filters['date_from'])->startOfDay(),
                 Carbon::parse($filters['date_to'])->endOfDay(),
             ]);
@@ -103,10 +106,19 @@ class OrderDataTable extends BaseDatable
             $query->where('area', $filters['area']);
         }
         if (@$filters['merchant_name']) {
-            $query->where('merchant_name', $filters['merchant_name']);
+            $query->whereIn('merchant_name', array_filter((array) $filters['merchant_name']));
         }
 
         return $query;
+    }
+
+    private function applyAccountingOrderScope($query)
+    {
+        return $query
+            ->whereNotNull('payment_time')
+            ->where('order_amount', '>', 0)
+            ->whereNotIn('order_amount', self::EXCLUDED_ACCOUNTING_ORDER_AMOUNTS)
+            ->whereIn('payment_channels', self::ACCOUNTING_PAYMENT_CHANNELS);
     }
 
     protected function getColumns(): array
