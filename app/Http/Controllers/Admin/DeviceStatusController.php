@@ -12,13 +12,14 @@ class DeviceStatusController extends Controller
     public function index(DeviceStatusDataTable $dataTable, Request $request)
     {
         return $dataTable->with([
-            'filters' => $request->only(['filter_mode', 'status', 'shop_keyword', 'product_type']),
+            'filters' => $request->only(['filter_mode', 'status', 'shop_keyword', 'product_type', 'assignment_status']),
         ])->render('admin.devices.index', [
             'filters' => $request->only([
                 'filter_mode',
                 'status',
                 'shop_keyword',
                 'product_type',
+                'assignment_status',
             ]),
         ]);
     }

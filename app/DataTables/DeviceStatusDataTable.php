@@ -9,6 +9,8 @@ use Yajra\DataTables\Html\Column;
 
 class DeviceStatusDataTable extends BaseDatable
 {
+    private const ASSIGNMENT_ASSIGNED = 'assigned';
+    private const ASSIGNMENT_UNASSIGNED = 'unassigned';
     private const PRODUCT_TYPE_8_PIN = '8_pin';
     private const PRODUCT_TYPE_8_PIN_SCREEN = '8_pin_screen';
     private const PRODUCT_TYPE_32_PIN = '32_pin';
@@ -72,7 +74,27 @@ class DeviceStatusDataTable extends BaseDatable
             $this->applyProductTypeFilter($query, $filters['product_type']);
         }
 
+        if (!empty($filters['assignment_status'])) {
+            $this->applyAssignmentStatusFilter($query, $filters['assignment_status']);
+        }
+
         return $query;
+    }
+
+    private function applyAssignmentStatusFilter($query, string $assignmentStatus): void
+    {
+        if ($assignmentStatus === self::ASSIGNMENT_ASSIGNED) {
+            $query->whereNotNull('shop_code')
+                ->where('shop_code', '!=', '');
+            return;
+        }
+
+        if ($assignmentStatus === self::ASSIGNMENT_UNASSIGNED) {
+            $query->where(function ($subQuery) {
+                $subQuery->whereNull('shop_code')
+                    ->orWhere('shop_code', '');
+            });
+        }
     }
 
     private function applyProductTypeFilter($query, string $productType): void

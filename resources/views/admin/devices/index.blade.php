@@ -65,6 +65,14 @@
                 <option value="32_pin" {{ request('product_type') === '32_pin' ? 'selected' : '' }}>VNSBABPxxxxx - 32 pin</option>
             </select>
         </div>
+        <div class="col-md-2">
+            <label for="assignment_status">Trạng thái đặt</label>
+            <select name="assignment_status" id="assignment_status" class="form-control">
+                <option value="">-- Tất cả --</option>
+                <option value="assigned" {{ request('assignment_status') === 'assigned' ? 'selected' : '' }}>Đã đặt</option>
+                <option value="unassigned" {{ request('assignment_status') === 'unassigned' ? 'selected' : '' }}>Chưa đặt</option>
+            </select>
+        </div>
         <div class="col-md-3">
             <label for="shop_keyword">Cửa hàng</label>
             <input type="text" name="shop_keyword" id="shop_keyword" class="form-control" value="{{ request('shop_keyword') }}" placeholder="Nhập mã/tên cửa hàng, ví dụ MB-HN">
