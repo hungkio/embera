@@ -32,6 +32,17 @@ class ContractDataTable extends BaseDatable
                     return '<a href="' . $url . '" target="_blank">' . e($shop->shop_name) . '</a>';
                 })->implode('<br>');
             })
+            ->addColumn('shop_address', function (Contract $c) {
+                if ($c->shops->isEmpty()) {
+                    return '-';
+                }
+
+                return $c->shops
+                    ->pluck('address')
+                    ->filter()
+                    ->map(fn ($address) => e($address))
+                    ->implode('<br>');
+            })
             ->editColumn('contract_number', fn(Contract $c) => e($c->full_contract_number))
             ->editColumn('sign_date', fn(Contract $c) => optional($c->sign_date)->format('d/m/Y'))
             ->editColumn('expired_date', fn(Contract $c) => optional($c->expired_date)->format('d/m/Y'))
@@ -66,6 +77,7 @@ class ContractDataTable extends BaseDatable
             ->editColumn('created_at', fn(Contract $c) => optional($c->created_at)->format('d/m/Y H:i'))
             ->filterColumn('contract_number', fn($query, $keyword) => $query->where('contract_number', 'like', "%$keyword%"))
             ->filterColumn('email', fn($query, $keyword) => $query->where('email', 'like', "%$keyword%"))
+            ->filterColumn('phone', fn($query, $keyword) => $query->where('phone', 'like', "%$keyword%"))
             ->filterColumn('customer_name', fn($query, $keyword) => $query->where('customer_name', 'like', "%$keyword%"))
             ->filterColumn('status', function ($query, $keyword) {
                 $statusMap = [
@@ -84,6 +96,11 @@ class ContractDataTable extends BaseDatable
             ->filterColumn('shop_name', function ($query, $keyword) {
                 $query->whereHas('shops', function ($q) use ($keyword) {
                     $q->where('shop_name', 'like', "%$keyword%");
+                });
+            })
+            ->filterColumn('shop_address', function ($query, $keyword) {
+                $query->whereHas('shops', function ($q) use ($keyword) {
+                    $q->where('address', 'like', "%$keyword%");
                 });
             })
             ->orderColumn('shop_name', function ($query, $direction) {
@@ -118,7 +135,9 @@ class ContractDataTable extends BaseDatable
             Column::checkbox(''),
             Column::make('merchant')->title('Merchant')->addClass('text-center'),
             Column::make('shop_name')->title('Cửa hàng')->data('shop_name'),
+            Column::make('shop_address')->title('Địa chỉ cửa hàng')->data('shop_address'),
             Column::make('customer_name')->title('Tên khách hàng'),
+            Column::make('phone')->title('SĐT'),
             Column::make('contract_number')->title('Mã hợp đồng'),
             Column::make('business_registration')->title('GĐKKD'),
             Column::make('sign_date')->title('Ngày ký'),
