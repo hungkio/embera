@@ -34,7 +34,7 @@ class OrderExportEmailService
         Storage::disk('local')->makeDirectory('exports');
 
         Excel::store(
-            new OrderExportHandler($orders, $date),
+            new OrderExportHandler($orders, $date, $date, $date),
             $filePath,
             'local'
         );

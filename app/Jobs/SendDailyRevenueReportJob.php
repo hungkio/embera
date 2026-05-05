@@ -55,8 +55,9 @@ class SendDailyRevenueReportJob implements ShouldQueue
             $filename     = 'Bao_cao_doanh_thu_' . $dateVN->format('Y_m_d') . '.xlsx';
             $relativePath = 'reports/' . $filename;
 
+            $dateStr = $dateVN->toDateString();
             // ✅ Lưu file Excel vào disk local
-            Excel::store(new OrderExportHandler($orders), $relativePath, 'local');
+            Excel::store(new OrderExportHandler($orders, $dateStr, $dateStr, $dateStr), $relativePath, 'local');
 
             // Kiểm tra file có tồn tại
             $absolutePath = storage_path('app/' . $relativePath);

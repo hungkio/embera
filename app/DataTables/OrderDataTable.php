@@ -61,6 +61,9 @@ class OrderDataTable extends BaseDatable
                 $filters['date_from'] = $filters['date_range'];
                 $filters['date_to'] = $filters['date_range'];
             }
+            $filters['date_from'] = trim($filters['date_from']);
+            $filters['date_to'] = trim($filters['date_to']);
+            $this->request->merge(['date_from' => $filters['date_from'], 'date_to' => $filters['date_to']]);
         }
 
         if (!empty($filters['date_from']) && !empty($filters['date_to'])) {
@@ -190,7 +193,7 @@ class OrderDataTable extends BaseDatable
         if ($this->request()->date_from == $this->request()->date_to) {
             $date = $this->request()->date_from;
         }
-        return new OrderExportHandler($source->get(), $date);
+        return new OrderExportHandler($source->get(), $date, $this->request()->date_from, $this->request()->date_to);
     }
 
     public function getExportQuery()
@@ -219,7 +222,7 @@ class OrderDataTable extends BaseDatable
         if ($this->request()->date_from == $this->request()->date_to) {
             $date = $this->request()->date_from;
         }
-        return new OrderExportHandler($source->get(), $date);
+        return new OrderExportHandler($source->get(), $date, $this->request()->date_from, $this->request()->date_to);
     }
 
     public function buildExcelFileFull()

@@ -5,8 +5,10 @@
     <tr>
         <td colspan="3"></td>
         <td colspan="5" style="text-align:center; font-weight:bold; font-size:16px;">
-            @if($date)
+            @if(isset($date) && $date)
                 BẢNG KÊ CHI TIẾT GIAO DỊCH THUÊ PIN NGÀY {{ \Illuminate\Support\Carbon::parse($date)->format('d') }} THÁNG {{ \Illuminate\Support\Carbon::parse($date)->format('m') }} NĂM {{ \Illuminate\Support\Carbon::parse($date)->format('Y') }}
+            @elseif(isset($date_from) && isset($date_to) && $date_from && $date_to)
+                BẢNG KÊ CHI TIẾT GIAO DỊCH THUÊ PIN TỪ NGÀY {{ \Illuminate\Support\Carbon::parse($date_from)->format('d/m/Y') }} ĐẾN NGÀY {{ \Illuminate\Support\Carbon::parse($date_to)->format('d/m/Y') }}
             @else
                 BẢNG KÊ CHI TIẾT GIAO DỊCH THUÊ PIN NGÀY {{ date('d') }} THÁNG {{ date('m') }} NĂM {{ date('Y') }}
             @endif

@@ -6,89 +6,41 @@ use Carbon\Carbon;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Collection;
 use Maatwebsite\Excel\Concerns\Exportable;
-use Maatwebsite\Excel\Concerns\WithMultipleSheets;
 use Maatwebsite\Excel\Concerns\ShouldAutoSize;
 
-class OrderExportHandler implements WithMultipleSheets, ShouldAutoSize
+class OrderExportHandler implements \Maatwebsite\Excel\Concerns\FromView, ShouldAutoSize
 {
     use Exportable;
     protected $collection;
     protected $date;
+    protected $date_from;
+    protected $date_to;
 
     /**
      * OrderExportHandler constructor.
      *
      * @param Collection $collection
      */
-    public function __construct(Collection $collection, $date = null)
+    public function __construct(Collection $collection, $date = null, $date_from = null, $date_to = null)
     {
         $this->collection = $collection;
         $this->date = $date;
+        $this->date_from = $date_from;
+        $this->date_to = $date_to;
     }
 
     /**
-     * Define the sheets for the Excel file.
+     * Define the view for the Excel file.
      *
-     * @return array
+     * @return View
      */
-    public function sheets(): array
-    {
-        $groupedByDate = $this->collection->groupBy(function ($item) {
-            return Carbon::parse($item['return_time'])->toDateString();
-        })->sortKeys();
-
-        $data = [];
-        foreach ($groupedByDate as $date => $collection) {
-            $data[$date] = new OrderDetailsSheet($collection, $date);
-        }
-
-        return $data ?? null;
-//        return [
-//            'Order Details' => new OrderDetailsSheet($this->collection, $this->date),
-//            'Transaction Summary' => new TransactionSummarySheet($this->collection),
-//        ];
-    }
-}
-
-/**
- * Class for the Order Details sheet
- */
-class OrderDetailsSheet implements ShouldAutoSize, \Maatwebsite\Excel\Concerns\FromView
-{
-    protected $collection;
-    protected $date = null;
-
-    public function __construct(Collection $collection, $date)
-    {
-        $this->collection = $collection;
-        $this->date = $date;
-    }
-
     public function view(): View
     {
         return view('admin.orders.export-detail', [
             'orders' => $this->collection,
             'date' => $this->date,
-        ]);
-    }
-}
-
-/**
- * Class for the Transaction Summary sheet
- */
-class TransactionSummarySheet implements ShouldAutoSize, \Maatwebsite\Excel\Concerns\FromView
-{
-    protected $collection;
-
-    public function __construct(Collection $collection)
-    {
-        $this->collection = $collection;
-    }
-
-    public function view(): View
-    {
-        return view('admin.orders.export-summary', [
-            'orders' => $this->collection,
+            'date_from' => $this->date_from,
+            'date_to' => $this->date_to,
         ]);
     }
 }

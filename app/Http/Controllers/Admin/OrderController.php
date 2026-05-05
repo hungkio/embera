@@ -479,6 +479,10 @@ class OrderController
         $query = $dataTable->getExportQuery();
         $data = $query->get();
 
+        $date_from = $request->date_from;
+        $date_to = $request->date_to;
+        $date = ($date_from == $date_to) ? $date_from : null;
+
         // ✅ tránh lỗi Excel khi không có data
         if ($data->isEmpty()) {
             $data = collect([
@@ -494,7 +498,7 @@ class OrderController
 
         // ✅ export đúng chuẩn
         Excel::store(
-            new OrderExportHandler($data),
+            new OrderExportHandler($data, $date, $date_from, $date_to),
             $filePath,
             'local'
         );
