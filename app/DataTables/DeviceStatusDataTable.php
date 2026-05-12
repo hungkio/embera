@@ -90,14 +90,18 @@ class DeviceStatusDataTable extends BaseDatable
     private function applyShopLocationFilter($query, string $shopLocation): void
     {
         if ($shopLocation === self::SHOP_LOCATION_HANOI) {
-            $query->where('shop_code', 'like', '%MB-HN-%');
+            $query->whereHas('shop', function ($q) {
+                $q->where('name', 'like', '%MB-HN-%')
+                    ->orWhere('code', 'like', '%MB-HN-%');
+            });
             return;
         }
 
         if ($shopLocation === self::SHOP_LOCATION_PROVINCE) {
-            $query->whereNotNull('shop_code')
-                ->where('shop_code', '!=', '')
-                ->where('shop_code', 'not like', '%MB-HN-%');
+            $query->whereHas('shop', function ($q) {
+                $q->where('name', 'not like', '%MB-HN-%')
+                    ->where('code', 'not like', '%MB-HN-%');
+            });
         }
     }
 
