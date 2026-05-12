@@ -14,6 +14,8 @@ class DeviceStatusDataTable extends BaseDatable
     private const PRODUCT_TYPE_8_PIN = '8_pin';
     private const PRODUCT_TYPE_8_PIN_SCREEN = '8_pin_screen';
     private const PRODUCT_TYPE_32_PIN = '32_pin';
+    private const SHOP_LOCATION_HANOI = 'hanoi';
+    private const SHOP_LOCATION_PROVINCE = 'province';
 
     private const ADVANCED_EXCLUDED_SHOP_CODES = [
         'VNS011A00607',
@@ -78,7 +80,25 @@ class DeviceStatusDataTable extends BaseDatable
             $this->applyAssignmentStatusFilter($query, $filters['assignment_status']);
         }
 
+        if (!empty($filters['shop_location'])) {
+            $this->applyShopLocationFilter($query, $filters['shop_location']);
+        }
+
         return $query;
+    }
+
+    private function applyShopLocationFilter($query, string $shopLocation): void
+    {
+        if ($shopLocation === self::SHOP_LOCATION_HANOI) {
+            $query->where('shop_code', 'like', '%MB-HN-%');
+            return;
+        }
+
+        if ($shopLocation === self::SHOP_LOCATION_PROVINCE) {
+            $query->whereNotNull('shop_code')
+                ->where('shop_code', '!=', '')
+                ->where('shop_code', 'not like', '%MB-HN-%');
+        }
     }
 
     private function applyAssignmentStatusFilter($query, string $assignmentStatus): void

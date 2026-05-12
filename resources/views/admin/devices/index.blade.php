@@ -73,6 +73,14 @@
                 <option value="unassigned" {{ request('assignment_status') === 'unassigned' ? 'selected' : '' }}>Chưa đặt</option>
             </select>
         </div>
+        <div class="col-md-2">
+            <label for="shop_location">Khu vực</label>
+            <select name="shop_location" id="shop_location" class="form-control">
+                <option value="">-- Tất cả --</option>
+                <option value="hanoi" {{ request('shop_location') === 'hanoi' ? 'selected' : '' }}>Hà Nội</option>
+                <option value="province" {{ request('shop_location') === 'province' ? 'selected' : '' }}>Tỉnh</option>
+            </select>
+        </div>
         <div class="col-md-3">
             <label for="shop_keyword">Cửa hàng</label>
             <input type="text" name="shop_keyword" id="shop_keyword" class="form-control" value="{{ request('shop_keyword') }}" placeholder="Nhập mã/tên cửa hàng, ví dụ MB-HN">
