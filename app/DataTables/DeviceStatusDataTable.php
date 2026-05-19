@@ -40,8 +40,14 @@ class DeviceStatusDataTable extends BaseDatable
                     $q->where('name', 'like', "%$keyword%");
                 });
             })
+            ->filterColumn('contract_phone', function ($query, $keyword) {
+                $query->whereHas('shop.contractShop.contract', function ($q) use ($keyword) {
+                    $q->where('phone', 'like', "%$keyword%");
+                });
+            })
             ->addColumn('shop_id', fn (DeviceStatus $device) => $device->shop_code ?? '')
             ->addColumn('shop', fn (DeviceStatus $device) => $device->shop->name ?? '')
+            ->addColumn('contract_phone', fn (DeviceStatus $device) => $device->shop?->contractShop?->contract?->phone ?? '')
             ->editColumn('updated_at', fn ($d) => $d->updated_at?->setTimezone('Asia/Ho_Chi_Minh')->format('d/m/Y H:i') ?? '-')
             ->rawColumns(['status']);
     }
@@ -49,7 +55,7 @@ class DeviceStatusDataTable extends BaseDatable
     public function query(DeviceStatus $model)
     {
         $filters = $this->request->all();
-        $query = $model->newQuery()->with('shop');
+        $query = $model->newQuery()->with('shop.contractShop.contract');
 
         if (!empty($filters['shop_name'])) {
             $query->whereHas('shop', function ($q) use ($filters) {
@@ -147,6 +153,7 @@ class DeviceStatusDataTable extends BaseDatable
             Column::make('status')->title('Trạng thái'),
             Column::computed('shop_id')->title('Shop ID')->orderable(false)->searchable(false),
             Column::make('shop')->title('Cửa hàng'),
+            Column::make('contract_phone')->title('SĐT HĐ')->orderable(false),
             Column::make('updated_at')->title('Thời gian cập nhật'),
         ];
     }

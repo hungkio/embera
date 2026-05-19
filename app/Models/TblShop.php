@@ -11,4 +11,9 @@ class TblShop extends Model
         'code',
         'name',
     ];
+
+    public function contractShop()
+    {
+        return $this->hasOne(Shop::class, 'shop_name', 'name');
+    }
 }
