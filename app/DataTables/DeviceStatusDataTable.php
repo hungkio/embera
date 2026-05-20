@@ -24,6 +24,11 @@ class DeviceStatusDataTable extends BaseDatable
         'VNS011A00003',
         'CNSE09727',
         'VNS011A00005',
+        'VNS011A00702',
+        'VNS011A00782',
+        'VNS011A00401',
+        'VNS011A00701',
+        'VN010A02462',
     ];
 
     public function dataTable($query)
