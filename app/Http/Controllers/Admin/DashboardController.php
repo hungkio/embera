@@ -20,6 +20,29 @@ use Illuminate\Support\Facades\Schema;
 
 class DashboardController
 {
+    public function revenueDashboard(Request $request)
+    {
+        $startDate = $request->get('start_date')
+            ? Carbon::parse($request->get('start_date'))->startOfDay()
+            : Carbon::now('Asia/Ho_Chi_Minh')->startOfMonth();
+
+        $endDate = $request->get('end_date')
+            ? Carbon::parse($request->get('end_date'))->endOfDay()
+            : Carbon::now('Asia/Ho_Chi_Minh')->endOfDay();
+
+        if ($startDate->gt($endDate)) {
+            [$startDate, $endDate] = [$endDate, $startDate];
+        }
+
+        return view('admin.dashboards.revenue', [
+            'startDate' => $startDate,
+            'endDate' => $endDate,
+            'dailyStats' => $this->buildRevenueDailyStats($startDate, $endDate),
+            'regionStats' => $this->buildRevenueRegionStats($startDate, $endDate),
+            'topShopStats' => $this->buildRevenueTopShopStats($startDate, $endDate),
+        ]);
+    }
+
     public function deviceTurnOn(Request $request)
     {
         $startDate = $request->get('start_date')
@@ -684,6 +707,101 @@ class DashboardController
         return [
             $date->toDateString(),
             $date->format('d/m'),
+        ];
+    }
+
+    private function buildRevenueDailyStats(Carbon $startDate, Carbon $endDate): array
+    {
+        $rows = Order::query()
+            ->whereBetween('return_time', [$startDate, $endDate])
+            ->selectRaw('DATE(return_time) as date, SUM(order_amount) as revenue, COUNT(*) as order_count')
+            ->groupBy('date')
+            ->orderBy('date')
+            ->get()
+            ->keyBy('date');
+
+        $labels = [];
+        $revenues = [];
+        $orderCounts = [];
+
+        $cursor = $startDate->copy()->startOfDay();
+        $lastDate = $endDate->copy()->startOfDay();
+
+        while ($cursor->lte($lastDate)) {
+            $date = $cursor->toDateString();
+            $row = $rows->get($date);
+
+            $labels[] = $cursor->format('d/m');
+            $revenues[] = (float) ($row->revenue ?? 0);
+            $orderCounts[] = (int) ($row->order_count ?? 0);
+
+            $cursor->addDay();
+        }
+
+        return [
+            'labels' => $labels,
+            'revenues' => $revenues,
+            'orderCounts' => $orderCounts,
+        ];
+    }
+
+    private function buildRevenueRegionStats(Carbon $startDate, Carbon $endDate): array
+    {
+        $rows = Order::query()
+            ->whereBetween('return_time', [$startDate, $endDate])
+            ->selectRaw('DATE(return_time) as date')
+            ->selectRaw("SUM(CASE WHEN rental_shop LIKE '%MB-HN-%' OR rental_shop_id LIKE '%MB-HN-%' THEN order_amount ELSE 0 END) as hanoi_revenue")
+            ->selectRaw("SUM(CASE WHEN (rental_shop NOT LIKE '%MB-HN-%' OR rental_shop IS NULL) AND (rental_shop_id NOT LIKE '%MB-HN-%' OR rental_shop_id IS NULL) THEN order_amount ELSE 0 END) as province_revenue")
+            ->groupBy('date')
+            ->orderBy('date')
+            ->get()
+            ->keyBy('date');
+
+        $labels = [];
+        $hanoi = [];
+        $province = [];
+
+        $cursor = $startDate->copy()->startOfDay();
+        $lastDate = $endDate->copy()->startOfDay();
+
+        while ($cursor->lte($lastDate)) {
+            $date = $cursor->toDateString();
+            $row = $rows->get($date);
+
+            $labels[] = $cursor->format('d/m');
+            $hanoi[] = (float) ($row->hanoi_revenue ?? 0);
+            $province[] = (float) ($row->province_revenue ?? 0);
+
+            $cursor->addDay();
+        }
+
+        return [
+            'labels' => $labels,
+            'hanoi' => $hanoi,
+            'province' => $province,
+        ];
+    }
+
+    private function buildRevenueTopShopStats(Carbon $startDate, Carbon $endDate): array
+    {
+        $rows = Order::query()
+            ->whereBetween('return_time', [$startDate, $endDate])
+            ->whereNotNull('rental_shop_id')
+            ->where('rental_shop_id', '!=', '')
+            ->select('rental_shop_id')
+            ->selectRaw('MAX(rental_shop) as shop_name')
+            ->selectRaw('SUM(order_amount) as revenue')
+            ->selectRaw('COUNT(*) as order_count')
+            ->groupBy('rental_shop_id')
+            ->orderByDesc('revenue')
+            ->limit(10)
+            ->get();
+
+        return [
+            'labels' => $rows->map(fn ($row) => $row->rental_shop_id)->all(),
+            'shopNames' => $rows->map(fn ($row) => $row->shop_name ?: $row->rental_shop_id)->all(),
+            'revenues' => $rows->map(fn ($row) => (float) $row->revenue)->all(),
+            'orderCounts' => $rows->map(fn ($row) => (int) $row->order_count)->all(),
         ];
     }
 

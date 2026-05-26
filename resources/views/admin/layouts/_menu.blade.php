@@ -75,6 +75,13 @@
                     </a>
                 </li>
                 <li class="nav-item">
+                    <a href="{{ route('admin.dashboard.revenue') }}"
+                       class="nav-link @if(request()->routeIs('admin.dashboard.revenue'))active @endif">
+                        <i class="fal fa-chart-column"></i>
+                        <span>{{ __('Dashboard doanh thu') }}</span>
+                    </a>
+                </li>
+                <li class="nav-item">
                     <a href="{{ route('admin.map.index') }}"
                          class="nav-link @if(request()->routeIs('admin.map*')) active @endif">
                          <i class="fal fa-map-marked-alt"></i>

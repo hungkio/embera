@@ -97,6 +97,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
 
             Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
             Route::get('/device-turn-on-dashboard', [DashboardController::class, 'deviceTurnOn'])->name('dashboard.device-turn-on');
+            Route::get('/revenue-dashboard', [DashboardController::class, 'revenueDashboard'])->name('dashboard.revenue');
             Route::get('/gen-site-map', [DashboardController::class, 'genSiteMap'])->name('site-map');
             Route::get('/dashboard/map-shops', [DashboardMapController::class, 'shops'])->name('dashboard.map-shops');
             Route::get('/dashboard/top-shops', [DashboardMapController::class, 'topShops'])->name('dashboard.top-shops');
