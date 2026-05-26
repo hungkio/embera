@@ -200,6 +200,55 @@
     </div>
 </div>
 
+<div class="row g-3 mt-2">
+    <div class="col-md-4">
+        <div class="card dashboard-card text-center h-100">
+            <div class="card-body">
+                <h6>Máy đã đặt hôm nay</h6>
+                <h4>{{ formatNumber($deviceTurnOnStats['total']['assigned'] ?? 0) }}</h4>
+                <small>Online: {{ formatNumber($deviceTurnOnStats['total']['online'] ?? 0) }} | Offline: {{ formatNumber($deviceTurnOnStats['total']['offline'] ?? 0) }}</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card dashboard-card text-center h-100">
+            <div class="card-body">
+                <h6>Máy Hà Nội đã đặt hôm nay</h6>
+                <h4>{{ formatNumber($deviceTurnOnStats['hanoi']['assigned'] ?? 0) }}</h4>
+                <small>Online: {{ formatNumber($deviceTurnOnStats['hanoi']['online'] ?? 0) }} | Offline: {{ formatNumber($deviceTurnOnStats['hanoi']['offline'] ?? 0) }}</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card dashboard-card text-center h-100">
+            <div class="card-body">
+                <h6>Máy Tỉnh đã đặt hôm nay</h6>
+                <h4>{{ formatNumber($deviceTurnOnStats['province']['assigned'] ?? 0) }}</h4>
+                <small>Online: {{ formatNumber($deviceTurnOnStats['province']['online'] ?? 0) }} | Offline: {{ formatNumber($deviceTurnOnStats['province']['offline'] ?? 0) }}</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-md-6">
+        <div class="card dashboard-card">
+            <div class="card-body text-center">
+                <h6>Tỷ lệ máy online/offline Hà Nội hôm nay</h6>
+                <div id="deviceHanoiOnlineChart" style="height:400px;"></div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card dashboard-card">
+            <div class="card-body text-center">
+                <h6>Tỷ lệ máy online/offline Tỉnh hôm nay</h6>
+                <div id="deviceProvinceOnlineChart" style="height:400px;"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
 <div class="row mt-4">
     <div class="col-md-6">
         <div class="card dashboard-card">
@@ -1047,6 +1096,68 @@ echarts.init(document.getElementById('deviceOnlineChart')).setOption({
     }
   ]
 });
+
+function renderDeviceTurnOnChart(elementId, title, online, offline) {
+    const el = document.getElementById(elementId);
+    if (!el) return;
+
+    echarts.init(el).setOption({
+        tooltip: {
+            trigger: 'item',
+            formatter: '{b}: {c} máy ({d}%)'
+        },
+        legend: {
+            orient: 'horizontal',
+            bottom: 10,
+            data: ['Online', 'Offline']
+        },
+        color: ['#95cb78', '#ea3144'],
+        series: [
+            {
+                name: title,
+                type: 'pie',
+                radius: ['40%', '70%'],
+                avoidLabelOverlap: false,
+                itemStyle: {
+                    borderRadius: 8,
+                    borderColor: '#fff',
+                    borderWidth: 2
+                },
+                label: {
+                    show: true,
+                    position: 'outside',
+                    formatter: '{b}\n{d}%'
+                },
+                emphasis: {
+                    label: {
+                        show: true,
+                        fontSize: 18,
+                        fontWeight: 'bold'
+                    }
+                },
+                labelLine: { show: true },
+                data: [
+                    { value: online, name: 'Online' },
+                    { value: offline, name: 'Offline' }
+                ]
+            }
+        ]
+    });
+}
+
+renderDeviceTurnOnChart(
+    'deviceHanoiOnlineChart',
+    'Máy Hà Nội hôm nay',
+    {{ $deviceTurnOnStats['hanoi']['online'] ?? 0 }},
+    {{ $deviceTurnOnStats['hanoi']['offline'] ?? 0 }}
+);
+
+renderDeviceTurnOnChart(
+    'deviceProvinceOnlineChart',
+    'Máy Tỉnh hôm nay',
+    {{ $deviceTurnOnStats['province']['online'] ?? 0 }},
+    {{ $deviceTurnOnStats['province']['offline'] ?? 0 }}
+);
 
 // --- Device Online Status ---
 echarts.init(document.getElementById('initOrderSuccessChart')).setOption({

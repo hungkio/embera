@@ -5,8 +5,9 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Admin;
 
 use App\Models\Merchant;
+use App\Models\DeviceStatus;
+use App\Models\DeviceTurnOnHistory;
 use App\Models\Order;
-use App\Models\TblDevice;
 use App\Models\TblOrder;
 use App\Models\TblShop;
 use Carbon\Carbon;
@@ -15,6 +16,7 @@ use App\Models\Contract;
 use App\Models\Shop;
 use App\Domain\Admin\Models\Admin;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 class DashboardController
 {
@@ -465,12 +467,14 @@ class DashboardController
 
         // --- Thống kê số lượng máy đã lắp / chưa lắp ---
 
-        $totalBoundDevices = TblDevice::whereNotNull('shop_code')->count();
-        $devices = \App\Models\DeviceStatus::all()->count();
-        $device_online = \App\Models\DeviceStatus::where('status', 'online')->count();
-        $device_offline = $totalBoundDevices - $device_online;
+        $deviceTurnOnStats = $this->buildDeviceTurnOnDashboard();
 
-        $totalUnboundDevices = $devices - $totalBoundDevices;
+        $totalBoundDevices = $deviceTurnOnStats['total']['assigned'];
+        $devices = DeviceStatus::count();
+        $device_online = $deviceTurnOnStats['total']['online'];
+        $device_offline = $deviceTurnOnStats['total']['offline'];
+
+        $totalUnboundDevices = max(0, $devices - $totalBoundDevices);
 
         $merchants = Merchant::count();
 
@@ -488,7 +492,7 @@ class DashboardController
             'targetRevenue', 'totalRevenue',
             'avgOrderValue', 'avgRevenuePerDay', 'avgRentalHours',
             'prevTotalRevenue', 'revenueChangePercent', 'totalBoundDevices','totalUnboundDevices',
-            'device_online', 'device_offline', 'merchants', 'totalErrorOrder', 'totalOrder', 'totalErrorRefund',
+            'device_online', 'device_offline', 'deviceTurnOnStats', 'merchants', 'totalErrorOrder', 'totalOrder', 'totalErrorRefund',
 
             // Contracts
             'activeContracts', 'expiringContractsCount', 'signedNotInstalled',
@@ -510,5 +514,72 @@ class DashboardController
             // Expiring contracts
             'expiringByAdmin','totalExpiring'
         ));
+    }
+
+    private function buildDeviceTurnOnDashboard(): array
+    {
+        $today = Carbon::now('Asia/Ho_Chi_Minh')->toDateString();
+        $records = collect();
+
+        if (Schema::hasTable('device_turn_on_histories')) {
+            $records = DeviceTurnOnHistory::query()
+                ->with('shop')
+                ->whereDate('recorded_date', $today)
+                ->get();
+        }
+
+        if ($records->isEmpty()) {
+            $records = DeviceStatus::query()
+                ->with('shop')
+                ->get()
+                ->map(function (DeviceStatus $device) {
+                    return (object) [
+                        'shop_code' => $device->shop_code,
+                        'status' => $device->status,
+                        'shop' => $device->shop,
+                    ];
+                });
+        }
+
+        $assignedRecords = $records->filter(fn ($record) => $this->isAssignedDevice($record));
+        $hanoiRecords = $assignedRecords->filter(fn ($record) => $this->isHanoiDevice($record));
+        $provinceRecords = $assignedRecords->reject(fn ($record) => $this->isHanoiDevice($record));
+
+        return [
+            'date' => $today,
+            'total' => $this->summarizeDeviceTurnOnRecords($assignedRecords),
+            'hanoi' => $this->summarizeDeviceTurnOnRecords($hanoiRecords),
+            'province' => $this->summarizeDeviceTurnOnRecords($provinceRecords),
+        ];
+    }
+
+    private function summarizeDeviceTurnOnRecords($records): array
+    {
+        $assigned = $records->count();
+        $online = $records->where('status', 'online')->count();
+        $offline = max(0, $assigned - $online);
+
+        return [
+            'assigned' => $assigned,
+            'online' => $online,
+            'offline' => $offline,
+            'online_rate' => $assigned > 0 ? round(($online / $assigned) * 100, 2) : 0,
+            'offline_rate' => $assigned > 0 ? round(($offline / $assigned) * 100, 2) : 0,
+        ];
+    }
+
+    private function isAssignedDevice($record): bool
+    {
+        return !empty($record->shop_code);
+    }
+
+    private function isHanoiDevice($record): bool
+    {
+        $shop = $record->shop ?? null;
+        $shopName = $shop->name ?? '';
+        $shopCode = $shop->code ?? '';
+
+        return stripos($shopName, 'MB-HN-') !== false
+            || stripos($shopCode, 'MB-HN-') !== false;
     }
 }

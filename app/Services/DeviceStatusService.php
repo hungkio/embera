@@ -3,8 +3,10 @@
 namespace App\Services;
 
 use App\Models\DeviceStatus;
+use App\Models\DeviceTurnOnHistory;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Schema;
 use Carbon\Carbon;
 
 class DeviceStatusService
@@ -68,10 +70,58 @@ class DeviceStatusService
                 $page++;
             } while (!empty($items));
 
+            $this->recordTodayHistory();
+
             $count = DeviceStatus::count();
             Log::info("✅ Đồng bộ hoàn tất vào lúc ".now()->format('d/m/Y H:i:s')." - Tổng số: {$count} thiết bị.");
         } catch (\Throwable $e) {
             Log::error('🔥 Lỗi đồng bộ thiết bị', ['error' => $e->getMessage()]);
         }
+    }
+
+    private function recordTodayHistory(): void
+    {
+        if (!Schema::hasTable('device_turn_on_histories')) {
+            return;
+        }
+
+        $now = Carbon::now('Asia/Ho_Chi_Minh');
+        $recordedDate = $now->toDateString();
+
+        DeviceStatus::query()
+            ->select(['equip_id', 'code', 'shop_code', 'status'])
+            ->orderBy('id')
+            ->chunk(500, function ($devices) use ($recordedDate, $now) {
+                $rows = $devices
+                    ->map(function (DeviceStatus $device) use ($recordedDate, $now) {
+                        $equipId = $device->equip_id ?: $device->code;
+
+                        if (!$equipId) {
+                            return null;
+                        }
+
+                        return [
+                            'recorded_date' => $recordedDate,
+                            'equip_id' => $equipId,
+                            'code' => $device->code,
+                            'shop_code' => $device->shop_code,
+                            'status' => $device->status === 'online' ? 'online' : 'offline',
+                            'recorded_at' => $now,
+                            'created_at' => $now,
+                            'updated_at' => $now,
+                        ];
+                    })
+                    ->filter()
+                    ->values()
+                    ->all();
+
+                if (!empty($rows)) {
+                    DeviceTurnOnHistory::upsert(
+                        $rows,
+                        ['recorded_date', 'equip_id'],
+                        ['code', 'shop_code', 'status', 'recorded_at', 'updated_at']
+                    );
+                }
+            });
     }
 }
