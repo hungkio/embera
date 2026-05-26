@@ -68,6 +68,13 @@
                     </a>
                 </li>
                 <li class="nav-item">
+                    <a href="{{ route('admin.dashboard.device-turn-on') }}"
+                       class="nav-link @if(request()->routeIs('admin.dashboard.device-turn-on'))active @endif">
+                        <i class="fal fa-chart-pie"></i>
+                        <span>{{ __('Báo cáo máy on/off') }}</span>
+                    </a>
+                </li>
+                <li class="nav-item">
                     <a href="{{ route('admin.map.index') }}"
                          class="nav-link @if(request()->routeIs('admin.map*')) active @endif">
                          <i class="fal fa-map-marked-alt"></i>

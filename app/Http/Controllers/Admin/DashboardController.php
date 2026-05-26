@@ -20,6 +20,33 @@ use Illuminate\Support\Facades\Schema;
 
 class DashboardController
 {
+    public function deviceTurnOn(Request $request)
+    {
+        $startDate = $request->get('start_date')
+            ? Carbon::parse($request->get('start_date'))->startOfDay()
+            : Carbon::now('Asia/Ho_Chi_Minh')->subDays(6)->startOfDay();
+
+        $endDate = $request->get('end_date')
+            ? Carbon::parse($request->get('end_date'))->endOfDay()
+            : Carbon::now('Asia/Ho_Chi_Minh')->endOfDay();
+
+        if ($startDate->gt($endDate)) {
+            [$startDate, $endDate] = [$endDate, $startDate];
+        }
+
+        $groupBy = in_array($request->get('group_by'), ['day', 'week', 'month'], true)
+            ? $request->get('group_by')
+            : 'day';
+
+        return view('admin.dashboards.device-turn-on', [
+            'startDate' => $startDate,
+            'endDate' => $endDate,
+            'groupBy' => $groupBy,
+            'todayStats' => $this->buildDeviceTurnOnDashboard(),
+            'rangeStats' => $this->buildDeviceTurnOnRangeDashboard($startDate, $endDate, $groupBy),
+        ]);
+    }
+
     public function index(Request $request)
     {
         // --- Lấy start_date và end_date từ request ---
@@ -519,13 +546,24 @@ class DashboardController
     private function buildDeviceTurnOnDashboard(): array
     {
         $today = Carbon::now('Asia/Ho_Chi_Minh')->toDateString();
+        $records = $this->getDeviceTurnOnRecordsForDate($today);
+
+        return $this->summarizeDeviceTurnOnGroups($records) + ['date' => $today];
+    }
+
+    private function getDeviceTurnOnRecordsForDate(string $date)
+    {
         $records = collect();
 
         if (Schema::hasTable('device_turn_on_histories')) {
             $records = DeviceTurnOnHistory::query()
                 ->with('shop')
-                ->whereDate('recorded_date', $today)
+                ->whereDate('recorded_date', $date)
                 ->get();
+        }
+
+        if ($date !== Carbon::now('Asia/Ho_Chi_Minh')->toDateString()) {
+            return $records;
         }
 
         if ($records->isEmpty()) {
@@ -541,15 +579,111 @@ class DashboardController
                 });
         }
 
+        return $records;
+    }
+
+    private function summarizeDeviceTurnOnGroups($records): array
+    {
         $assignedRecords = $records->filter(fn ($record) => $this->isAssignedDevice($record));
         $hanoiRecords = $assignedRecords->filter(fn ($record) => $this->isHanoiDevice($record));
         $provinceRecords = $assignedRecords->reject(fn ($record) => $this->isHanoiDevice($record));
 
         return [
-            'date' => $today,
             'total' => $this->summarizeDeviceTurnOnRecords($assignedRecords),
             'hanoi' => $this->summarizeDeviceTurnOnRecords($hanoiRecords),
             'province' => $this->summarizeDeviceTurnOnRecords($provinceRecords),
+        ];
+    }
+
+    private function buildDeviceTurnOnRangeDashboard(Carbon $startDate, Carbon $endDate, string $groupBy = 'day'): array
+    {
+        $buckets = [];
+        $today = Carbon::now('Asia/Ho_Chi_Minh')->toDateString();
+        $recordsByDate = collect();
+
+        if (Schema::hasTable('device_turn_on_histories')) {
+            $recordsByDate = DeviceTurnOnHistory::query()
+                ->with('shop')
+                ->whereBetween('recorded_date', [$startDate->toDateString(), $endDate->toDateString()])
+                ->get()
+                ->groupBy(fn ($record) => $record->recorded_date->toDateString());
+        }
+
+        $cursor = $startDate->copy()->startOfDay();
+        $lastDate = $endDate->copy()->startOfDay();
+
+        while ($cursor->lte($lastDate)) {
+            $date = $cursor->toDateString();
+            $records = $recordsByDate->get($date, collect());
+
+            if ($date === $today && $records->isEmpty()) {
+                $records = $this->getDeviceTurnOnRecordsForDate($date);
+            }
+
+            $stats = $this->summarizeDeviceTurnOnGroups($records);
+            [$bucketKey, $bucketLabel] = $this->getDeviceTurnOnBucket($cursor, $groupBy);
+
+            if (!isset($buckets[$bucketKey])) {
+                $buckets[$bucketKey] = [
+                    'label' => $bucketLabel,
+                    'total' => ['online' => 0, 'offline' => 0, 'assigned' => 0],
+                    'hanoi' => ['online' => 0, 'offline' => 0, 'assigned' => 0],
+                    'province' => ['online' => 0, 'offline' => 0, 'assigned' => 0],
+                ];
+            }
+
+            foreach (['total', 'hanoi', 'province'] as $scope) {
+                $buckets[$bucketKey][$scope]['assigned'] += $stats[$scope]['assigned'];
+                $buckets[$bucketKey][$scope]['online'] += $stats[$scope]['online'];
+                $buckets[$bucketKey][$scope]['offline'] += $stats[$scope]['offline'];
+            }
+
+            $cursor->addDay();
+        }
+
+        $labels = array_column($buckets, 'label');
+        $series = [
+            'total' => ['online' => [], 'offline' => [], 'assigned' => []],
+            'hanoi' => ['online' => [], 'offline' => [], 'assigned' => []],
+            'province' => ['online' => [], 'offline' => [], 'assigned' => []],
+        ];
+
+        foreach ($buckets as $bucket) {
+            foreach (['total', 'hanoi', 'province'] as $scope) {
+                $series[$scope]['assigned'][] = $bucket[$scope]['assigned'];
+                $series[$scope]['online'][] = $bucket[$scope]['online'];
+                $series[$scope]['offline'][] = $bucket[$scope]['offline'];
+            }
+        }
+
+        return [
+            'labels' => $labels,
+            'series' => $series,
+        ];
+    }
+
+    private function getDeviceTurnOnBucket(Carbon $date, string $groupBy): array
+    {
+        if ($groupBy === 'week') {
+            $startOfWeek = $date->copy()->startOfWeek();
+            $endOfWeek = $date->copy()->endOfWeek();
+
+            return [
+                $startOfWeek->toDateString(),
+                $startOfWeek->format('d/m') . ' - ' . $endOfWeek->format('d/m'),
+            ];
+        }
+
+        if ($groupBy === 'month') {
+            return [
+                $date->format('Y-m'),
+                $date->format('m/Y'),
+            ];
+        }
+
+        return [
+            $date->toDateString(),
+            $date->format('d/m'),
         ];
     }
 
