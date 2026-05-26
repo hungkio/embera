@@ -50,9 +50,22 @@ class DeviceStatusDataTable extends BaseDatable
                     $q->where('phone', 'like', "%$keyword%");
                 });
             })
+            ->filterColumn('admin_full_name', function ($query, $keyword) {
+                $query->whereHas('shop.contractShop.contract.admin', function ($q) use ($keyword) {
+                    $q->where('first_name', 'like', "%$keyword%")
+                        ->orWhere('last_name', 'like', "%$keyword%");
+                });
+            })
+            ->filterColumn('admin_last_name', function ($query, $keyword) {
+                $query->whereHas('shop.contractShop.contract.admin', function ($q) use ($keyword) {
+                    $q->where('last_name', 'like', "%$keyword%");
+                });
+            })
             ->addColumn('shop_id', fn (DeviceStatus $device) => $device->shop_code ?? '')
             ->addColumn('shop', fn (DeviceStatus $device) => $device->shop->name ?? '')
             ->addColumn('contract_phone', fn (DeviceStatus $device) => $device->shop?->contractShop?->contract?->phone ?? '')
+            ->addColumn('admin_full_name', fn (DeviceStatus $device) => $device->shop?->contractShop?->contract?->admin?->full_name ?? '')
+            ->addColumn('admin_last_name', fn (DeviceStatus $device) => $device->shop?->contractShop?->contract?->admin?->last_name ?? '')
             ->editColumn('updated_at', fn ($d) => $d->updated_at?->setTimezone('Asia/Ho_Chi_Minh')->format('d/m/Y H:i') ?? '-')
             ->rawColumns(['status']);
     }
@@ -60,7 +73,7 @@ class DeviceStatusDataTable extends BaseDatable
     public function query(DeviceStatus $model)
     {
         $filters = $this->request->all();
-        $query = $model->newQuery()->with('shop.contractShop.contract');
+        $query = $model->newQuery()->with('shop.contractShop.contract.admin');
 
         if (!empty($filters['shop_name'])) {
             $query->whereHas('shop', function ($q) use ($filters) {
@@ -159,6 +172,8 @@ class DeviceStatusDataTable extends BaseDatable
             Column::computed('shop_id')->title('Shop ID')->orderable(false)->searchable(false),
             Column::make('shop')->title('Cửa hàng'),
             Column::make('contract_phone')->title('SĐT HĐ')->orderable(false),
+            Column::make('admin_full_name')->title('Admin Full Name')->orderable(false),
+            Column::make('admin_last_name')->title('Admin Last Name')->orderable(false),
             Column::make('updated_at')->title('Thời gian cập nhật'),
         ];
     }
