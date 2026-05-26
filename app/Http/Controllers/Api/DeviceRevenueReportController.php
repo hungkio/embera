@@ -121,6 +121,133 @@ class DeviceRevenueReportController extends Controller
         ]);
     }
 
+    public function summary(Request $request): JsonResponse
+    {
+        $deviceCodes = $this->parseDeviceCodes($request);
+
+        if ($deviceCodes->isEmpty()) {
+            return response()->json([
+                'message' => 'Vui lòng truyền danh sách mã máy qua field device_codes.',
+                'example' => [
+                    'device_codes' => ['VNS011A00481', 'VNSBABP00134'],
+                ],
+            ], 422);
+        }
+
+        $startDate = $request->filled('start_date')
+            ? Carbon::parse($request->input('start_date'))->startOfDay()
+            : Order::query()
+                ->whereIn('rental_equipment_id', $deviceCodes)
+                ->whereNotNull('payment_time')
+                ->min('payment_time');
+
+        $startDate = $startDate ? Carbon::parse($startDate)->startOfDay() : now()->startOfYear();
+
+        $endDate = $request->filled('end_date')
+            ? Carbon::parse($request->input('end_date'))->endOfDay()
+            : now()->endOfDay();
+
+        if ($startDate->gt($endDate)) {
+            [$startDate, $endDate] = [$endDate->copy()->startOfDay(), $startDate->copy()->endOfDay()];
+        }
+
+        $rows = Order::query()
+            ->whereIn('rental_equipment_id', $deviceCodes)
+            ->whereNotNull('payment_time')
+            ->where('order_amount', '>', 0)
+            ->whereNotIn('order_amount', self::EXCLUDED_ORDER_AMOUNTS)
+            ->whereIn('payment_channels', self::REPORT_PAYMENT_CHANNELS)
+            ->whereBetween('payment_time', [$startDate, $endDate])
+            ->select('rental_equipment_id')
+            ->selectRaw('DATE_FORMAT(payment_time, "%Y-%m") as month')
+            ->selectRaw('SUM(order_amount) as revenue')
+            ->selectRaw('COUNT(*) as order_count')
+            ->groupBy('rental_equipment_id', 'month')
+            ->orderBy('month')
+            ->get();
+
+        $months = collect();
+        $cursor = $startDate->copy()->startOfMonth();
+        $lastMonth = $endDate->copy()->startOfMonth();
+
+        while ($cursor->lte($lastMonth)) {
+            $months->push($cursor->format('Y-m'));
+            $cursor->addMonthNoOverflow();
+        }
+
+        $rowsByDevice = $rows->groupBy('rental_equipment_id');
+        $rowsByMonth = $rows->groupBy('month');
+
+        $deviceTotals = $deviceCodes->map(function (string $deviceCode) use ($rowsByDevice) {
+            $rows = $rowsByDevice->get($deviceCode, collect());
+
+            return [
+                'device_code' => $deviceCode,
+                'total_revenue' => (float) $rows->sum('revenue'),
+                'order_count' => (int) $rows->sum('order_count'),
+            ];
+        })->values();
+
+        $monthlyTotals = $months->map(function (string $month) use ($rowsByMonth) {
+            $rows = $rowsByMonth->get($month, collect());
+
+            return [
+                'month' => $month,
+                'total_revenue' => (float) $rows->sum('revenue'),
+                'order_count' => (int) $rows->sum('order_count'),
+            ];
+        })->values();
+
+        $deviceMonthlyRevenue = $deviceCodes->map(function (string $deviceCode) use ($months, $rowsByDevice) {
+            $rows = $rowsByDevice->get($deviceCode, collect())->keyBy('month');
+
+            return [
+                'device_code' => $deviceCode,
+                'months' => $months->map(function (string $month) use ($rows) {
+                    $row = $rows->get($month);
+
+                    return [
+                        'month' => $month,
+                        'revenue' => (float) ($row->revenue ?? 0),
+                        'order_count' => (int) ($row->order_count ?? 0),
+                    ];
+                })->values(),
+            ];
+        })->values();
+
+        return response()->json([
+            'meta' => [
+                'start_date' => $startDate->toDateString(),
+                'end_date' => $endDate->toDateString(),
+                'device_count' => $deviceCodes->count(),
+                'rules' => [
+                    'date_field' => 'payment_time',
+                    'device_field' => 'rental_equipment_id',
+                    'included_payment_channels' => self::REPORT_PAYMENT_CHANNELS,
+                    'excluded_order_amounts' => self::EXCLUDED_ORDER_AMOUNTS,
+                ],
+            ],
+            'device_totals' => $deviceTotals,
+            'monthly_totals' => $monthlyTotals,
+            'device_monthly_revenue' => $deviceMonthlyRevenue,
+        ]);
+    }
+
+    private function parseDeviceCodes(Request $request): Collection
+    {
+        $codes = $request->input('device_codes', $request->input('devices', []));
+
+        if (is_string($codes)) {
+            $codes = preg_split('/[\s,;]+/', $codes);
+        }
+
+        return collect($codes)
+            ->map(fn ($code) => trim((string) $code))
+            ->filter()
+            ->unique()
+            ->values();
+    }
+
     private function getMonthlyRevenueFromOrders(Collection $months, Request $request): Collection
     {
         $start = $months->first()->copy()->startOfMonth();
