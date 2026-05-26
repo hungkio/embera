@@ -22,13 +22,19 @@ class DashboardController
 {
     public function revenueDashboard(Request $request)
     {
+        $latestReportDate = Carbon::now('Asia/Ho_Chi_Minh')->subDay()->endOfDay();
+
         $startDate = $request->get('start_date')
             ? Carbon::parse($request->get('start_date'))->startOfDay()
             : Carbon::now('Asia/Ho_Chi_Minh')->startOfMonth();
 
         $endDate = $request->get('end_date')
             ? Carbon::parse($request->get('end_date'))->endOfDay()
-            : Carbon::now('Asia/Ho_Chi_Minh')->endOfDay();
+            : $latestReportDate->copy();
+
+        if ($endDate->gt($latestReportDate)) {
+            $endDate = $latestReportDate->copy();
+        }
 
         if ($startDate->gt($endDate)) {
             [$startDate, $endDate] = [$endDate, $startDate];

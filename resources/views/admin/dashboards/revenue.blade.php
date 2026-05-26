@@ -49,6 +49,7 @@
     <div class="col-md-3">
         <label for="end_date">Đến ngày</label>
         <input type="date" id="end_date" name="end_date" class="form-control" value="{{ $endDate->format('Y-m-d') }}">
+        <small class="text-muted">Dữ liệu chốt đến hôm qua</small>
     </div>
     <div class="col-md-3">
         <button type="submit" class="btn btn-primary">
@@ -59,7 +60,7 @@
 </form>
 
 <div class="row">
-    <div class="col-md-6">
+    <div class="col-md-12">
         <div class="card dashboard-card">
             <div class="card-body">
                 <h6>Doanh thu theo ngày ({{ $startDate->format('d/m/Y') }} - {{ $endDate->format('d/m/Y') }})</h6>
@@ -67,7 +68,10 @@
             </div>
         </div>
     </div>
-    <div class="col-md-6">
+</div>
+
+<div class="row mt-4">
+    <div class="col-md-12">
         <div class="card dashboard-card">
             <div class="card-body">
                 <h6>Số lượng đơn hàng theo ngày</h6>
