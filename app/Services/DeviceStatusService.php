@@ -86,13 +86,20 @@ class DeviceStatusService
         $now = Carbon::now('Asia/Ho_Chi_Minh');
         $recordedDate = $now->toDateString();
 
+        $columns = ['code', 'shop_code', 'status'];
+        $hasEquipId = Schema::hasColumn('tbl_devices', 'equip_id');
+
+        if ($hasEquipId) {
+            $columns[] = 'equip_id';
+        }
+
         DeviceStatus::query()
-            ->select(['equip_id', 'code', 'shop_code', 'status'])
+            ->select($columns)
             ->orderBy('id')
-            ->chunk(500, function ($devices) use ($recordedDate, $now) {
+            ->chunk(500, function ($devices) use ($recordedDate, $now, $hasEquipId) {
                 $rows = $devices
-                    ->map(function (DeviceStatus $device) use ($recordedDate, $now) {
-                        $equipId = $device->equip_id ?: $device->code;
+                    ->map(function (DeviceStatus $device) use ($recordedDate, $now, $hasEquipId) {
+                        $equipId = $hasEquipId ? ($device->equip_id ?: $device->code) : $device->code;
 
                         if (!$equipId) {
                             return null;
