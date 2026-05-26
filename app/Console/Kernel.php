@@ -26,6 +26,11 @@ class Kernel extends ConsoleKernel
             ->everyThirtyMinutes()
             ->withoutOverlapping();
 
+        $schedule->command('device:record-turn-on-history')
+            ->dailyAt('08:00')
+            ->timezone('Asia/Ho_Chi_Minh')
+            ->withoutOverlapping();
+
         // 🔁 Sync trạng thái thuê pin cho MAP (5 phút)
         $schedule->call(function () {
                 app(\App\Services\ShopRentalSyncService::class)->sync();

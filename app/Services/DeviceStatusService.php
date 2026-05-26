@@ -70,8 +70,6 @@ class DeviceStatusService
                 $page++;
             } while (!empty($items));
 
-            $this->recordTodayHistory();
-
             $count = DeviceStatus::count();
             Log::info("✅ Đồng bộ hoàn tất vào lúc ".now()->format('d/m/Y H:i:s')." - Tổng số: {$count} thiết bị.");
         } catch (\Throwable $e) {
@@ -79,7 +77,7 @@ class DeviceStatusService
         }
     }
 
-    private function recordTodayHistory(): void
+    public function recordTodayHistory(): void
     {
         if (!Schema::hasTable('device_turn_on_histories')) {
             return;
