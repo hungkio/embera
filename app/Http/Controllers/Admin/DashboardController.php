@@ -716,6 +716,11 @@ class DashboardController
         ];
     }
 
+    private function cleanShopDisplayName(?string $shopName): string
+    {
+        return trim(preg_replace('/\s*\([^)]*\)\s*$/', '', $shopName ?? ''));
+    }
+
     private function buildRevenueDailyStats(Carbon $startDate, Carbon $endDate): array
     {
         $rows = Order::query()
@@ -804,7 +809,8 @@ class DashboardController
             ->get();
 
         return [
-            'labels' => $rows->map(fn ($row) => $row->rental_shop)->all(),
+            'labels' => $rows->map(fn ($row) => $this->cleanShopDisplayName($row->rental_shop))->all(),
+            'fullLabels' => $rows->map(fn ($row) => $row->rental_shop)->all(),
             'shopIds' => $rows->map(fn ($row) => $row->shop_id ?: '')->all(),
             'revenues' => $rows->map(fn ($row) => (float) $row->revenue)->all(),
             'orderCounts' => $rows->map(fn ($row) => (int) $row->order_count)->all(),

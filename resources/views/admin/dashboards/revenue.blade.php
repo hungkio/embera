@@ -169,7 +169,12 @@ echarts.init(document.getElementById('topShopRevenueChart')).setOption({
         formatter: function (params) {
             const index = params[0]?.dataIndex || 0;
             const shopId = topShopStats.shopIds[index] || '';
+            const fullName = topShopStats.fullLabels[index] || topShopStats.labels[index] || '';
             const lines = [`<strong>${topShopStats.labels[index]}</strong>`];
+
+            if (fullName && fullName !== topShopStats.labels[index]) {
+                lines.push(fullName);
+            }
 
             if (shopId) {
                 lines.push(`Shop ID: ${shopId}`);
