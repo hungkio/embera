@@ -792,20 +792,20 @@ class DashboardController
     {
         $rows = Order::query()
             ->whereBetween('return_time', [$startDate, $endDate])
-            ->whereNotNull('rental_shop_id')
-            ->where('rental_shop_id', '!=', '')
-            ->select('rental_shop_id')
-            ->selectRaw('MAX(rental_shop) as shop_name')
+            ->whereNotNull('rental_shop')
+            ->where('rental_shop', '!=', '')
+            ->select('rental_shop')
+            ->selectRaw('MAX(rental_shop_id) as shop_id')
             ->selectRaw('SUM(order_amount) as revenue')
             ->selectRaw('COUNT(*) as order_count')
-            ->groupBy('rental_shop_id')
+            ->groupBy('rental_shop')
             ->orderByDesc('revenue')
             ->limit(10)
             ->get();
 
         return [
-            'labels' => $rows->map(fn ($row) => $row->rental_shop_id)->all(),
-            'shopNames' => $rows->map(fn ($row) => $row->shop_name ?: $row->rental_shop_id)->all(),
+            'labels' => $rows->map(fn ($row) => $row->rental_shop)->all(),
+            'shopIds' => $rows->map(fn ($row) => $row->shop_id ?: '')->all(),
             'revenues' => $rows->map(fn ($row) => (float) $row->revenue)->all(),
             'orderCounts' => $rows->map(fn ($row) => (int) $row->order_count)->all(),
         ];

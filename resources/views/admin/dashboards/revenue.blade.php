@@ -96,7 +96,7 @@
     <div class="col-md-12">
         <div class="card dashboard-card">
             <div class="card-body">
-                <h6>Top 10 doanh thu theo shop_id</h6>
+                <h6>Top 10 doanh thu theo shop</h6>
                 <div id="topShopRevenueChart" class="chart-box"></div>
             </div>
         </div>
@@ -168,8 +168,12 @@ echarts.init(document.getElementById('topShopRevenueChart')).setOption({
         axisPointer: { type: 'shadow' },
         formatter: function (params) {
             const index = params[0]?.dataIndex || 0;
-            const shopName = topShopStats.shopNames[index] || topShopStats.labels[index] || '';
-            const lines = [`<strong>${topShopStats.labels[index]}</strong>`, shopName];
+            const shopId = topShopStats.shopIds[index] || '';
+            const lines = [`<strong>${topShopStats.labels[index]}</strong>`];
+
+            if (shopId) {
+                lines.push(`Shop ID: ${shopId}`);
+            }
 
             params.forEach(item => {
                 const value = item.seriesName === 'Doanh thu' ? formatVND(item.value) : item.value + ' đơn';
