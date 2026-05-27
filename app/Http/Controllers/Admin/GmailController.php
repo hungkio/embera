@@ -7,9 +7,11 @@ use App\Models\GmailAccount;
 use App\Models\GmailAttachment;
 use App\Models\GmailMessage;
 use App\Services\GmailService;
+use Carbon\Carbon;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Str;
 use Illuminate\View\View;
@@ -139,6 +141,33 @@ class GmailController
         try {
             $downloaded = $gmailService->syncDailyCsvAttachments($account);
             flash()->success(__('Đã tải về :count file CSV từ email daily_.', ['count' => $downloaded]));
+        } catch (\Throwable $exception) {
+            report($exception);
+            flash()->error($exception->getMessage());
+        }
+
+        return redirect()->route('admin.gmail.index');
+    }
+
+    public function importDailyOrdersToday(): RedirectResponse
+    {
+        $this->authorize('view', MailSetting::class);
+
+        $account = $this->account();
+        abort_unless($account, 404);
+
+        $today = Carbon::now('Asia/Ho_Chi_Minh')->toDateString();
+
+        try {
+            $exitCode = Artisan::call('gmail:import-daily-orders', [
+                '--date' => $today,
+            ]);
+
+            if ($exitCode === 0) {
+                flash()->success(__('Đã chạy import daily orders cho ngày :date.', ['date' => $today]));
+            } else {
+                flash()->error(__('Import daily orders kết thúc với mã lỗi :code.', ['code' => $exitCode]));
+            }
         } catch (\Throwable $exception) {
             report($exception);
             flash()->error($exception->getMessage());
