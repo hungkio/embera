@@ -48,9 +48,9 @@
                             <button type="submit" class="btn btn-success">{{ __('Tải file daily CSV') }}</button>
                         </form>
 
-                        <form method="POST" action="{{ route('admin.gmail.import-daily-orders-today') }}" onsubmit="return confirm('{{ __('Chạy import daily orders cho hôm nay?') }}')">
+                        <form method="POST" action="{{ route('admin.gmail.import-daily-orders-today') }}" onsubmit="return confirm('{{ __('Chạy import daily orders cho hôm qua?') }}')">
                             @csrf
-                            <button type="submit" class="btn btn-warning">{{ __('Lấy daily hôm nay') }}</button>
+                            <button type="submit" class="btn btn-warning">{{ __('Lấy daily hôm qua') }}</button>
                         </form>
 
                         <form method="POST" action="{{ route('admin.gmail.disconnect') }}" onsubmit="return confirm('{{ __('Bạn chắc chắn muốn ngắt kết nối Gmail?') }}')">
