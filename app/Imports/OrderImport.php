@@ -30,9 +30,16 @@ class OrderImport implements ToCollection, WithCalculatedFormulas
                     $normalized[$key] = $cleanValue;
                 }
 
+                $this->applyHeaderAliases($normalized);
+
                 // Helper
                 $clean = fn($v) => is_string($v) ? trim(preg_replace('/[\x00-\x1F\x7F]+/u', '', $v)) : $v;
                 $money = fn($v) => is_numeric($v) ? $v : (float) preg_replace('/[^0-9.]/', '', $v);
+                $ratio = function ($v) use ($clean) {
+                    $value = (float) $clean($v ?? 0);
+
+                    return abs($value) <= 99.999 ? $value : 0;
+                };
 
                 $orderNumber = $clean($normalized['order_id'] ?? null);
                 if (!$orderNumber) continue;
@@ -42,6 +49,7 @@ class OrderImport implements ToCollection, WithCalculatedFormulas
                 list($region, $city, $area) = isset($matches[1]) ? explode('-', $matches[1]) + [null, null, null] : [null, null, null];
 
                 $merchant_share_ratio = (float) $clean($normalized['merchant_share_ratio'] ?? 0);
+                $merchant_share_ratio = abs($merchant_share_ratio) <= 9999.9 ? $merchant_share_ratio : 0;
                 Order::updateOrCreate(['order_number' => $orderNumber], [
                     'payment_id' => $clean($normalized['payment_id'] ?? null),
                     'payment_failure_reason' => $clean($normalized['payment_failure_reason'] ?? null),
@@ -72,9 +80,9 @@ class OrderImport implements ToCollection, WithCalculatedFormulas
                     'refund_status' => $clean($normalized['refund_status'] ?? null),
                     'refund_amount' => $money($normalized['refund_amount'] ?? 0),
                     'refund_fee' => $money($normalized['refund_fee'] ?? 0),
-                    'agent_share_ratio' => (float) $clean($normalized['agent_share_ratio'] ?? 0),
-                    'franchisee_share_ratio' => (float) $clean($normalized['franchisee_share_ratio'] ?? 0),
-                    'service_provider_share_ratio' => (float) $clean($normalized['service_provider_share_ratio'] ?? 0),
+                    'agent_share_ratio' => $ratio($normalized['agent_share_ratio'] ?? 0),
+                    'franchisee_share_ratio' => $ratio($normalized['franchisee_share_ratio'] ?? 0),
+                    'service_provider_share_ratio' => $ratio($normalized['service_provider_share_ratio'] ?? 0),
                     'merchant_share_ratio' => $merchant_share_ratio ? round($merchant_share_ratio/100, 4) : 0,
                     'charging_strategy' => $clean($normalized['charging_strategy'] ?? null),
                     'region' => trim($region),
@@ -83,6 +91,36 @@ class OrderImport implements ToCollection, WithCalculatedFormulas
                 ]);
             }
         }, 1);
+    }
+
+    private function applyHeaderAliases(array &$normalized): void
+    {
+        $aliases = [
+            'payment_order_id' => 'payment_id',
+            'cabinet_(rental)' => 'rental_equipment_id',
+            'cabinet_(return)' => 'return_equipment_id',
+            'rental_start_time' => 'rental_time',
+            'rental_end_time' => 'return_time',
+            'store_id_(rental)' => 'rental_shop_id',
+            'store_name_(rental)' => 'rental_shop',
+            'store_type_(rental)' => 'rental_shop_type',
+            'store_address_(rental)' => 'rental_shop_address',
+            'store_name_(return)' => 'return_shop',
+            'rental_duration' => 'duration_of_use',
+            'fee' => 'fees',
+            'order_attribution' => 'orders_belong_to_merchants',
+            'staff_id' => 'employee_id',
+            'staff_name' => 'employee_name',
+            'payment_channel' => 'payment_channels',
+            'refund_service_fee' => 'refund_fee',
+            'pricing_strategy' => 'charging_strategy',
+        ];
+
+        foreach ($aliases as $from => $to) {
+            if (!array_key_exists($to, $normalized) && array_key_exists($from, $normalized)) {
+                $normalized[$to] = $normalized[$from];
+            }
+        }
     }
 
     private function parseDate($value)
