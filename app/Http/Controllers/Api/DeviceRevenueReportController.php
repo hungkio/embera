@@ -233,6 +233,96 @@ class DeviceRevenueReportController extends Controller
         ]);
     }
 
+    public function weeklyRevenue(Request $request): JsonResponse
+    {
+        $reportYear = (int) $request->input('year', now()->year);
+        $startDate = $request->filled('start_date')
+            ? Carbon::parse($request->input('start_date'))->startOfDay()
+            : Carbon::create($reportYear, 1, 1)->startOfDay();
+
+        $endDate = $request->filled('end_date')
+            ? Carbon::parse($request->input('end_date'))->endOfDay()
+            : now()->endOfDay();
+
+        if ($startDate->gt($endDate)) {
+            [$startDate, $endDate] = [$endDate->copy()->startOfDay(), $startDate->copy()->endOfDay()];
+        }
+
+        $rows = Order::query()
+            ->whereNotNull('rental_equipment_id')
+            ->where('rental_equipment_id', '!=', '')
+            ->whereNotNull('payment_time')
+            ->where('order_amount', '>', 0)
+            ->whereNotIn('order_amount', self::EXCLUDED_ORDER_AMOUNTS)
+            ->whereIn('payment_channels', self::REPORT_PAYMENT_CHANNELS)
+            ->whereBetween('payment_time', [$startDate, $endDate])
+            ->select('rental_equipment_id')
+            ->selectRaw('DATE(DATE_SUB(payment_time, INTERVAL WEEKDAY(payment_time) DAY)) as week_start')
+            ->selectRaw('SUM(order_amount) as total_revenue')
+            ->selectRaw('COUNT(*) as order_count')
+            ->groupBy('rental_equipment_id', 'week_start')
+            ->havingRaw('SUM(order_amount) > 0')
+            ->orderBy('week_start')
+            ->orderBy('rental_equipment_id')
+            ->get();
+
+        $data = $rows->map(function ($row) {
+            $weekStart = Carbon::parse($row->week_start)->startOfDay();
+
+            return [
+                'week' => $weekStart->isoWeekYear() . '-W' . str_pad((string) $weekStart->isoWeek(), 2, '0', STR_PAD_LEFT),
+                'week_start' => $weekStart->toDateString(),
+                'week_end' => $weekStart->copy()->addDays(6)->toDateString(),
+                'device_code' => $row->rental_equipment_id,
+                'total_revenue' => (float) $row->total_revenue,
+                'order_count' => (int) $row->order_count,
+            ];
+        })->values();
+
+        $weeklyTotals = $data
+            ->groupBy('week_start')
+            ->map(function (Collection $items, string $weekStart) {
+                $first = $items->first();
+
+                return [
+                    'week' => $first['week'],
+                    'week_start' => $weekStart,
+                    'week_end' => $first['week_end'],
+                    'total_revenue' => (float) $items->sum('total_revenue'),
+                    'order_count' => (int) $items->sum('order_count'),
+                ];
+            })
+            ->values();
+
+        $deviceTotals = $data
+            ->groupBy('device_code')
+            ->map(function (Collection $items, string $deviceCode) {
+                return [
+                    'device_code' => $deviceCode,
+                    'total_revenue' => (float) $items->sum('total_revenue'),
+                    'order_count' => (int) $items->sum('order_count'),
+                ];
+            })
+            ->sortByDesc('total_revenue')
+            ->values();
+
+        return response()->json([
+            'meta' => [
+                'start_date' => $startDate->toDateString(),
+                'end_date' => $endDate->toDateString(),
+                'group_by' => 'iso_week',
+                'date_field' => 'payment_time',
+                'device_field' => 'rental_equipment_id',
+                'included_payment_channels' => self::REPORT_PAYMENT_CHANNELS,
+                'excluded_order_amounts' => self::EXCLUDED_ORDER_AMOUNTS,
+                'total_rows' => $data->count(),
+            ],
+            'data' => $data,
+            'weekly_totals' => $weeklyTotals,
+            'device_totals' => $deviceTotals,
+        ]);
+    }
+
     private function parseDeviceCodes(Request $request): Collection
     {
         $codes = $request->input('device_codes', $request->input('devices', []));

@@ -24,4 +24,5 @@ Route::middleware('auth:api')->get('/user', function (Request $request) {
 
 Route::get('/device-revenue-report', [DeviceRevenueReportController::class, 'index']);
 Route::match(['get', 'post'], '/device-revenue-summary', [DeviceRevenueReportController::class, 'summary']);
+Route::get('/device-weekly-revenue', [DeviceRevenueReportController::class, 'weeklyRevenue']);
 Route::get('/shops-directory', [ShopDirectoryController::class, 'index']);
