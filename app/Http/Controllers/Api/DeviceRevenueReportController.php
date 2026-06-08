@@ -248,6 +248,21 @@ class DeviceRevenueReportController extends Controller
             [$startDate, $endDate] = [$endDate->copy()->startOfDay(), $startDate->copy()->endOfDay()];
         }
 
+        // Generate all weeks in the range
+        $weeks = collect();
+        $current = $startDate->copy()->startOfWeek(Carbon::MONDAY);
+        $end = $endDate->copy();
+
+        while ($current->lte($end)) {
+            $weekKey = $current->isoWeekYear() . '-W' . str_pad((string) $current->isoWeek(), 2, '0', STR_PAD_LEFT);
+            $weeks->put($weekKey, [
+                'week' => $weekKey,
+                'week_start' => $current->toDateString(),
+                'week_end' => $current->copy()->endOfWeek(Carbon::SUNDAY)->toDateString(),
+            ]);
+            $current->addWeek();
+        }
+
         $dbDriver = DB::connection()->getDriverName();
         if ($dbDriver === 'sqlite') {
             $weekStartRaw = "date(payment_time, '-6 days', 'weekday 1')";
@@ -284,19 +299,21 @@ class DeviceRevenueReportController extends Controller
 
         $latestOrders = $this->getLatestOrders($request);
 
-        $data = $rows->map(function ($row) use ($devices, $latestOrders) {
-            $weekStart = Carbon::parse($row->week_start)->startOfDay();
-            $deviceCode = $row->rental_equipment_id;
+        $deviceCodes = $rows->pluck('rental_equipment_id')
+            ->merge($latestOrders->keys())
+            ->filter()
+            ->unique()
+            ->values();
 
+        $data = $deviceCodes->map(function (string $deviceCode) use ($weeks, $rows, $devices, $latestOrders) {
             $device = $devices->get($deviceCode);
             $latestOrder = $latestOrders->get($deviceCode);
             $installDate = $this->getInstallDate($device, $latestOrder);
             $isOnline = ($device?->status ?? 'offline') === 'online';
 
-            return [
-                'week' => $weekStart->isoWeekYear() . '-W' . str_pad((string) $weekStart->isoWeek(), 2, '0', STR_PAD_LEFT),
-                'week_start' => $weekStart->toDateString(),
-                'week_end' => $weekStart->copy()->addDays(6)->toDateString(),
+            $deviceRows = $rows->where('rental_equipment_id', $deviceCode)->keyBy('week_start');
+
+            $rowResult = [
                 'device_code' => $deviceCode,
                 'cum' => $latestOrder?->region,
                 'khu_vuc' => $latestOrder?->city ?? $latestOrder?->area,
@@ -305,49 +322,68 @@ class DeviceRevenueReportController extends Controller
                 'loai_diem' => $latestOrder?->rental_shop_type,
                 'ngay_lap' => $installDate?->format('Y-m-d'),
                 'trang_thai_hien_tai' => $isOnline ? 'online' : 'offline',
-                'total_revenue' => (float) $row->total_revenue,
-                'order_count' => (int) $row->order_count,
+            ];
+
+            $totalRevenue = 0.0;
+            $totalOrderCount = 0;
+            $weeksList = [];
+
+            foreach ($weeks as $weekKey => $weekInfo) {
+                $row = $deviceRows->get($weekInfo['week_start']);
+                $revenue = $row ? (float) $row->total_revenue : 0.0;
+                $orderCount = $row ? (int) $row->order_count : 0;
+
+                $rowResult[$weekKey] = $revenue;
+
+                $totalRevenue += $revenue;
+                $totalOrderCount += $orderCount;
+
+                $weeksList[] = [
+                    'week' => $weekKey,
+                    'week_start' => $weekInfo['week_start'],
+                    'week_end' => $weekInfo['week_end'],
+                    'revenue' => $revenue,
+                    'order_count' => $orderCount,
+                ];
+            }
+
+            $rowResult['weeks'] = $weeksList;
+            $rowResult['total_revenue'] = $totalRevenue;
+            $rowResult['order_count'] = $totalOrderCount;
+
+            return $rowResult;
+        })
+        ->sortByDesc('total_revenue')
+        ->values();
+
+        $weeklyTotals = $weeks->map(function ($weekInfo) use ($rows) {
+            $weekRows = $rows->where('week_start', $weekInfo['week_start']);
+
+            return [
+                'week' => $weekInfo['week'],
+                'week_start' => $weekInfo['week_start'],
+                'week_end' => $weekInfo['week_end'],
+                'total_revenue' => (float) $weekRows->sum('total_revenue'),
+                'order_count' => (int) $weekRows->sum('order_count'),
             ];
         })->values();
 
-        $weeklyTotals = $data
-            ->groupBy('week_start')
-            ->map(function (Collection $items, string $weekStart) {
-                $first = $items->first();
-
-                return [
-                    'week' => $first['week'],
-                    'week_start' => $weekStart,
-                    'week_end' => $first['week_end'],
-                    'total_revenue' => (float) $items->sum('total_revenue'),
-                    'order_count' => (int) $items->sum('order_count'),
-                ];
-            })
-            ->values();
-
-        $deviceTotals = $data
-            ->groupBy('device_code')
-            ->map(function (Collection $items, string $deviceCode) use ($devices, $latestOrders) {
-                $device = $devices->get($deviceCode);
-                $latestOrder = $latestOrders->get($deviceCode);
-                $installDate = $this->getInstallDate($device, $latestOrder);
-                $isOnline = ($device?->status ?? 'offline') === 'online';
-
-                return [
-                    'device_code' => $deviceCode,
-                    'cum' => $latestOrder?->region,
-                    'khu_vuc' => $latestOrder?->city ?? $latestOrder?->area,
-                    'nhan_vien_pt' => $latestOrder?->employee_name,
-                    'ten_diem' => $device?->shop?->name ?? $latestOrder?->rental_shop,
-                    'loai_diem' => $latestOrder?->rental_shop_type,
-                    'ngay_lap' => $installDate?->format('Y-m-d'),
-                    'trang_thai_hien_tai' => $isOnline ? 'online' : 'offline',
-                    'total_revenue' => (float) $items->sum('total_revenue'),
-                    'order_count' => (int) $items->sum('order_count'),
-                ];
-            })
-            ->sortByDesc('total_revenue')
-            ->values();
+        $deviceTotals = $data->map(function ($deviceItem) {
+            return [
+                'device_code' => $deviceItem['device_code'],
+                'cum' => $deviceItem['cum'],
+                'khu_vuc' => $deviceItem['khu_vuc'],
+                'nhan_vien_pt' => $deviceItem['nhan_vien_pt'],
+                'ten_diem' => $deviceItem['ten_diem'],
+                'loai_diem' => $deviceItem['loai_diem'],
+                'ngay_lap' => $deviceItem['ngay_lap'],
+                'trang_thai_hien_tai' => $deviceItem['trang_thai_hien_tai'],
+                'total_revenue' => $deviceItem['total_revenue'],
+                'order_count' => $deviceItem['order_count'],
+            ];
+        })
+        ->sortByDesc('total_revenue')
+        ->values();
 
         return response()->json([
             'meta' => [
@@ -358,6 +394,7 @@ class DeviceRevenueReportController extends Controller
                 'device_field' => 'rental_equipment_id',
                 'included_payment_channels' => self::REPORT_PAYMENT_CHANNELS,
                 'excluded_order_amounts' => self::EXCLUDED_ORDER_AMOUNTS,
+                'weeks' => $weeks->values(),
                 'total_rows' => $data->count(),
             ],
             'data' => $data,
