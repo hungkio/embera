@@ -265,19 +265,19 @@ class DeviceRevenueReportController extends Controller
 
         $dbDriver = DB::connection()->getDriverName();
         if ($dbDriver === 'sqlite') {
-            $weekStartRaw = "date(payment_time, '-6 days', 'weekday 1')";
+            $weekStartRaw = "date(return_time, '-6 days', 'weekday 1')";
         } else {
-            $weekStartRaw = "DATE(DATE_SUB(CONVERT_TZ(payment_time, '+00:00', '+07:00'), INTERVAL WEEKDAY(CONVERT_TZ(payment_time, '+00:00', '+07:00')) DAY))";
+            $weekStartRaw = "DATE(DATE_SUB(CONVERT_TZ(return_time, '+00:00', '+07:00'), INTERVAL WEEKDAY(CONVERT_TZ(return_time, '+00:00', '+07:00')) DAY))";
         }
 
         $query = Order::query()
             ->whereNotNull('rental_equipment_id')
             ->where('rental_equipment_id', '!=', '')
-            ->whereNotNull('payment_time')
+            ->whereNotNull('return_time')
             ->where('order_amount', '>', 0)
             ->whereNotIn('order_amount', self::EXCLUDED_ORDER_AMOUNTS)
             ->whereIn('payment_channels', self::REPORT_PAYMENT_CHANNELS)
-            ->whereBetween('payment_time', [$startDate, $endDate]);
+            ->whereBetween('return_time', [$startDate, $endDate]);
 
         $this->applyOrderFilters($query, $request);
 
@@ -390,7 +390,7 @@ class DeviceRevenueReportController extends Controller
                 'start_date' => $startDate->toDateString(),
                 'end_date' => $endDate->toDateString(),
                 'group_by' => 'iso_week',
-                'date_field' => 'payment_time',
+                'date_field' => 'return_time',
                 'device_field' => 'rental_equipment_id',
                 'included_payment_channels' => self::REPORT_PAYMENT_CHANNELS,
                 'excluded_order_amounts' => self::EXCLUDED_ORDER_AMOUNTS,
