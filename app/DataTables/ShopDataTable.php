@@ -151,27 +151,19 @@ class ShopDataTable extends BaseDatable
 
         $hasDevice = request('has_device');
         if ($hasDevice === 'yes') {
-            $dbDriver = \Illuminate\Support\Facades\DB::connection()->getDriverName();
-            if ($dbDriver === 'sqlite') {
-                $query->whereRaw("json_array_length(json_extract(device_json, '$.devices')) > 0");
-            } else {
-                $query->whereJsonLength('device_json->devices', '>', 0);
-            }
+            $query->whereExists(function ($sub) {
+                $sub->select(\Illuminate\Support\Facades\DB::raw(1))
+                    ->from('tbl_devices')
+                    ->join('tbl_shops', 'tbl_shops.code', '=', 'tbl_devices.shop_code')
+                    ->whereColumn('tbl_shops.name', '=', 'shops.shop_name');
+            });
         } elseif ($hasDevice === 'no') {
-            $dbDriver = \Illuminate\Support\Facades\DB::connection()->getDriverName();
-            if ($dbDriver === 'sqlite') {
-                $query->where(function ($sub) {
-                    $sub->whereNull('device_json')
-                        ->orWhereRaw("json_extract(device_json, '$.devices') IS NULL")
-                        ->orWhereRaw("json_array_length(json_extract(device_json, '$.devices')) = 0");
-                });
-            } else {
-                $query->where(function ($sub) {
-                    $sub->whereNull('device_json')
-                        ->orWhereNull('device_json->devices')
-                        ->orWhereJsonLength('device_json->devices', 0);
-                });
-            }
+            $query->whereNotExists(function ($sub) {
+                $sub->select(\Illuminate\Support\Facades\DB::raw(1))
+                    ->from('tbl_devices')
+                    ->join('tbl_shops', 'tbl_shops.code', '=', 'tbl_devices.shop_code')
+                    ->whereColumn('tbl_shops.name', '=', 'shops.shop_name');
+            });
         }
 
         return $query;
