@@ -334,6 +334,7 @@ class DeviceRevenueReportController extends Controller
                 $orderCount = $row ? (int) $row->order_count : 0;
 
                 $rowResult[$weekKey] = $revenue;
+                $rowResult[$weekKey . '_orders'] = $orderCount;
 
                 $totalRevenue += $revenue;
                 $totalOrderCount += $orderCount;
