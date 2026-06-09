@@ -16,4 +16,9 @@ class TblShop extends Model
     {
         return $this->hasOne(Shop::class, 'shop_name', 'name');
     }
+
+    public function devices()
+    {
+        return $this->hasMany(DeviceStatus::class, 'shop_code', 'code');
+    }
 }

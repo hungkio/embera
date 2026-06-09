@@ -59,4 +59,8 @@ class Shop extends Model
         return $this->hasMany(\App\Models\Order::class, 'rental_shop', 'shop_name');
     }
 
+    public function tblShop()
+    {
+        return $this->belongsTo(TblShop::class, 'shop_name', 'name');
+    }
 }

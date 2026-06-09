@@ -150,19 +150,16 @@ class ShopDataTable extends BaseDatable
             ->when(request('show_deleted') !== 'yes', fn($q) => $q->where('shops.is_deleted', 0));
 
         $hasDevice = request('has_device');
-        if ($hasDevice === 'yes') {
-            $query->whereExists(function ($sub) {
+        if ($hasDevice === 'yes' || $hasDevice === 'no') {
+            $dbDriver = \Illuminate\Support\Facades\DB::connection()->getDriverName();
+            $collate = ($dbDriver === 'sqlite') ? '' : ' COLLATE utf8mb4_unicode_ci';
+            $method = ($hasDevice === 'yes') ? 'whereExists' : 'whereNotExists';
+
+            $query->$method(function ($sub) use ($collate) {
                 $sub->select(\Illuminate\Support\Facades\DB::raw(1))
                     ->from('tbl_devices')
                     ->join('tbl_shops', 'tbl_shops.code', '=', 'tbl_devices.shop_code')
-                    ->whereColumn('tbl_shops.name', '=', 'shops.shop_name');
-            });
-        } elseif ($hasDevice === 'no') {
-            $query->whereNotExists(function ($sub) {
-                $sub->select(\Illuminate\Support\Facades\DB::raw(1))
-                    ->from('tbl_devices')
-                    ->join('tbl_shops', 'tbl_shops.code', '=', 'tbl_devices.shop_code')
-                    ->whereColumn('tbl_shops.name', '=', 'shops.shop_name');
+                    ->whereRaw("tbl_shops.name{$collate} = shops.shop_name{$collate}");
             });
         }
 
