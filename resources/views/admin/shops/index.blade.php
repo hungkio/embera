@@ -9,8 +9,22 @@
 @stop
 
 @section('page-content')
-@can('shops.create')
-@endcan
+    <form method="GET" action="{{ route('admin.shops.index') }}" class="row g-3 mb-4 align-items-end filters">
+        <div class="col-md-3">
+            <label for="has_device" class="form-label font-weight-bold">Thiết bị</label>
+            <select name="has_device" id="has_device" class="form-control">
+                <option value="all" {{ request('has_device') === 'all' || !request()->has('has_device') ? 'selected' : '' }}>-- Tất cả --</option>
+                <option value="yes" {{ request('has_device') === 'yes' ? 'selected' : '' }}>Có thiết bị</option>
+                <option value="no" {{ request('has_device') === 'no' ? 'selected' : '' }}>Không có thiết bị</option>
+            </select>
+        </div>
+        <div class="col-md-3">
+            <button type="submit" class="btn btn-primary mr-2">
+                <i class="fal fa-filter mr-1"></i> Lọc
+            </button>
+            <a href="{{ route('admin.shops.index') }}" class="btn btn-light">Đặt lại</a>
+        </div>
+    </form>
 
 <x-card title="Cửa hàng">
     <div class="table-responsive">

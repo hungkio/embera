@@ -141,13 +141,40 @@ class ShopDataTable extends BaseDatable
 
     public function query(Shop $model)
     {
-        return $model->newQuery()
+        $query = $model->newQuery()
             ->with(['contract'])
             ->leftJoin('contracts', 'contracts.id', '=', 'shops.contract_id')
             ->leftJoin('merchants', 'merchants.id', '=', 'contracts.merchant_id')
             ->select('shops.*')
             ->when(request('show_deleted') === 'yes', fn($q) => $q->where('shops.is_deleted', 1))
             ->when(request('show_deleted') !== 'yes', fn($q) => $q->where('shops.is_deleted', 0));
+
+        $hasDevice = request('has_device');
+        if ($hasDevice === 'yes') {
+            $dbDriver = \Illuminate\Support\Facades\DB::connection()->getDriverName();
+            if ($dbDriver === 'sqlite') {
+                $query->whereRaw("json_array_length(json_extract(device_json, '$.devices')) > 0");
+            } else {
+                $query->whereJsonLength('device_json->devices', '>', 0);
+            }
+        } elseif ($hasDevice === 'no') {
+            $dbDriver = \Illuminate\Support\Facades\DB::connection()->getDriverName();
+            if ($dbDriver === 'sqlite') {
+                $query->where(function ($sub) {
+                    $sub->whereNull('device_json')
+                        ->orWhereRaw("json_extract(device_json, '$.devices') IS NULL")
+                        ->orWhereRaw("json_array_length(json_extract(device_json, '$.devices')) = 0");
+                });
+            } else {
+                $query->where(function ($sub) {
+                    $sub->whereNull('device_json')
+                        ->orWhereNull('device_json->devices')
+                        ->orWhereJsonLength('device_json->devices', 0);
+                });
+            }
+        }
+
+        return $query;
     }
 
     protected function getColumns(): array
