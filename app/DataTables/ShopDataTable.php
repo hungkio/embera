@@ -198,7 +198,7 @@ class ShopDataTable extends BaseDatable
 
             Button::raw('<i class="fal fa-download mr-2"></i>Xuất danh sách shop')
                 ->addClass('btn btn-primary')
-                ->action("window.location='" . route('admin.shops.export_all') . "';"),
+                ->action("window.location='" . route('admin.shops.export_all') . "' + window.location.search;"),
 
             Button::make('reset')->addClass('btn bg-blue')->text('<i class="fal fa-undo mr-2"></i>Thiết lập lại'),
         ];

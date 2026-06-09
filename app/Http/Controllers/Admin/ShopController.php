@@ -210,9 +210,9 @@ class ShopController extends Controller
         ]);
     }
 
-    public function exportAll()
+    public function exportAll(Request $request)
     {
-        $rows = Shop::query()
+        $query = Shop::query()
             ->where('shops.is_deleted', 0)
             ->leftJoin('contracts', 'contracts.id', '=', 'shops.contract_id')
             ->leftJoin('merchants', 'merchants.id', '=', 'contracts.merchant_id')
@@ -223,8 +223,23 @@ class ShopController extends Controller
                 'contracts.contract_number',
                 'merchants.username as merchant_username',
             ])
-            ->orderBy('shops.shop_name')
-            ->get();
+            ->orderBy('shops.shop_name');
+
+        $hasDevice = $request->input('has_device');
+        if ($hasDevice === 'yes' || $hasDevice === 'no') {
+            $dbDriver = \Illuminate\Support\Facades\DB::connection()->getDriverName();
+            $collate = ($dbDriver === 'sqlite') ? '' : ' COLLATE utf8mb4_unicode_ci';
+            $method = ($hasDevice === 'yes') ? 'whereExists' : 'whereNotExists';
+
+            $query->$method(function ($sub) use ($collate) {
+                $sub->select(\Illuminate\Support\Facades\DB::raw(1))
+                    ->from('tbl_devices')
+                    ->join('tbl_shops', 'tbl_shops.code', '=', 'tbl_devices.shop_code')
+                    ->whereRaw("tbl_shops.name{$collate} = shops.shop_name{$collate}");
+            });
+        }
+
+        $rows = $query->get();
 
         return Excel::download(
             new ShopsAllExport($rows),
