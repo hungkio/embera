@@ -263,6 +263,13 @@ class DeviceRevenueReportController extends Controller
             $current->addWeek();
         }
 
+        $devices = DeviceStatus::query()
+            ->whereNotNull('shop_code')
+            ->where('shop_code', '!=', '')
+            ->with('shop')
+            ->get()
+            ->keyBy('code');
+
         $dbDriver = DB::connection()->getDriverName();
         if ($dbDriver === 'sqlite') {
             $weekStartRaw = "date(payment_time, '-6 days', 'weekday 1')";
@@ -273,6 +280,7 @@ class DeviceRevenueReportController extends Controller
         $query = Order::query()
             ->whereNotNull('rental_equipment_id')
             ->where('rental_equipment_id', '!=', '')
+            ->whereIn('rental_equipment_id', $devices->keys())
             ->whereNotNull('payment_time')
             ->where('order_amount', '>', 0)
             ->whereNotIn('order_amount', self::EXCLUDED_ORDER_AMOUNTS)
@@ -292,16 +300,11 @@ class DeviceRevenueReportController extends Controller
             ->orderBy('rental_equipment_id')
             ->get();
 
-        $devices = DeviceStatus::query()
-            ->with('shop')
-            ->get()
-            ->keyBy('code');
-
         $latestOrders = $this->getLatestOrders($request);
 
         $deviceCodes = $rows->pluck('rental_equipment_id')
             ->merge($latestOrders->keys())
-            ->filter()
+            ->filter(fn ($code) => $devices->has($code))
             ->unique()
             ->values();
 
