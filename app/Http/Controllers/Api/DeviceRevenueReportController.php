@@ -407,6 +407,183 @@ class DeviceRevenueReportController extends Controller
         ]);
     }
 
+    public function monthlyRevenue(Request $request): JsonResponse
+    {
+        $reportYear = (int) $request->input('year', now()->year);
+        $startDate = $request->filled('start_date')
+            ? Carbon::parse($request->input('start_date'))->startOfDay()
+            : Carbon::create($reportYear, 1, 1)->startOfDay();
+
+        $endDate = $request->filled('end_date')
+            ? Carbon::parse($request->input('end_date'))->endOfDay()
+            : now()->endOfDay();
+
+        if ($startDate->gt($endDate)) {
+            [$startDate, $endDate] = [$endDate->copy()->startOfDay(), $startDate->copy()->endOfDay()];
+        }
+
+        // Generate all months in the range
+        $months = collect();
+        $current = $startDate->copy()->startOfMonth();
+        $end = $endDate->copy()->startOfMonth();
+
+        while ($current->lte($end)) {
+            $monthKey = $current->format('Y-m');
+            $months->put($monthKey, [
+                'month' => $monthKey,
+                'month_name' => 'Tháng ' . $current->format('m/Y'),
+            ]);
+            $current->addMonthNoOverflow();
+        }
+
+        $devices = DeviceStatus::query()
+            ->whereNotNull('shop_code')
+            ->where('shop_code', '!=', '')
+            ->whereHas('shop', function ($q) {
+                $q->whereRaw('LOWER(name) NOT LIKE ?', ['%test%']);
+            })
+            ->with('shop')
+            ->get()
+            ->keyBy('code');
+
+        $dbDriver = DB::connection()->getDriverName();
+        if ($dbDriver === 'sqlite') {
+            $monthStartRaw = "strftime('%Y-%m', payment_time)";
+        } else {
+            $monthStartRaw = "DATE_FORMAT(CONVERT_TZ(payment_time, '+00:00', '+07:00'), '%Y-%m')";
+        }
+
+        $query = Order::query()
+            ->whereNotNull('rental_equipment_id')
+            ->where('rental_equipment_id', '!=', '')
+            ->whereIn('rental_equipment_id', $devices->keys())
+            ->whereNotNull('payment_time')
+            ->where('order_amount', '>', 0)
+            ->whereNotIn('order_amount', self::EXCLUDED_ORDER_AMOUNTS)
+            ->whereIn('payment_channels', self::REPORT_PAYMENT_CHANNELS)
+            ->whereBetween('payment_time', [$startDate, $endDate])
+            ->where(function ($q) {
+                $q->whereNull('rental_shop')
+                  ->orWhereRaw('LOWER(rental_shop) NOT LIKE ?', ['%test%']);
+            });
+
+        $this->applyOrderFilters($query, $request);
+
+        $rows = $query
+            ->select('rental_equipment_id')
+            ->selectRaw($monthStartRaw . ' as month_key')
+            ->selectRaw('SUM(order_amount) as total_revenue')
+            ->selectRaw('COUNT(*) as order_count')
+            ->groupBy('rental_equipment_id', 'month_key')
+            ->havingRaw('SUM(order_amount) > 0')
+            ->orderBy('month_key')
+            ->orderBy('rental_equipment_id')
+            ->get();
+
+        $latestOrders = $this->getLatestOrders($request);
+
+        $deviceCodes = $rows->pluck('rental_equipment_id')
+            ->filter(fn ($code) => $devices->has($code))
+            ->unique()
+            ->values();
+
+        $data = $deviceCodes->map(function (string $deviceCode) use ($months, $rows, $devices, $latestOrders) {
+            $device = $devices->get($deviceCode);
+            $latestOrder = $latestOrders->get($deviceCode);
+            $installDate = $this->getInstallDate($device, $latestOrder);
+            $isOnline = ($device?->status ?? 'offline') === 'online';
+
+            $deviceRows = $rows->where('rental_equipment_id', $deviceCode)->keyBy('month_key');
+
+            $rowResult = [
+                'device_code' => $deviceCode,
+                'cum' => $latestOrder?->region,
+                'khu_vuc' => $latestOrder?->city ?? $latestOrder?->area,
+                'nhan_vien_pt' => $latestOrder?->employee_name,
+                'ten_diem' => $device?->shop?->name ?? $latestOrder?->rental_shop,
+                'loai_diem' => $latestOrder?->rental_shop_type,
+                'ngay_lap' => $installDate?->format('Y-m-d'),
+                'trang_thai_hien_tai' => $isOnline ? 'online' : 'offline',
+            ];
+
+            $totalRevenue = 0.0;
+            $totalOrderCount = 0;
+            $monthsList = [];
+
+            foreach ($months as $monthKey => $monthInfo) {
+                $row = $deviceRows->get($monthKey);
+                $revenue = $row ? (float) $row->total_revenue : 0.0;
+                $orderCount = $row ? (int) $row->order_count : 0;
+
+                $rowResult[$monthKey] = $revenue;
+                $rowResult[$monthKey . '_orders'] = $orderCount;
+
+                $totalRevenue += $revenue;
+                $totalOrderCount += $orderCount;
+
+                $monthsList[] = [
+                    'month' => $monthKey,
+                    'month_name' => $monthInfo['month_name'],
+                    'revenue' => $revenue,
+                    'order_count' => $orderCount,
+                ];
+            }
+
+            $rowResult['months'] = $monthsList;
+            $rowResult['total_revenue'] = $totalRevenue;
+            $rowResult['order_count'] = $totalOrderCount;
+
+            return $rowResult;
+        })
+        ->sortByDesc('total_revenue')
+        ->values();
+
+        $monthlyTotals = $months->map(function ($monthInfo, $monthKey) use ($rows) {
+            $monthRows = $rows->where('month_key', $monthKey);
+
+            return [
+                'month' => $monthKey,
+                'month_name' => $monthInfo['month_name'],
+                'total_revenue' => (float) $monthRows->sum('total_revenue'),
+                'order_count' => (int) $monthRows->sum('order_count'),
+            ];
+        })->values();
+
+        $deviceTotals = $data->map(function ($deviceItem) {
+            return [
+                'device_code' => $deviceItem['device_code'],
+                'cum' => $deviceItem['cum'],
+                'khu_vuc' => $deviceItem['khu_vuc'],
+                'nhan_vien_pt' => $deviceItem['nhan_vien_pt'],
+                'ten_diem' => $deviceItem['ten_diem'],
+                'loai_diem' => $deviceItem['loai_diem'],
+                'ngay_lap' => $deviceItem['ngay_lap'],
+                'trang_thai_hien_tai' => $deviceItem['trang_thai_hien_tai'],
+                'total_revenue' => $deviceItem['total_revenue'],
+                'order_count' => $deviceItem['order_count'],
+            ];
+        })
+        ->sortByDesc('total_revenue')
+        ->values();
+
+        return response()->json([
+            'meta' => [
+                'start_date' => $startDate->toDateString(),
+                'end_date' => $endDate->toDateString(),
+                'group_by' => 'month',
+                'date_field' => 'payment_time',
+                'device_field' => 'rental_equipment_id',
+                'included_payment_channels' => self::REPORT_PAYMENT_CHANNELS,
+                'excluded_order_amounts' => self::EXCLUDED_ORDER_AMOUNTS,
+                'months' => $months->values(),
+                'total_rows' => $data->count(),
+            ],
+            'data' => $data,
+            'monthly_totals' => $monthlyTotals,
+            'device_totals' => $deviceTotals,
+        ]);
+    }
+
     private function parseDeviceCodes(Request $request): Collection
     {
         $codes = $request->input('device_codes', $request->input('devices', []));
