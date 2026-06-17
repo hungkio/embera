@@ -176,6 +176,22 @@ class GmailController
         return redirect()->route('admin.gmail.index');
     }
 
+    public function downloadAttachment(int $id)
+    {
+        $this->authorize('view', MailSetting::class);
+
+        $attachment = GmailAttachment::findOrFail($id);
+
+        if (!\Illuminate\Support\Facades\Storage::disk($attachment->storage_disk)->exists($attachment->storage_path)) {
+            abort(404, __('Tập tin không tồn tại.'));
+        }
+
+        return \Illuminate\Support\Facades\Storage::disk($attachment->storage_disk)->download(
+            $attachment->storage_path,
+            $attachment->filename
+        );
+    }
+
     private function account(): ?GmailAccount
     {
         return GmailAccount::where('admin_id', auth()->id())->first();

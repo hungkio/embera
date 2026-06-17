@@ -130,14 +130,24 @@
                                     <th>{{ __('Tên file') }}</th>
                                     <th>{{ __('Lưu tại') }}</th>
                                     <th>{{ __('Dung lượng') }}</th>
+                                    <th class="text-center">{{ __('Hành động') }}</th>
                                 </tr>
                                 </thead>
                                 <tbody>
                                 @foreach($attachments as $attachment)
                                     <tr>
-                                        <td>{{ $attachment->filename }}</td>
+                                        <td>
+                                            <a href="{{ route('admin.gmail.attachment.download', $attachment->id) }}">
+                                                {{ $attachment->filename }}
+                                            </a>
+                                        </td>
                                         <td>{{ $attachment->storage_path }}</td>
                                         <td>{{ number_format($attachment->size) }} bytes</td>
+                                        <td class="text-center">
+                                            <a href="{{ route('admin.gmail.attachment.download', $attachment->id) }}" class="btn btn-sm btn-primary">
+                                                <i class="fal fa-download mr-1"></i> {{ __('Tải về') }}
+                                            </a>
+                                        </td>
                                     </tr>
                                 @endforeach
                                 </tbody>
