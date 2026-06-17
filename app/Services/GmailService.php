@@ -480,6 +480,18 @@ class GmailService
         return $payload;
     }
 
+    public function downloadAttachmentContent(GmailAccount $account, string $messageId, string $attachmentId): string
+    {
+        $accessToken = $this->getValidAccessToken($account);
+        $attachment = $this->apiRequest(
+            'GET',
+            '/users/me/messages/' . $messageId . '/attachments/' . $attachmentId,
+            $accessToken
+        );
+
+        return $this->decodeBase64Url((string) Arr::get($attachment, 'data', ''));
+    }
+
     private function assertConfigured(): void
     {
         if (!$this->isConfigured()) {

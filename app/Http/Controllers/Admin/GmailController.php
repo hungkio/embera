@@ -176,14 +176,33 @@ class GmailController
         return redirect()->route('admin.gmail.index');
     }
 
-    public function downloadAttachment(int $id)
+    public function downloadAttachment(int $id, GmailService $gmailService)
     {
         $this->authorize('view', MailSetting::class);
 
         $attachment = GmailAttachment::findOrFail($id);
 
         if (!\Illuminate\Support\Facades\Storage::disk($attachment->storage_disk)->exists($attachment->storage_path)) {
-            abort(404, __('Tập tin không tồn tại.'));
+            try {
+                $account = $this->account();
+                if ($account && $attachment->message && $attachment->gmail_attachment_id) {
+                    $content = $gmailService->downloadAttachmentContent(
+                        $account,
+                        $attachment->message->gmail_message_id,
+                        $attachment->gmail_attachment_id
+                    );
+
+                    \Illuminate\Support\Facades\Storage::disk($attachment->storage_disk)->put(
+                        $attachment->storage_path,
+                        $content
+                    );
+                } else {
+                    abort(404, __('Tập tin không tồn tại và không thể khôi phục từ Gmail.'));
+                }
+            } catch (\Throwable $e) {
+                report($e);
+                abort(404, __('Tập tin không tồn tại và lỗi khi tải lại: ') . $e->getMessage());
+            }
         }
 
         return \Illuminate\Support\Facades\Storage::disk($attachment->storage_disk)->download(
