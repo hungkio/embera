@@ -131,7 +131,7 @@ class GmailController
         return redirect()->route('admin.gmail.index');
     }
 
-    public function syncDailyCsv(Request $request, GmailService $gmailService): RedirectResponse
+    public function syncDailyCsv(Request $request, GmailService $gmailService)
     {
         $this->authorize('view', MailSetting::class);
 
@@ -142,11 +142,18 @@ class GmailController
         try {
             $date = $dateStr ? Carbon::parse($dateStr) : Carbon::yesterday('Asia/Ho_Chi_Minh');
             $attachments = $gmailService->syncDailyCsvAttachmentsForDate($account, $date);
-            $downloaded = $attachments->count();
-            flash()->success(__('Đã tải về :count file CSV từ email daily_ cho ngày :date.', [
-                'count' => $downloaded,
-                'date' => $date->format('d/m/Y')
-            ]));
+
+            if ($attachments->isEmpty()) {
+                flash()->error(__('Không tìm thấy file CSV nào từ email daily_ cho ngày :date.', ['date' => $date->format('d/m/Y')]));
+                return redirect()->route('admin.gmail.index');
+            }
+
+            $attachment = $attachments->first();
+
+            return \Illuminate\Support\Facades\Storage::disk($attachment->storage_disk)->download(
+                $attachment->storage_path,
+                $attachment->filename
+            );
         } catch (\Throwable $exception) {
             report($exception);
             flash()->error($exception->getMessage());
