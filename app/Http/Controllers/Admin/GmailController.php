@@ -41,12 +41,6 @@ class GmailController
             'account' => $account,
             'messages' => $messages,
             'selectedMessage' => $selectedMessage,
-            'attachments' => $account
-                ? GmailAttachment::query()
-                    ->whereHas('message', fn ($query) => $query->where('gmail_account_id', $account->id))
-                    ->latest('id')
-                    ->get()
-                : collect(),
         ]);
     }
 
@@ -131,36 +125,6 @@ class GmailController
         return redirect()->route('admin.gmail.index');
     }
 
-    public function syncDailyCsv(Request $request, GmailService $gmailService)
-    {
-        $this->authorize('view', MailSetting::class);
-
-        $account = $this->account();
-        abort_unless($account, 404);
-
-        $dateStr = $request->input('date');
-        try {
-            $date = $dateStr ? Carbon::parse($dateStr) : Carbon::yesterday('Asia/Ho_Chi_Minh');
-            $attachments = $gmailService->syncDailyCsvAttachmentsForDate($account, $date);
-
-            if ($attachments->isEmpty()) {
-                flash()->error(__('Không tìm thấy file CSV nào từ email daily_ cho ngày :date.', ['date' => $date->format('d/m/Y')]));
-                return redirect()->route('admin.gmail.index');
-            }
-
-            $attachment = $attachments->first();
-
-            return \Illuminate\Support\Facades\Storage::disk($attachment->storage_disk)->download(
-                $attachment->storage_path,
-                $attachment->filename
-            );
-        } catch (\Throwable $exception) {
-            report($exception);
-            flash()->error($exception->getMessage());
-        }
-
-        return redirect()->route('admin.gmail.index');
-    }
 
     public function importDailyOrdersToday(Request $request): RedirectResponse
     {
@@ -190,61 +154,6 @@ class GmailController
         return redirect()->route('admin.gmail.index');
     }
 
-    public function downloadAttachment(int $id, GmailService $gmailService)
-    {
-        $this->authorize('view', MailSetting::class);
-
-        $attachment = GmailAttachment::findOrFail($id);
-
-        $disk = \Illuminate\Support\Facades\Storage::disk($attachment->storage_disk);
-        $exists = false;
-        try {
-            $exists = $disk->exists($attachment->storage_path) && $disk->size($attachment->storage_path) !== false;
-        } catch (\Throwable) {
-            $exists = false;
-        }
-
-        if (!$exists) {
-            try {
-                $account = $this->account();
-                if ($account && $attachment->message && $attachment->gmail_attachment_id) {
-                    $content = $gmailService->downloadAttachmentContent(
-                        $account,
-                        $attachment->message->gmail_message_id,
-                        $attachment->gmail_attachment_id
-                    );
-
-                    // Tự động sửa đường dẫn lưu trữ nếu bị lỗi đuôi gạch dưới
-                    if (Str::endsWith($attachment->storage_path, '_')) {
-                        $datePath = optional($attachment->message->received_at)->format('Ymd') ?: now()->format('Ymd');
-                        $newPath = 'gmail/daily/' . $account->id . '/' . $datePath . '/' . $attachment->message->gmail_message_id . '_attachment_' . $attachment->message->gmail_message_id . '.csv';
-
-                        $attachment->storage_path = $newPath;
-                        $attachment->save();
-                    }
-
-                    $written = \Illuminate\Support\Facades\Storage::disk($attachment->storage_disk)->put(
-                        $attachment->storage_path,
-                        $content
-                    );
-
-                    if (!$written) {
-                        throw new \RuntimeException('Không thể ghi file vào thư mục storage. Vui lòng kiểm tra quyền ghi thư mục.');
-                    }
-                } else {
-                    abort(404, __('Tập tin không tồn tại và không thể khôi phục từ Gmail.'));
-                }
-            } catch (\Throwable $e) {
-                report($e);
-                abort(404, __('Tập tin không tồn tại và lỗi khi tải lại: ') . $e->getMessage());
-            }
-        }
-
-        return \Illuminate\Support\Facades\Storage::disk($attachment->storage_disk)->download(
-            $attachment->storage_path,
-            $attachment->filename
-        );
-    }
 
     private function account(): ?GmailAccount
     {

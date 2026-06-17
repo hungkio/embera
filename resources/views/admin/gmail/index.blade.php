@@ -43,15 +43,6 @@
                             <button type="submit" class="btn btn-primary btn-sm">{{ __('Đồng bộ inbox') }}</button>
                         </form>
 
-                        <form method="POST" action="{{ route('admin.gmail.sync-daily-csv') }}" class="d-inline-flex align-items-center mb-1" style="gap: 6px;">
-                            @csrf
-                            <select name="date" class="form-control form-control-sm" style="width: auto;">
-                                <option value="{{ now('Asia/Ho_Chi_Minh')->toDateString() }}">{{ __('Hôm nay') }} ({{ now('Asia/Ho_Chi_Minh')->format('d/m') }})</option>
-                                <option value="{{ now('Asia/Ho_Chi_Minh')->subDay()->toDateString() }}" selected>{{ __('Hôm qua') }} ({{ now('Asia/Ho_Chi_Minh')->subDay()->format('d/m') }})</option>
-                                <option value="{{ now('Asia/Ho_Chi_Minh')->subDays(2)->toDateString() }}">{{ __('2 ngày trước') }} ({{ now('Asia/Ho_Chi_Minh')->subDays(2)->format('d/m') }})</option>
-                            </select>
-                            <button type="submit" class="btn btn-success btn-sm">{{ __('Tải file daily CSV') }}</button>
-                        </form>
 
                         <form method="POST" action="{{ route('admin.gmail.import-daily-orders-today') }}" class="d-inline-flex align-items-center mb-1" style="gap: 6px;" onsubmit="return confirm('{{ __('Xác nhận import dữ liệu daily orders?') }}')">
                             @csrf
@@ -126,46 +117,6 @@
                 @endif
             </x-card>
 
-            @if($account)
-                <x-card>
-                    <h5 class="mb-3">{{ __('File CSV đã tải') }}</h5>
-
-                    @if($attachments->isEmpty())
-                        <p class="text-muted mb-0">{{ __('Chưa có file CSV nào được tải về.') }}</p>
-                    @else
-                        <div class="table-responsive">
-                            <table class="table table-striped">
-                                <thead>
-                                <tr>
-                                    <th>{{ __('Tên file') }}</th>
-                                    <th>{{ __('Lưu tại') }}</th>
-                                    <th>{{ __('Dung lượng') }}</th>
-                                    <th class="text-center">{{ __('Hành động') }}</th>
-                                </tr>
-                                </thead>
-                                <tbody>
-                                @foreach($attachments as $attachment)
-                                    <tr>
-                                        <td>
-                                            <a href="{{ route('admin.gmail.attachment.download', $attachment->id) }}">
-                                                {{ $attachment->filename }}
-                                            </a>
-                                        </td>
-                                        <td>{{ $attachment->storage_path }}</td>
-                                        <td>{{ number_format($attachment->size) }} bytes</td>
-                                        <td class="text-center">
-                                            <a href="{{ route('admin.gmail.attachment.download', $attachment->id) }}" class="btn btn-sm btn-primary">
-                                                <i class="fal fa-download mr-1"></i> {{ __('Tải về') }}
-                                            </a>
-                                        </td>
-                                    </tr>
-                                @endforeach
-                                </tbody>
-                            </table>
-                        </div>
-                    @endif
-                </x-card>
-            @endif
         </div>
     </div>
 @stop
