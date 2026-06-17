@@ -214,10 +214,23 @@ class GmailController
                         $attachment->gmail_attachment_id
                     );
 
-                    \Illuminate\Support\Facades\Storage::disk($attachment->storage_disk)->put(
+                    // Tự động sửa đường dẫn lưu trữ nếu bị lỗi đuôi gạch dưới
+                    if (Str::endsWith($attachment->storage_path, '_')) {
+                        $datePath = optional($attachment->message->received_at)->format('Ymd') ?: now()->format('Ymd');
+                        $newPath = 'gmail/daily/' . $account->id . '/' . $datePath . '/' . $attachment->message->gmail_message_id . '_attachment_' . $attachment->message->gmail_message_id . '.csv';
+
+                        $attachment->storage_path = $newPath;
+                        $attachment->save();
+                    }
+
+                    $written = \Illuminate\Support\Facades\Storage::disk($attachment->storage_disk)->put(
                         $attachment->storage_path,
                         $content
                     );
+
+                    if (!$written) {
+                        throw new \RuntimeException('Không thể ghi file vào thư mục storage. Vui lòng kiểm tra quyền ghi thư mục.');
+                    }
                 } else {
                     abort(404, __('Tập tin không tồn tại và không thể khôi phục từ Gmail.'));
                 }
