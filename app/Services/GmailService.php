@@ -366,7 +366,18 @@ class GmailService
 
     private function buildAttachmentPath(GmailAccount $account, GmailMessage $message, string $filename): string
     {
-        $safeName = preg_replace('/[^A-Za-z0-9._-]/', '_', $filename) ?: 'attachment.csv';
+        $filename = trim($filename);
+        $safeName = preg_replace('/[^A-Za-z0-9._-]/', '_', $filename);
+        $safeName = trim($safeName, '_');
+
+        if (empty($safeName) || preg_match('/^[\s_.-]+$/', $safeName)) {
+            $safeName = 'attachment_' . $message->gmail_message_id . '.csv';
+        }
+
+        if (!Str::endsWith(Str::lower($safeName), '.csv')) {
+            $safeName .= '.csv';
+        }
+
         $datePath = optional($message->received_at)->format('Ymd') ?: now()->format('Ymd');
 
         return 'gmail/daily/' . $account->id . '/' . $datePath . '/' . $message->gmail_message_id . '_' . $safeName;

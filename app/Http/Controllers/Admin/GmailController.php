@@ -196,7 +196,15 @@ class GmailController
 
         $attachment = GmailAttachment::findOrFail($id);
 
-        if (!\Illuminate\Support\Facades\Storage::disk($attachment->storage_disk)->exists($attachment->storage_path)) {
+        $disk = \Illuminate\Support\Facades\Storage::disk($attachment->storage_disk);
+        $exists = false;
+        try {
+            $exists = $disk->exists($attachment->storage_path) && $disk->size($attachment->storage_path) !== false;
+        } catch (\Throwable) {
+            $exists = false;
+        }
+
+        if (!$exists) {
             try {
                 $account = $this->account();
                 if ($account && $attachment->message && $attachment->gmail_attachment_id) {
