@@ -319,6 +319,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
             Route::get('/gmail/connect', [GmailController::class, 'connect'])->name('gmail.connect');
             Route::get('/gmail/callback', [GmailController::class, 'callback'])->name('gmail.callback');
             Route::post('/gmail/sync', [GmailController::class, 'sync'])->name('gmail.sync');
+            Route::post('/gmail/sync-daily-csv', [GmailController::class, 'syncDailyCsv'])->name('gmail.sync-daily-csv');
             Route::post('/gmail/import-daily-orders-today', [GmailController::class, 'importDailyOrdersToday'])->name('gmail.import-daily-orders-today');
             Route::post('/gmail/disconnect', [GmailController::class, 'disconnect'])->name('gmail.disconnect');
 

@@ -43,6 +43,15 @@
                             <button type="submit" class="btn btn-primary btn-sm">{{ __('Đồng bộ inbox') }}</button>
                         </form>
 
+                        <form method="POST" action="{{ route('admin.gmail.sync-daily-csv') }}" class="d-inline-flex align-items-center mb-1" style="gap: 6px;">
+                            @csrf
+                            <select name="date" class="form-control form-control-sm" style="width: auto;">
+                                <option value="{{ now('Asia/Ho_Chi_Minh')->toDateString() }}">{{ __('Hôm nay') }} ({{ now('Asia/Ho_Chi_Minh')->format('d/m') }})</option>
+                                <option value="{{ now('Asia/Ho_Chi_Minh')->subDay()->toDateString() }}" selected>{{ __('Hôm qua') }} ({{ now('Asia/Ho_Chi_Minh')->subDay()->format('d/m') }})</option>
+                                <option value="{{ now('Asia/Ho_Chi_Minh')->subDays(2)->toDateString() }}">{{ __('2 ngày trước') }} ({{ now('Asia/Ho_Chi_Minh')->subDays(2)->format('d/m') }})</option>
+                            </select>
+                            <button type="submit" class="btn btn-success btn-sm">{{ __('Tải file daily CSV') }}</button>
+                        </form>
 
                         <form method="POST" action="{{ route('admin.gmail.import-daily-orders-today') }}" class="d-inline-flex align-items-center mb-1" style="gap: 6px;" onsubmit="return confirm('{{ __('Xác nhận import dữ liệu daily orders?') }}')">
                             @csrf
