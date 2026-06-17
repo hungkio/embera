@@ -37,25 +37,35 @@
                         <dd>{{ $messages?->total() ?? 0 }}</dd>
                     </dl>
 
-                    <div class="d-flex flex-wrap" style="gap: 8px;">
-                        <form method="POST" action="{{ route('admin.gmail.sync') }}">
+                    <div class="d-flex flex-wrap align-items-center" style="gap: 12px;">
+                        <form method="POST" action="{{ route('admin.gmail.sync') }}" class="mb-1">
                             @csrf
-                            <button type="submit" class="btn btn-primary">{{ __('Đồng bộ inbox') }}</button>
+                            <button type="submit" class="btn btn-primary btn-sm">{{ __('Đồng bộ inbox') }}</button>
                         </form>
 
-                        <form method="POST" action="{{ route('admin.gmail.sync-daily-csv') }}">
+                        <form method="POST" action="{{ route('admin.gmail.sync-daily-csv') }}" class="d-inline-flex align-items-center mb-1" style="gap: 6px;">
                             @csrf
-                            <button type="submit" class="btn btn-success">{{ __('Tải file daily CSV') }}</button>
+                            <select name="date" class="form-control form-control-sm" style="width: auto;">
+                                <option value="{{ now('Asia/Ho_Chi_Minh')->toDateString() }}">{{ __('Hôm nay') }} ({{ now('Asia/Ho_Chi_Minh')->format('d/m') }})</option>
+                                <option value="{{ now('Asia/Ho_Chi_Minh')->subDay()->toDateString() }}" selected>{{ __('Hôm qua') }} ({{ now('Asia/Ho_Chi_Minh')->subDay()->format('d/m') }})</option>
+                                <option value="{{ now('Asia/Ho_Chi_Minh')->subDays(2)->toDateString() }}">{{ __('2 ngày trước') }} ({{ now('Asia/Ho_Chi_Minh')->subDays(2)->format('d/m') }})</option>
+                            </select>
+                            <button type="submit" class="btn btn-success btn-sm">{{ __('Tải file daily CSV') }}</button>
                         </form>
 
-                        <form method="POST" action="{{ route('admin.gmail.import-daily-orders-today') }}" onsubmit="return confirm('{{ __('Chạy import daily orders cho hôm qua?') }}')">
+                        <form method="POST" action="{{ route('admin.gmail.import-daily-orders-today') }}" class="d-inline-flex align-items-center mb-1" style="gap: 6px;" onsubmit="return confirm('{{ __('Xác nhận import dữ liệu daily orders?') }}')">
                             @csrf
-                            <button type="submit" class="btn btn-warning">{{ __('Lấy daily hôm qua') }}</button>
+                            <select name="date" class="form-control form-control-sm" style="width: auto;">
+                                <option value="{{ now('Asia/Ho_Chi_Minh')->toDateString() }}">{{ __('Hôm nay') }} ({{ now('Asia/Ho_Chi_Minh')->format('d/m') }})</option>
+                                <option value="{{ now('Asia/Ho_Chi_Minh')->subDay()->toDateString() }}" selected>{{ __('Hôm qua') }} ({{ now('Asia/Ho_Chi_Minh')->subDay()->format('d/m') }})</option>
+                                <option value="{{ now('Asia/Ho_Chi_Minh')->subDays(2)->toDateString() }}">{{ __('2 ngày trước') }} ({{ now('Asia/Ho_Chi_Minh')->subDays(2)->format('d/m') }})</option>
+                            </select>
+                            <button type="submit" class="btn btn-warning btn-sm">{{ __('Lấy daily orders') }}</button>
                         </form>
 
-                        <form method="POST" action="{{ route('admin.gmail.disconnect') }}" onsubmit="return confirm('{{ __('Bạn chắc chắn muốn ngắt kết nối Gmail?') }}')">
+                        <form method="POST" action="{{ route('admin.gmail.disconnect') }}" class="mb-1" onsubmit="return confirm('{{ __('Bạn chắc chắn muốn ngắt kết nối Gmail?') }}')">
                             @csrf
-                            <button type="submit" class="btn btn-outline-danger">{{ __('Ngắt kết nối') }}</button>
+                            <button type="submit" class="btn btn-outline-danger btn-sm">{{ __('Ngắt kết nối') }}</button>
                         </form>
                     </div>
                 @endif

@@ -131,16 +131,22 @@ class GmailController
         return redirect()->route('admin.gmail.index');
     }
 
-    public function syncDailyCsv(GmailService $gmailService): RedirectResponse
+    public function syncDailyCsv(Request $request, GmailService $gmailService): RedirectResponse
     {
         $this->authorize('view', MailSetting::class);
 
         $account = $this->account();
         abort_unless($account, 404);
 
+        $dateStr = $request->input('date');
         try {
-            $downloaded = $gmailService->syncDailyCsvAttachments($account);
-            flash()->success(__('Đã tải về :count file CSV từ email daily_.', ['count' => $downloaded]));
+            $date = $dateStr ? Carbon::parse($dateStr) : Carbon::yesterday('Asia/Ho_Chi_Minh');
+            $attachments = $gmailService->syncDailyCsvAttachmentsForDate($account, $date);
+            $downloaded = $attachments->count();
+            flash()->success(__('Đã tải về :count file CSV từ email daily_ cho ngày :date.', [
+                'count' => $downloaded,
+                'date' => $date->format('d/m/Y')
+            ]));
         } catch (\Throwable $exception) {
             report($exception);
             flash()->error($exception->getMessage());
@@ -149,14 +155,15 @@ class GmailController
         return redirect()->route('admin.gmail.index');
     }
 
-    public function importDailyOrdersToday(): RedirectResponse
+    public function importDailyOrdersToday(Request $request): RedirectResponse
     {
         $this->authorize('view', MailSetting::class);
 
         $account = $this->account();
         abort_unless($account, 404);
 
-        $importDate = Carbon::yesterday('Asia/Ho_Chi_Minh')->toDateString();
+        $dateStr = $request->input('date');
+        $importDate = $dateStr ? Carbon::parse($dateStr)->toDateString() : Carbon::yesterday('Asia/Ho_Chi_Minh')->toDateString();
 
         try {
             $exitCode = Artisan::call('gmail:import-daily-orders', [
@@ -164,7 +171,7 @@ class GmailController
             ]);
 
             if ($exitCode === 0) {
-                flash()->success(__('Đã chạy import daily orders cho ngày :date.', ['date' => $importDate]));
+                flash()->success(__('Đã chạy import daily orders cho ngày :date.', ['date' => Carbon::parse($importDate)->format('d/m/Y')]));
             } else {
                 flash()->error(__('Import daily orders kết thúc với mã lỗi :code.', ['code' => $exitCode]));
             }
