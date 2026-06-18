@@ -186,11 +186,59 @@ class GmailController
                 throw new \RuntimeException('Không thể lấy nội dung file CSV từ Gmail.');
             }
 
-            return response()->streamDownload(function () use ($content) {
-                echo $content;
-            }, $attachment->filename, [
-                'Content-Type' => 'text/csv',
-            ]);
+            // Chuyển đổi nội dung CSV sang định dạng XLSX
+            $tempCsvFile = tempnam(sys_get_temp_dir(), 'csv_');
+            file_put_contents($tempCsvFile, $content);
+
+            try {
+                $reader = new \PhpOffice\PhpSpreadsheet\Reader\Csv();
+                $reader->setInputEncoding('UTF-8');
+
+                // Tự động nhận diện dấu phân cách (delimiter)
+                $firstLine = strtok($content, "\r\n");
+                if ($firstLine !== false) {
+                    $semicolons = substr_count($firstLine, ';');
+                    $commas = substr_count($firstLine, ',');
+                    if ($semicolons > $commas) {
+                        $reader->setDelimiter(';');
+                    } else {
+                        $reader->setDelimiter(',');
+                    }
+                }
+
+                $spreadsheet = $reader->load($tempCsvFile);
+                if (file_exists($tempCsvFile)) {
+                    unlink($tempCsvFile);
+                }
+
+                $writer = new \PhpOffice\PhpSpreadsheet\Writer\Xlsx($spreadsheet);
+
+                $filename = $attachment->filename;
+                if (Str::endsWith(Str::lower($filename), '.csv')) {
+                    $xlsxFilename = substr($filename, 0, -4) . '.xlsx';
+                } else {
+                    $xlsxFilename = $filename . '.xlsx';
+                }
+
+                return response()->streamDownload(function () use ($writer) {
+                    $writer->save('php://output');
+                }, $xlsxFilename, [
+                    'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                    'Cache-Control' => 'max-age=0',
+                ]);
+            } catch (\Throwable $e) {
+                // Fallback về tải CSV nguyên bản nếu có lỗi xảy ra khi chuyển đổi
+                if (file_exists($tempCsvFile)) {
+                    unlink($tempCsvFile);
+                }
+                report($e);
+
+                return response()->streamDownload(function () use ($content) {
+                    echo $content;
+                }, $attachment->filename, [
+                    'Content-Type' => 'text/csv',
+                ]);
+            }
         } catch (\Throwable $exception) {
             report($exception);
             flash()->error($exception->getMessage());

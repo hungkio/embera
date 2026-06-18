@@ -100,6 +100,63 @@ class ImportDailyOrdersFromGmail extends Command
                         continue;
                     }
 
+                    // Tự động chuyển đổi CSV sang XLSX nếu file là CSV
+                    if (\Illuminate\Support\Str::endsWith(\Illuminate\Support\Str::lower($attachment->storage_path), '.csv')) {
+                        try {
+                            $csvContent = file_get_contents($fullPath);
+
+                            $reader = new \PhpOffice\PhpSpreadsheet\Reader\Csv();
+                            $reader->setInputEncoding('UTF-8');
+
+                            // Nhận diện delimiter
+                            $firstLine = strtok($csvContent, "\r\n");
+                            if ($firstLine !== false) {
+                                $semicolons = substr_count($firstLine, ';');
+                                $commas = substr_count($firstLine, ',');
+                                if ($semicolons > $commas) {
+                                    $reader->setDelimiter(';');
+                                } else {
+                                    $reader->setDelimiter(',');
+                                }
+                            }
+
+                            $spreadsheet = $reader->load($fullPath);
+                            $writer = new \PhpOffice\PhpSpreadsheet\Writer\Xlsx($spreadsheet);
+
+                            $newStoragePath = substr($attachment->storage_path, 0, -4) . '.xlsx';
+                            $newFilename = substr($attachment->filename, 0, -4) . '.xlsx';
+                            $newFullPath = Storage::disk($attachment->storage_disk)->path($newStoragePath);
+
+                            $dir = dirname($newFullPath);
+                            if (!is_dir($dir)) {
+                                mkdir($dir, 0755, true);
+                            }
+
+                            $writer->save($newFullPath);
+
+                            // Xóa file CSV cũ
+                            unlink($fullPath);
+
+                            // Cập nhật model
+                            $attachment->update([
+                                'storage_path' => $newStoragePath,
+                                'filename' => $newFilename,
+                            ]);
+
+                            $fullPath = $newFullPath;
+
+                            Log::info('Da tu dong convert file daily CSV sang XLSX trong cronjob', [
+                                'attachment_id' => $attachment->id,
+                                'new_path' => $newStoragePath,
+                            ]);
+                        } catch (\Throwable $e) {
+                            Log::error('Loi khi convert CSV sang XLSX trong cronjob: ' . $e->getMessage(), [
+                                'attachment_id' => $attachment->id,
+                                'exception' => $e,
+                            ]);
+                        }
+                    }
+
                     try {
                         Excel::import(new OrderImport(), $fullPath);
                         Log::info('Da import file CSV vao orders', [
