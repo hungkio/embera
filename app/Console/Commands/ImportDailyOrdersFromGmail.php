@@ -15,7 +15,7 @@ use Maatwebsite\Excel\Facades\Excel;
 
 class ImportDailyOrdersFromGmail extends Command
 {
-    protected $signature = 'gmail:import-daily-orders {--date=}';
+    protected $signature = 'gmail:import-daily-orders {--date=} {--force}';
 
     private const SYNC_SCAN_LIMIT = 5;
 
@@ -71,7 +71,7 @@ class ImportDailyOrdersFromGmail extends Command
                 }
 
                 foreach ($attachments as $attachment) {
-                    if ($attachment->imported_at) {
+                    if ($attachment->imported_at && !$this->option('force')) {
                         Log::info('Bo qua file da import truoc do', [
                             'gmail_account_id' => $account->id,
                             'attachment_id' => $attachment->id,
@@ -91,6 +91,25 @@ class ImportDailyOrdersFromGmail extends Command
                         'storage_path' => $attachment->storage_path,
                         'full_path' => $fullPath,
                     ]);
+
+                    if (!file_exists($fullPath)) {
+                        // Tự động tải lại file nếu bị mất hoặc đã bị xóa trước đó
+                        if ($attachment->message && $attachment->gmail_attachment_id) {
+                            try {
+                                $content = $gmailService->downloadAttachmentContent(
+                                    $account,
+                                    $attachment->message->gmail_message_id,
+                                    $attachment->gmail_attachment_id
+                                );
+                                Storage::disk($attachment->storage_disk)->put($attachment->storage_path, $content);
+                                Log::info('Da tu dong tai lai file attachment thieu trong cronjob', [
+                                    'attachment_id' => $attachment->id,
+                                ]);
+                            } catch (\Throwable $e) {
+                                Log::error('Khong the tai lai file attachment trong cronjob: ' . $e->getMessage());
+                            }
+                        }
+                    }
 
                     if (!file_exists($fullPath)) {
                         $attachment->update([
