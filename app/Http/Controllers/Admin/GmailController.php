@@ -260,7 +260,6 @@ class GmailController
         try {
             $exitCode = Artisan::call('gmail:import-daily-orders', [
                 '--date' => $importDate,
-                '--force' => true,
             ]);
 
             if ($exitCode === 0) {
