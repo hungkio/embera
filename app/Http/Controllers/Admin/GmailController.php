@@ -143,16 +143,20 @@ class GmailController
             }
 
             $attachment = $attachments->first();
-
             $disk = \Illuminate\Support\Facades\Storage::disk($attachment->storage_disk);
-            $exists = false;
+            $content = null;
+
+            // 1. Thử lấy nội dung từ disk nếu file tồn tại
             try {
-                $exists = $disk->exists($attachment->storage_path) && $disk->size($attachment->storage_path) !== false;
-            } catch (\Throwable) {
-                $exists = false;
+                if ($disk->exists($attachment->storage_path)) {
+                    $content = $disk->get($attachment->storage_path);
+                }
+            } catch (\Throwable $e) {
+                report($e);
             }
 
-            if (!$exists) {
+            // 2. Nếu chưa có nội dung, tải trực tiếp từ Gmail
+            if ($content === null || $content === '') {
                 if ($attachment->message && $attachment->gmail_attachment_id) {
                     $content = $gmailService->downloadAttachmentContent(
                         $account,
@@ -169,17 +173,24 @@ class GmailController
                         $attachment->save();
                     }
 
-                    $written = $disk->put($attachment->storage_path, $content);
-                    if (!$written) {
-                        throw new \RuntimeException('Không thể ghi file vào thư mục storage. Vui lòng kiểm tra quyền ghi thư mục.');
+                    // Lưu tạm vào disk làm cache (nếu không có quyền ghi thì bỏ qua, vẫn cho tải về)
+                    try {
+                        $disk->put($attachment->storage_path, $content);
+                    } catch (\Throwable $e) {
+                        report($e);
                     }
                 }
             }
 
-            return $disk->download(
-                $attachment->storage_path,
-                $attachment->filename
-            );
+            if ($content === null) {
+                throw new \RuntimeException('Không thể lấy nội dung file CSV từ Gmail.');
+            }
+
+            return response()->streamDownload(function () use ($content) {
+                echo $content;
+            }, $attachment->filename, [
+                'Content-Type' => 'text/csv',
+            ]);
         } catch (\Throwable $exception) {
             report($exception);
             flash()->error($exception->getMessage());
