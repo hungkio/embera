@@ -3,6 +3,7 @@
 use App\Http\Controllers\Admin\MenuController;
 use App\Http\Controllers\Api\DeviceRevenueReportController;
 use App\Http\Controllers\Api\ShopDirectoryController;
+use App\Http\Controllers\Api\DeviceDirectoryController;
 use App\Http\Controllers\License\LicenseController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -27,3 +28,4 @@ Route::match(['get', 'post'], '/device-revenue-summary', [DeviceRevenueReportCon
 Route::get('/device-weekly-revenue', [DeviceRevenueReportController::class, 'weeklyRevenue']);
 Route::get('/device-monthly-revenue', [DeviceRevenueReportController::class, 'monthlyRevenue']);
 Route::get('/shops-directory', [ShopDirectoryController::class, 'index']);
+Route::get('/devices-directory', [DeviceDirectoryController::class, 'index']);
