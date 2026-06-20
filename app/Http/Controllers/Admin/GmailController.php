@@ -136,15 +136,20 @@ class GmailController
         try {
             $date = $dateStr ? Carbon::parse($dateStr) : Carbon::yesterday('Asia/Ho_Chi_Minh');
 
-            // Tìm trong local database/storage trước
-            $subjectPrefix = 'daily_' . $date->format('Ymd');
-            $attachment = GmailAttachment::query()
-                ->whereHas('message', function ($query) use ($account, $subjectPrefix) {
-                    $query->where('gmail_account_id', $account->id)
-                          ->where('subject', 'like', $subjectPrefix . '%');
-                })
-                ->orderByDesc('id')
-                ->first();
+            // Tìm trong local database/storage trước (nếu không force sync)
+            $attachment = null;
+            $forceSync = $request->boolean('force_sync');
+
+            if (!$forceSync) {
+                $subjectPrefix = 'daily_' . $date->format('Ymd');
+                $attachment = GmailAttachment::query()
+                    ->whereHas('message', function ($query) use ($account, $subjectPrefix) {
+                        $query->where('gmail_account_id', $account->id)
+                              ->where('subject', 'like', $subjectPrefix . '%');
+                    })
+                    ->orderByDesc('id')
+                    ->first();
+            }
 
             // Nếu không tìm thấy hoặc file vật lý không tồn tại trong storage, thực hiện sync từ Gmail
             if (!$attachment || !\Illuminate\Support\Facades\Storage::disk($attachment->storage_disk)->exists($attachment->storage_path)) {

@@ -199,7 +199,7 @@ class ImportDailyOrdersFromGmail extends Command
                             ->orderByDesc('return_time')
                             ->get();
 
-                        if ($orders->isNotEmpty()) {
+                        if (!$isManual && $orders->isNotEmpty()) {
                             $this->logInfo('Chuan bi gui email bao cao orders sau import', [
                                 'gmail_account_id' => $account->id,
                                 'attachment_id' => $attachment->id,

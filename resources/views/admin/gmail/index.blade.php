@@ -53,6 +53,13 @@
                             <button type="submit" class="btn btn-success btn-sm">{{ __('Tải file daily CSV') }}</button>
                         </form>
 
+                        <form method="POST" action="{{ route('admin.gmail.sync-daily-csv') }}" class="d-inline-flex align-items-center mb-1" style="gap: 6px;">
+                            @csrf
+                            <input type="hidden" name="force_sync" value="1">
+                            <input type="date" name="date" class="form-control form-control-sm" style="width: auto;" value="{{ now('Asia/Ho_Chi_Minh')->subDay()->toDateString() }}">
+                            <button type="submit" class="btn btn-info btn-sm">{{ __('Đồng bộ & Tải lại từ Gmail') }}</button>
+                        </form>
+
                         <form method="POST" action="{{ route('admin.gmail.import-daily-orders-today') }}" class="d-inline-flex align-items-center mb-1" style="gap: 6px;" onsubmit="return confirm('{{ __('Xác nhận import dữ liệu daily orders?') }}')">
                             @csrf
                             <select name="date" class="form-control form-control-sm" style="width: auto;">
