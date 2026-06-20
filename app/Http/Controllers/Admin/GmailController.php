@@ -291,13 +291,14 @@ class GmailController
         $importDate = $dateStr ? Carbon::parse($dateStr)->toDateString() : Carbon::yesterday('Asia/Ho_Chi_Minh')->toDateString();
 
         try {
+            @set_time_limit(0);
             $exitCode = Artisan::call('gmail:import-daily-orders', [
-                '--date' => $importDate,
+                '--start-date' => $importDate,
                 '--manual' => true,
             ]);
 
             if ($exitCode === 0) {
-                flash()->success(__('Đã chạy import daily orders cho ngày :date.', ['date' => Carbon::parse($importDate)->format('d/m/Y')]));
+                flash()->success(__('Đã chạy import daily orders từ ngày :date đến hôm nay.', ['date' => Carbon::parse($importDate)->format('d/m/Y')]));
             } else {
                 flash()->error(__('Import daily orders kết thúc với mã lỗi :code.', ['code' => $exitCode]));
             }
