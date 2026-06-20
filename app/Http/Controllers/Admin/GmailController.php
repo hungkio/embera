@@ -134,43 +134,74 @@ class GmailController
 
         $dateStr = $request->input('date');
         try {
-            $date = $dateStr ? Carbon::parse($dateStr) : Carbon::yesterday('Asia/Ho_Chi_Minh');
+            @set_time_limit(0);
+            $startDate = $dateStr ? Carbon::parse($dateStr) : Carbon::yesterday('Asia/Ho_Chi_Minh');
+            $endDate = Carbon::today('Asia/Ho_Chi_Minh');
 
-            // Tìm trong local database/storage trước (nếu không force sync)
-            $attachment = null;
             $forceSync = $request->boolean('force_sync');
 
-            if (!$forceSync) {
-                $subjectPrefix = 'daily_' . $date->format('Ymd');
-                $attachment = GmailAttachment::query()
-                    ->whereHas('message', function ($query) use ($account, $subjectPrefix) {
-                        $query->where('gmail_account_id', $account->id)
-                              ->where('subject', 'like', $subjectPrefix . '%');
-                    })
-                    ->orderByDesc('id')
-                    ->first();
+            // Xác định các ngày cần xử lý từ startDate đến endDate
+            $dates = [];
+            if ($startDate->greaterThan($endDate)) {
+                $dates[] = $endDate;
+            } else {
+                $current = $startDate->copy();
+                while ($current->lessThanOrEqualTo($endDate)) {
+                    $dates[] = $current->copy();
+                    $current->addDay();
+                }
             }
 
-            // Nếu không tìm thấy hoặc file vật lý không tồn tại trong storage, thực hiện sync từ Gmail
-            if (!$attachment || !\Illuminate\Support\Facades\Storage::disk($attachment->storage_disk)->exists($attachment->storage_path)) {
-                $attachments = $gmailService->syncDailyCsvAttachmentsForDate($account, $date);
+            $targetAttachment = null;
 
-                if ($attachments->isEmpty()) {
-                    flash()->error(__('Không tìm thấy file CSV nào từ email daily_ cho ngày :date.', ['date' => $date->format('d/m/Y')]));
-                    return redirect()->route('admin.gmail.index');
+            foreach ($dates as $date) {
+                $subjectPrefix = 'daily_' . $date->format('Ymd');
+                $attachment = null;
+
+                // 1. Kiểm tra xem file đã được đồng bộ chưa (nếu không phải force sync ngày được chọn trực tiếp)
+                if (!$forceSync || !$date->equalTo($startDate)) {
+                    $attachment = GmailAttachment::query()
+                        ->whereHas('message', function ($query) use ($account, $subjectPrefix) {
+                            $query->where('gmail_account_id', $account->id)
+                                  ->where('subject', 'like', $subjectPrefix . '%');
+                        })
+                        ->orderByDesc('id')
+                        ->first();
+
+                    // Nếu bản ghi tồn tại và file vật lý cũng tồn tại trong storage, thì bỏ qua tải từ Gmail để tránh trùng lặp
+                    if ($attachment && \Illuminate\Support\Facades\Storage::disk($attachment->storage_disk)->exists($attachment->storage_path)) {
+                        if ($date->equalTo($startDate)) {
+                            $targetAttachment = $attachment;
+                        }
+                        continue; // Bỏ qua ngày này
+                    }
                 }
 
-                $attachment = $attachments->first();
+                // 2. Nếu chưa có hoặc file không tồn tại hoặc force sync, thực hiện tải từ Gmail
+                $attachments = $gmailService->syncDailyCsvAttachmentsForDate($account, $date);
+
+                if ($attachments->isNotEmpty()) {
+                    $attachment = $attachments->first();
+                }
+
+                if ($date->equalTo($startDate)) {
+                    $targetAttachment = $attachment;
+                }
             }
 
-            $disk = \Illuminate\Support\Facades\Storage::disk($attachment->storage_disk);
+            if (!$targetAttachment) {
+                flash()->error(__('Không tìm thấy file CSV nào từ email daily_ cho ngày :date.', ['date' => $startDate->format('d/m/Y')]));
+                return redirect()->route('admin.gmail.index');
+            }
+
+            $disk = \Illuminate\Support\Facades\Storage::disk($targetAttachment->storage_disk);
 
             // Nếu file đã được chuyển đổi sang XLSX ở local storage, tải trực tiếp luôn
-            if (Str::endsWith(Str::lower($attachment->storage_path), '.xlsx')) {
-                if ($disk->exists($attachment->storage_path)) {
-                    return response()->streamDownload(function () use ($disk, $attachment) {
-                        echo $disk->get($attachment->storage_path);
-                    }, $attachment->filename, [
+            if (Str::endsWith(Str::lower($targetAttachment->storage_path), '.xlsx')) {
+                if ($disk->exists($targetAttachment->storage_path)) {
+                    return response()->streamDownload(function () use ($disk, $targetAttachment) {
+                        echo $disk->get($targetAttachment->storage_path);
+                    }, $targetAttachment->filename, [
                         'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
                         'Cache-Control' => 'max-age=0',
                     ]);
@@ -181,8 +212,8 @@ class GmailController
 
             // 1. Thử lấy nội dung từ disk nếu file tồn tại (đối với file CSV)
             try {
-                if ($disk->exists($attachment->storage_path)) {
-                    $content = $disk->get($attachment->storage_path);
+                if ($disk->exists($targetAttachment->storage_path)) {
+                    $content = $disk->get($targetAttachment->storage_path);
                 }
             } catch (\Throwable $e) {
                 report($e);
@@ -190,25 +221,25 @@ class GmailController
 
             // 2. Nếu chưa có nội dung, tải trực tiếp từ Gmail
             if ($content === null || $content === '') {
-                if ($attachment->message && $attachment->gmail_attachment_id) {
+                if ($targetAttachment->message && $targetAttachment->gmail_attachment_id) {
                     $content = $gmailService->downloadAttachmentContent(
                         $account,
-                        $attachment->message->gmail_message_id,
-                        $attachment->gmail_attachment_id
+                        $targetAttachment->message->gmail_message_id,
+                        $targetAttachment->gmail_attachment_id
                     );
 
                     // Tự động sửa đường dẫn lưu trữ nếu bị lỗi đuôi gạch dưới
-                    if (Str::endsWith($attachment->storage_path, '_')) {
-                        $datePath = optional($attachment->message->received_at)->format('Ymd') ?: now()->format('Ymd');
-                        $newPath = 'gmail/daily/' . $account->id . '/' . $datePath . '/' . $attachment->message->gmail_message_id . '_attachment_' . $attachment->message->gmail_message_id . '.csv';
+                    if (Str::endsWith($targetAttachment->storage_path, '_')) {
+                        $datePath = optional($targetAttachment->message->received_at)->format('Ymd') ?: now()->format('Ymd');
+                        $newPath = 'gmail/daily/' . $account->id . '/' . $datePath . '/' . $targetAttachment->message->gmail_message_id . '_attachment_' . $targetAttachment->message->gmail_message_id . '.csv';
 
-                        $attachment->storage_path = $newPath;
-                        $attachment->save();
+                        $targetAttachment->storage_path = $newPath;
+                        $targetAttachment->save();
                     }
 
                     // Lưu tạm vào disk làm cache
                     try {
-                        $disk->put($attachment->storage_path, $content);
+                        $disk->put($targetAttachment->storage_path, $content);
                     } catch (\Throwable $e) {
                         report($e);
                     }
@@ -246,7 +277,7 @@ class GmailController
 
                 $writer = new \PhpOffice\PhpSpreadsheet\Writer\Xlsx($spreadsheet);
 
-                $filename = $attachment->filename;
+                $filename = $targetAttachment->filename;
                 if (Str::endsWith(Str::lower($filename), '.csv')) {
                     $xlsxFilename = substr($filename, 0, -4) . '.xlsx';
                 } else {
@@ -268,7 +299,7 @@ class GmailController
 
                 return response()->streamDownload(function () use ($content) {
                     echo $content;
-                }, $attachment->filename, [
+                }, $targetAttachment->filename, [
                     'Content-Type' => 'text/csv',
                 ]);
             }
@@ -293,12 +324,12 @@ class GmailController
         try {
             @set_time_limit(0);
             $exitCode = Artisan::call('gmail:import-daily-orders', [
-                '--start-date' => $importDate,
+                '--date' => $importDate,
                 '--manual' => true,
             ]);
 
             if ($exitCode === 0) {
-                flash()->success(__('Đã chạy import daily orders từ ngày :date đến hôm nay.', ['date' => Carbon::parse($importDate)->format('d/m/Y')]));
+                flash()->success(__('Đã chạy import daily orders cho ngày :date.', ['date' => Carbon::parse($importDate)->format('d/m/Y')]));
             } else {
                 flash()->error(__('Import daily orders kết thúc với mã lỗi :code.', ['code' => $exitCode]));
             }
