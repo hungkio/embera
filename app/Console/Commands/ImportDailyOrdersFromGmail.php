@@ -15,11 +15,28 @@ use Maatwebsite\Excel\Facades\Excel;
 
 class ImportDailyOrdersFromGmail extends Command
 {
-    protected $signature = 'gmail:import-daily-orders {--date=}';
+    protected $signature = 'gmail:import-daily-orders {--date=} {--manual}';
 
     private const SYNC_SCAN_LIMIT = 5;
 
-    protected $description = 'Tải file CSV daily từ Gmail, import vào orders và xóa file sau khi import thành công.';
+    protected $description = 'Tải file CSV daily từ Gmail, import vào orders và lưu file vào storage.';
+
+    private $customLogger;
+
+    private function logInfo(string $message, array $context = []): void
+    {
+        $this->customLogger->info($message, $context);
+    }
+
+    private function logWarning(string $message, array $context = []): void
+    {
+        $this->customLogger->warning($message, $context);
+    }
+
+    private function logError(string $message, array $context = []): void
+    {
+        $this->customLogger->error($message, $context);
+    }
 
     public function handle(GmailService $gmailService, OrderExportEmailService $emailService): int
     {
@@ -27,15 +44,23 @@ class ImportDailyOrdersFromGmail extends Command
             ? Carbon::parse($this->option('date'), 'Asia/Ho_Chi_Minh')
             : Carbon::yesterday('Asia/Ho_Chi_Minh');
 
-        Log::info('Bat dau cron import daily orders tu Gmail', [
+        $isManual = (bool) $this->option('manual');
+        $logFile = $isManual ? 'gmail_manual.log' : 'gmail_cron.log';
+        $this->customLogger = \Illuminate\Support\Facades\Log::build([
+            'driver' => 'single',
+            'path' => storage_path('logs/' . $logFile),
+        ]);
+
+        $this->logInfo('Bat dau import daily orders tu Gmail', [
             'target_date' => $targetDate->format('Y-m-d'),
             'manual_date' => $this->option('date'),
+            'is_manual' => $isManual,
         ]);
 
         $accounts = GmailAccount::query()->get();
 
         if ($accounts->isEmpty()) {
-            Log::warning('Cron import daily orders dung vi chua co tai khoan Gmail nao duoc ket noi');
+            $this->logWarning('Import daily orders dung vi chua co tai khoan Gmail nao duoc ket noi');
             $this->warn('Chưa có tài khoản Gmail nào được kết nối.');
             return self::SUCCESS;
         }
@@ -43,7 +68,7 @@ class ImportDailyOrdersFromGmail extends Command
         foreach ($accounts as $account) {
             try {
                 $synced = $gmailService->syncRecentMessages($account, self::SYNC_SCAN_LIMIT, true);
-                Log::info('Da quet Gmail cho cron import orders', [
+                $this->logInfo('Da quet Gmail cho import orders', [
                     'gmail_account_id' => $account->id,
                     'email' => $account->email,
                     'synced_messages' => $synced,
@@ -52,7 +77,7 @@ class ImportDailyOrdersFromGmail extends Command
                 $this->info("Đã quét Gmail {$account->email}: {$synced} thư.");
 
                 $attachments = $gmailService->syncDailyCsvAttachmentsForDate($account, $targetDate);
-                Log::info('Ket qua tim file daily CSV tu Gmail', [
+                $this->logInfo('Ket qua tim file daily CSV tu Gmail', [
                     'gmail_account_id' => $account->id,
                     'email' => $account->email,
                     'target_date' => $targetDate->format('Y-m-d'),
@@ -72,7 +97,7 @@ class ImportDailyOrdersFromGmail extends Command
 
                 foreach ($attachments as $attachment) {
                     if ($attachment->imported_at) {
-                        Log::info('Bo qua file da import truoc do', [
+                        $this->logInfo('Bo qua file da import truoc do', [
                             'gmail_account_id' => $account->id,
                             'attachment_id' => $attachment->id,
                             'filename' => $attachment->filename,
@@ -82,7 +107,7 @@ class ImportDailyOrdersFromGmail extends Command
                     }
 
                     $fullPath = Storage::disk($attachment->storage_disk)->path($attachment->storage_path);
-                    Log::info('Chuan bi import file daily CSV', [
+                    $this->logInfo('Chuan bi import file daily CSV', [
                         'gmail_account_id' => $account->id,
                         'email' => $account->email,
                         'attachment_id' => $attachment->id,
@@ -145,12 +170,12 @@ class ImportDailyOrdersFromGmail extends Command
 
                             $fullPath = $newFullPath;
 
-                            Log::info('Da tu dong convert file daily CSV sang XLSX trong cronjob', [
+                            $this->logInfo('Da tu dong convert file daily CSV sang XLSX trong import', [
                                 'attachment_id' => $attachment->id,
                                 'new_path' => $newStoragePath,
                             ]);
                         } catch (\Throwable $e) {
-                            Log::error('Loi khi convert CSV sang XLSX trong cronjob: ' . $e->getMessage(), [
+                            $this->logError('Loi khi convert CSV sang XLSX trong import: ' . $e->getMessage(), [
                                 'attachment_id' => $attachment->id,
                                 'exception' => $e,
                             ]);
@@ -159,7 +184,7 @@ class ImportDailyOrdersFromGmail extends Command
 
                     try {
                         Excel::import(new OrderImport(), $fullPath);
-                        Log::info('Da import file CSV vao orders', [
+                        $this->logInfo('Da import file vao orders', [
                             'gmail_account_id' => $account->id,
                             'attachment_id' => $attachment->id,
                             'filename' => $attachment->filename,
@@ -175,7 +200,7 @@ class ImportDailyOrdersFromGmail extends Command
                             ->get();
 
                         if ($orders->isNotEmpty()) {
-                            Log::info('Chuan bi gui email bao cao orders sau import', [
+                            $this->logInfo('Chuan bi gui email bao cao orders sau import', [
                                 'gmail_account_id' => $account->id,
                                 'attachment_id' => $attachment->id,
                                 'filename' => $attachment->filename,
@@ -199,15 +224,15 @@ class ImportDailyOrdersFromGmail extends Command
                             'import_error' => null,
                         ]);
 
-                        Storage::disk($attachment->storage_disk)->delete($attachment->storage_path);
-                        Log::info('Da xoa file CSV local sau khi import', [
+                        // Lưu lại luôn không xóa nữa theo yêu cầu của user
+                        $this->logInfo('Da import file thanh cong va luu lai trong storage', [
                             'gmail_account_id' => $account->id,
                             'attachment_id' => $attachment->id,
                             'filename' => $attachment->filename,
                             'storage_path' => $attachment->storage_path,
                         ]);
 
-                        $this->info("Đã import và xóa file {$attachment->filename}.");
+                        $this->info("Đã import và lưu file {$attachment->filename}.");
                     } catch (\Throwable $exception) {
                         report($exception);
 
@@ -216,7 +241,7 @@ class ImportDailyOrdersFromGmail extends Command
                             'import_error' => $exception->getMessage(),
                         ]);
 
-                        Log::error('Import daily CSV từ Gmail thất bại', [
+                        $this->logError('Import daily CSV từ Gmail thất bại', [
                             'gmail_account_id' => $account->id,
                             'attachment_id' => $attachment->id,
                             'filename' => $attachment->filename,
@@ -229,7 +254,7 @@ class ImportDailyOrdersFromGmail extends Command
             } catch (\Throwable $exception) {
                 report($exception);
 
-                Log::error('Đồng bộ daily CSV từ Gmail thất bại', [
+                $this->logError('Đồng bộ daily CSV từ Gmail thất bại', [
                     'gmail_account_id' => $account->id,
                     'email' => $account->email,
                     'date' => $targetDate->format('Y-m-d'),
@@ -240,7 +265,7 @@ class ImportDailyOrdersFromGmail extends Command
             }
         }
 
-        Log::info('Ket thuc cron import daily orders tu Gmail', [
+        $this->logInfo('Ket thuc import daily orders tu Gmail', [
             'target_date' => $targetDate->format('Y-m-d'),
         ]);
 

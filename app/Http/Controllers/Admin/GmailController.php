@@ -135,18 +135,46 @@ class GmailController
         $dateStr = $request->input('date');
         try {
             $date = $dateStr ? Carbon::parse($dateStr) : Carbon::yesterday('Asia/Ho_Chi_Minh');
-            $attachments = $gmailService->syncDailyCsvAttachmentsForDate($account, $date);
 
-            if ($attachments->isEmpty()) {
-                flash()->error(__('Không tìm thấy file CSV nào từ email daily_ cho ngày :date.', ['date' => $date->format('d/m/Y')]));
-                return redirect()->route('admin.gmail.index');
+            // Tìm trong local database/storage trước
+            $subjectPrefix = 'daily_' . $date->format('Ymd');
+            $attachment = GmailAttachment::query()
+                ->whereHas('message', function ($query) use ($account, $subjectPrefix) {
+                    $query->where('gmail_account_id', $account->id)
+                          ->where('subject', 'like', $subjectPrefix . '%');
+                })
+                ->orderByDesc('id')
+                ->first();
+
+            // Nếu không tìm thấy hoặc file vật lý không tồn tại trong storage, thực hiện sync từ Gmail
+            if (!$attachment || !\Illuminate\Support\Facades\Storage::disk($attachment->storage_disk)->exists($attachment->storage_path)) {
+                $attachments = $gmailService->syncDailyCsvAttachmentsForDate($account, $date);
+
+                if ($attachments->isEmpty()) {
+                    flash()->error(__('Không tìm thấy file CSV nào từ email daily_ cho ngày :date.', ['date' => $date->format('d/m/Y')]));
+                    return redirect()->route('admin.gmail.index');
+                }
+
+                $attachment = $attachments->first();
             }
 
-            $attachment = $attachments->first();
             $disk = \Illuminate\Support\Facades\Storage::disk($attachment->storage_disk);
+
+            // Nếu file đã được chuyển đổi sang XLSX ở local storage, tải trực tiếp luôn
+            if (Str::endsWith(Str::lower($attachment->storage_path), '.xlsx')) {
+                if ($disk->exists($attachment->storage_path)) {
+                    return response()->streamDownload(function () use ($disk, $attachment) {
+                        echo $disk->get($attachment->storage_path);
+                    }, $attachment->filename, [
+                        'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                        'Cache-Control' => 'max-age=0',
+                    ]);
+                }
+            }
+
             $content = null;
 
-            // 1. Thử lấy nội dung từ disk nếu file tồn tại
+            // 1. Thử lấy nội dung từ disk nếu file tồn tại (đối với file CSV)
             try {
                 if ($disk->exists($attachment->storage_path)) {
                     $content = $disk->get($attachment->storage_path);
@@ -173,7 +201,7 @@ class GmailController
                         $attachment->save();
                     }
 
-                    // Lưu tạm vào disk làm cache (nếu không có quyền ghi thì bỏ qua, vẫn cho tải về)
+                    // Lưu tạm vào disk làm cache
                     try {
                         $disk->put($attachment->storage_path, $content);
                     } catch (\Throwable $e) {
@@ -260,6 +288,7 @@ class GmailController
         try {
             $exitCode = Artisan::call('gmail:import-daily-orders', [
                 '--date' => $importDate,
+                '--manual' => true,
             ]);
 
             if ($exitCode === 0) {
