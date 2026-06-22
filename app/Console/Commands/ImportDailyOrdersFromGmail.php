@@ -38,7 +38,7 @@ class ImportDailyOrdersFromGmail extends Command
         $this->customLogger->error($message, $context);
     }
 
-    public function handle(GmailService $gmailService, OrderExportEmailService $emailService): int
+    public function handle(GmailService $gmailService, OrderExportEmailService $emailService, \App\Services\TelegramService $telegramService): int
     {
         @set_time_limit(0);
 
@@ -261,6 +261,9 @@ class ImportDailyOrdersFromGmail extends Command
                             ]);
 
                             $this->info("Đã import và lưu file {$attachment->filename}.");
+
+                            // Gửi thông báo Telegram khi import thành công
+                            $telegramService->sendMessage("✅ <b>Import thành công daily orders từ Gmail</b>\n📅 Ngày: {$targetDate->format('d/m/Y')}\n📧 Email: {$account->email}\n📂 Tệp tin: <code>{$attachment->filename}</code>\n📊 Tổng số orders: " . ($orders->count() ?? 0));
                         } catch (\Throwable $exception) {
                             report($exception);
 
@@ -277,6 +280,9 @@ class ImportDailyOrdersFromGmail extends Command
                             ]);
 
                             $this->error("Import thất bại với file {$attachment->filename}: {$exception->getMessage()}");
+
+                            // Gửi thông báo Telegram khi import thất bại
+                            $telegramService->sendMessage("❌ <b>Import daily orders thất bại!</b>\n📅 Ngày: {$targetDate->format('d/m/Y')}\n📧 Email: {$account->email}\n📂 Tệp tin: <code>{$attachment->filename}</code>\n⚠️ Lỗi: <code>{$exception->getMessage()}</code>");
                         }
                     }
                 } catch (\Throwable $exception) {
@@ -290,6 +296,9 @@ class ImportDailyOrdersFromGmail extends Command
                     ]);
 
                     $this->error("Xử lý Gmail {$account->email} thất bại: {$exception->getMessage()}");
+
+                    // Gửi thông báo Telegram khi đồng bộ Gmail thất bại
+                    $telegramService->sendMessage("❌ <b>Đồng bộ Gmail thất bại!</b>\n📅 Ngày: {$targetDate->format('d/m/Y')}\n📧 Email: {$account->email}\n⚠️ Lỗi: <code>{$exception->getMessage()}</code>");
                 }
             }
         }
