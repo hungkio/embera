@@ -14,7 +14,7 @@ use App\DataTables\Export\OrdersFullExport;
 class OrderDataTable extends BaseDatable
 {
     private const ACCOUNTING_PAYMENT_CHANNELS = ['balance', 'mbpay'];
-    private const EXCLUDED_ACCOUNTING_ORDER_AMOUNTS = [240000, 364000];
+    private const EXCLUDED_ACCOUNTING_ORDER_AMOUNTS = [24000, 240000, 360000];
 
     public function dataTable($query)
     {
