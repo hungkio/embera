@@ -437,11 +437,6 @@ class DeviceRevenueReportController extends Controller
         }
 
         $devices = DeviceStatus::query()
-            ->whereNotNull('shop_code')
-            ->where('shop_code', '!=', '')
-            ->whereHas('shop', function ($q) {
-                $q->whereRaw('LOWER(name) NOT LIKE ?', ['%test%']);
-            })
             ->with('shop')
             ->get()
             ->keyBy('code');
@@ -535,6 +530,7 @@ class DeviceRevenueReportController extends Controller
 
             return $rowResult;
         })
+        ->filter(fn ($item) => $item['total_revenue'] > 0)
         ->sortByDesc('total_revenue')
         ->values();
 
