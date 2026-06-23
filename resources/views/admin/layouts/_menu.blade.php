@@ -77,7 +77,7 @@
                 <li class="nav-item">
                     <a href="{{ route('admin.dashboard.revenue') }}"
                        class="nav-link @if(request()->routeIs('admin.dashboard.revenue'))active @endif">
-                        <i class="fal fa-chart-column"></i>
+                        <i class="fal fa-chart-bar"></i>
                         <span>{{ __('Dashboard doanh thu') }}</span>
                     </a>
                 </li>

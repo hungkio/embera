@@ -4,6 +4,15 @@
     "description": "The Laravel Framework.",
     "keywords": ["framework", "laravel"],
     "license": "MIT",
+    "repositories": [
+        {
+            "type": "path",
+            "url": "packages/davejamesmiller/laravel-breadcrumbs",
+            "options": {
+                "symlink": true
+            }
+        }
+    ],
     "require": {
         "php": "^8.1",
         "astrotomic/laravel-translatable": "^11.13",
@@ -11,7 +20,7 @@
         "barryvdh/laravel-translation-manager": "^0.6.6",
         "bensampo/laravel-enum": "^6.11",
         "cviebrock/eloquent-sluggable": "^10.0",
-        "davejamesmiller/laravel-breadcrumbs": "^5.3",
+        "davejamesmiller/laravel-breadcrumbs": "dev-master as 5.3.2",
         "edsdk/flmngr-server-php": "^1.6",
         "guzzlehttp/guzzle": "^7.2",
         "intervention/image-laravel": "^1.3",

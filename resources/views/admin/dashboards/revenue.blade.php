@@ -35,7 +35,7 @@
 @section('page-header')
 <x-page-header>
     <x-slot name="title">
-        <h4><i class="fal fa-chart-column mr-2"></i> <span class="font-weight-semibold">Dashboard doanh thu</span></h4>
+        <h4><i class="fal fa-chart-bar mr-2"></i> <span class="font-weight-semibold">Dashboard doanh thu</span></h4>
     </x-slot>
 </x-page-header>
 @stop
