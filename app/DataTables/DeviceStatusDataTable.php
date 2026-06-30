@@ -92,6 +92,10 @@ class DeviceStatusDataTable extends BaseDatable
             $query->whereNotIn('code', self::ADVANCED_EXCLUDED_SHOP_CODES);
         }
 
+        if (!empty($filters['device_code'])) {
+            $query->where('code', 'like', '%' . $filters['device_code'] . '%');
+        }
+
         if (!empty($filters['status'])) {
             $query->where('status', $filters['status']);
         }

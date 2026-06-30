@@ -81,7 +81,11 @@
                 <option value="province" {{ request('shop_location') === 'province' ? 'selected' : '' }}>Tỉnh</option>
             </select>
         </div>
-        <div class="col-md-3">
+        <div class="col-md-2">
+            <label for="device_code">Mã thiết bị</label>
+            <input type="text" name="device_code" id="device_code" class="form-control" value="{{ request('device_code') }}" placeholder="Nhập mã thiết bị...">
+        </div>
+        <div class="col-md-2">
             <label for="shop_keyword">Cửa hàng</label>
             <input type="text" name="shop_keyword" id="shop_keyword" class="form-control" value="{{ request('shop_keyword') }}" placeholder="Nhập mã/tên cửa hàng, ví dụ MB-HN">
         </div>
