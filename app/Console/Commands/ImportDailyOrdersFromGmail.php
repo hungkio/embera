@@ -273,7 +273,8 @@ class ImportDailyOrdersFromGmail extends Command
                             $this->info("Đã import và lưu file {$attachment->filename}.");
 
                             // Gửi thông báo Telegram khi import thành công
-                            $telegramService->sendMessage("✅ <b>Import thành công daily orders từ Gmail</b>\n📅 Ngày: {$targetDate->format('d/m/Y')}\n📧 Email: {$account->email}\n📂 Tệp tin: <code>{$attachment->filename}</code>\n📊 Tổng số orders: " . ($orders->count() ?? 0));
+                            $recipientEmail = $emailService->defaultEmail();
+                            $telegramService->sendMessage("✅ <b>Import thành công daily orders từ Gmail</b>\n📅 Ngày: {$targetDate->format('d/m/Y')}\n📧 Email gửi: {$account->email}\n📧 Email nhận BC: <code>{$recipientEmail}</code>\n📂 Tệp tin: <code>{$attachment->filename}</code>\n📊 Tổng số orders: " . ($orders->count() ?? 0));
                         } catch (\Throwable $exception) {
                             report($exception);
 
