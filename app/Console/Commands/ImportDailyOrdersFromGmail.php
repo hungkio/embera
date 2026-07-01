@@ -190,6 +190,16 @@ class ImportDailyOrdersFromGmail extends Command
                                 // Xóa file CSV cũ
                                 unlink($fullPath);
 
+                                // Tránh lỗi Duplicate entry khi cập nhật tên file sang .xlsx
+                                $existingXlsx = \App\Models\GmailAttachment::where('gmail_message_id', $attachment->gmail_message_id)
+                                    ->where('filename', $newFilename)
+                                    ->where('id', '!=', $attachment->id)
+                                    ->first();
+
+                                if ($existingXlsx) {
+                                    $existingXlsx->delete();
+                                }
+
                                 // Cập nhật model
                                 $attachment->update([
                                     'storage_path' => $newStoragePath,
