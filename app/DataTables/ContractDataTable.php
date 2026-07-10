@@ -7,6 +7,7 @@ use App\Models\Contract;
 use Carbon\Carbon;
 use Yajra\DataTables\Html\Button;
 use Yajra\DataTables\Html\Column;
+use Illuminate\Support\Facades\DB;
 
 class ContractDataTable extends BaseDatable
 {
@@ -58,7 +59,9 @@ class ContractDataTable extends BaseDatable
                 return trim($c->admin->first_name . ' ' . $c->admin->last_name);
             })
             ->filterColumn('admin_id', function ($query, $keyword) {
-                $query->whereRaw("LOWER(CONCAT(admins.first_name, ' ', admins.last_name)) like ?", ["%" . strtolower($keyword) . "%"]);
+                $query->whereHas('admin', function ($q) use ($keyword) {
+                    $q->where(DB::raw("LOWER(CONCAT(first_name, ' ', last_name))"), 'like', "%" . strtolower($keyword) . "%");
+                });
             })
             ->filterColumn('merchant', function ($query, $keyword) {
                 $query->whereHas('merchant', function ($q) use ($keyword) {
