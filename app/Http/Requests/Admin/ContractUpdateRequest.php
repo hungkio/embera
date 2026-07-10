@@ -36,7 +36,7 @@ class ContractUpdateRequest extends FormRequest
             'note' => 'nullable|string',
             'upload' => 'nullable|file|mimes:pdf',
             'download_count' => 'nullable|integer|min:0',
-            'business_registration' => 'required|string|regex:/^([0-9]{12}|[0-9]{10}(-[0-9]{3})?|[0-9]{13})$/', // CCCD (12 số) hoặc MST (10, 13 số có/không có gạch ngang)
+            'business_registration' => 'required|string|regex:/^[0-9a-zA-Z\s.-]{10,20}$/', // Chấp nhận chữ, số, dấu gạch ngang, dấu chấm, khoảng trắng độ dài từ 10 đến 20 ký tự
         ];
     }
 
@@ -100,7 +100,7 @@ class ContractUpdateRequest extends FormRequest
             'download_count.integer' => 'Số lượt tải phải là số.',
             'download_count.min' => 'Số lượt tải không được âm.',
             'business_registration.required' => 'Mã số thuế/CCCD/GPKD là bắt buộc.',
-            'business_registration.regex' => 'Định dạng giấy đăng ký kinh doanh/CCCD không hợp lệ (yêu cầu CCCD 12 số, hoặc MST 10 số, hoặc MST 13 số dạng 10số-3số).',
+            'business_registration.regex' => 'Định dạng giấy đăng ký kinh doanh/CCCD không hợp lệ (yêu cầu từ 10 đến 20 ký tự chữ, số, dấu gạch ngang, dấu chấm hoặc khoảng trắng).',
         ];
     }
 }
