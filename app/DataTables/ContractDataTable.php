@@ -69,8 +69,8 @@ class ContractDataTable extends BaseDatable
                 });
             })
             ->editColumn('business_registration', fn(Contract $c) => e($c->business_registration ?? '-'))
-            ->filterColumn('bank_account_number', fn($query, $keyword) => $query->where('bank_account_number', 'like', "%$keyword%"))
-            ->filterColumn('bank_account_name', fn($query, $keyword) => $query->where('bank_account_name', 'like', "%$keyword%"))
+            ->filterColumn('bank_account_number', fn($query, $keyword) => $query->where('contracts.bank_account_number', 'like', "%$keyword%"))
+            ->filterColumn('bank_account_name', fn($query, $keyword) => $query->where('contracts.bank_account_name', 'like', "%$keyword%"))
             ->editColumn('expired_time', function (Contract $c) {
                 if ($c->sign_date && $c->expired_date) {
                     return $c->sign_date->diffInMonths($c->expired_date) . ' tháng';
@@ -78,10 +78,10 @@ class ContractDataTable extends BaseDatable
                 return '-';
             })
             ->editColumn('created_at', fn(Contract $c) => optional($c->created_at)->format('d/m/Y H:i'))
-            ->filterColumn('contract_number', fn($query, $keyword) => $query->where('contract_number', 'like', "%$keyword%"))
-            ->filterColumn('email', fn($query, $keyword) => $query->where('email', 'like', "%$keyword%"))
-            ->filterColumn('phone', fn($query, $keyword) => $query->where('phone', 'like', "%$keyword%"))
-            ->filterColumn('customer_name', fn($query, $keyword) => $query->where('customer_name', 'like', "%$keyword%"))
+            ->filterColumn('contract_number', fn($query, $keyword) => $query->where('contracts.contract_number', 'like', "%$keyword%"))
+            ->filterColumn('email', fn($query, $keyword) => $query->where('contracts.email', 'like', "%$keyword%"))
+            ->filterColumn('phone', fn($query, $keyword) => $query->where('contracts.phone', 'like', "%$keyword%"))
+            ->filterColumn('customer_name', fn($query, $keyword) => $query->where('contracts.customer_name', 'like', "%$keyword%"))
             ->filterColumn('status', function ($query, $keyword) {
                 $statusMap = [
                     'Đã ký' => 2,
