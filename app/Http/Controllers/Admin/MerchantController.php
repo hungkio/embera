@@ -49,6 +49,12 @@ class MerchantController
     public function store(MerchantStoreRequest $request)
     {
         $data = $request->all();
+        
+        // Mật khẩu mặc định là 123456 (được hash bcrypt)
+        if (empty($data['password'])) {
+            $data['password'] = '$2y$10$wFq53rVw23ETNrYdV8bVwumBrsxQ4ZxLHikRgcl4F4riNx2whDmA6';
+        }
+        
         Merchant::create($data);
 
         return redirect()->route('admin.merchants.index')

@@ -25,20 +25,6 @@
                                 </div>
                             </div>
 
-                            <div class="form-group row">
-                                <label class="col-lg-2 col-form-label text-lg-right">
-                                    <span class="text-danger">*</span> Mật khẩu
-                                </label>
-                                <div class="col-lg-9">
-                                    <input type="text" name="password" class="form-control"
-                                           value="{{ $merchant->password ?? '' }}"
-                                           placeholder="">
-                                    @error('password')
-                                    <span class="form-text text-danger">{{ $message }}</span>
-                                    @enderror
-                                </div>
-                            </div>
-
                             <x-text-field
                                 name="email"
                                 type="email"
@@ -69,26 +55,6 @@
                                 </div>
                             </div>
 
-                        </fieldset>
-                    </x-card>
-                    <x-card class="shadow-sm">
-                        <fieldset class="p-4">
-                            <legend class="border-bottom pb-2 mb-4 font-weight-bold text-primary">
-                                {{ __('Thông tin liên quan') }}
-                            </legend>
-
-                            <x-text-field
-                                name="email"
-                                type="email"
-                                :label="__('Email')"
-                                :value="$merchant->email ?? old('email')"
-                            />
-
-                            <x-text-field
-                                name="phone"
-                                :label="__('Số điện thoại')"
-                                :value="$merchant->phone ?? old('phone')"
-                            />
                         </fieldset>
                     </x-card>
 

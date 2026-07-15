@@ -20,7 +20,7 @@ class MerchantUpdateRequest extends FormRequest
             'email'    => 'nullable|email', // bỏ unique
             'phone'    => 'nullable|string',
             'password' => 'nullable|string|min:6',
-            'admin_id' => 'required|exists:admins,id',
+            'admin_id' => 'nullable|exists:admins,id',
         ];
     }
 

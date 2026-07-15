@@ -17,8 +17,8 @@ class MerchantStoreRequest extends FormRequest
             'username' => 'required|string|unique:merchants,username',
             'email' => 'nullable|email|unique:merchants,email',
             'phone' => 'nullable|string',
-            'password' => 'required|string|min:6',
-            'admin_id' => 'required|exists:admins,id',
+            'password' => 'nullable|string|min:6',
+            'admin_id' => 'nullable|exists:admins,id',
         ];
     }
 
