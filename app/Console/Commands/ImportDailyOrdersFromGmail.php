@@ -124,7 +124,7 @@ class ImportDailyOrdersFromGmail extends Command
                     }
 
                     foreach ($attachments as $attachment) {
-                        if ($attachment->imported_at) {
+                        if (!$isManual && $attachment->imported_at) {
                             $this->logInfo('Bo qua file da import truoc do', [
                                 'gmail_account_id' => $account->id,
                                 'attachment_id' => $attachment->id,
