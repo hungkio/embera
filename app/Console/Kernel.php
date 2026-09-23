@@ -43,11 +43,6 @@ class Kernel extends ConsoleKernel
         $schedule->job(new \App\Jobs\SendDailyRevenueReportJob)
             ->dailyAt('08:30')
             ->withoutOverlapping();
-
-        $schedule->command('gmail:import-daily-orders')
-            ->dailyAt('09:00')
-            ->timezone('Asia/Ho_Chi_Minh')
-            ->withoutOverlapping();
     }
 
     /**

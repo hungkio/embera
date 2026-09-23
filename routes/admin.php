@@ -31,7 +31,6 @@ use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\PageController;
 use App\Http\Controllers\Admin\RoleController;
 use App\Http\Controllers\Admin\SettingController;
-use App\Http\Controllers\Admin\GmailController;
 use App\Http\Controllers\Admin\TaxonController;
 use App\Http\Controllers\Admin\TaxonomyController;
 use App\Http\Controllers\Admin\TaxonomyTreeController;
@@ -315,13 +314,6 @@ Route::prefix('admin')->name('admin.')->group(function () {
             Route::post('/mail-settings', [MailSettingController::class, 'save'])->name('mail-settings.save');
             Route::post('/send-mail-now', [MailSettingController::class, 'send_mail_now'])->name('mail-settings.send-mail-now');
             Route::delete('/mail-settings/delete/{slug}', [MailSettingController::class, 'delete'])->name('mail-settings.delete');
-            Route::get('/gmail', [GmailController::class, 'index'])->name('gmail.index');
-            Route::get('/gmail/connect', [GmailController::class, 'connect'])->name('gmail.connect');
-            Route::get('/gmail/callback', [GmailController::class, 'callback'])->name('gmail.callback');
-            Route::post('/gmail/sync', [GmailController::class, 'sync'])->name('gmail.sync');
-            Route::post('/gmail/sync-daily-csv', [GmailController::class, 'syncDailyCsv'])->name('gmail.sync-daily-csv');
-            Route::post('/gmail/import-daily-orders-today', [GmailController::class, 'importDailyOrdersToday'])->name('gmail.import-daily-orders-today');
-            Route::post('/gmail/disconnect', [GmailController::class, 'disconnect'])->name('gmail.disconnect');
 
             //Menu
             Route::get('/menus', [MenuController::class, 'index'])->name('menus.index');

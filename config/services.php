@@ -35,15 +35,6 @@ return [
       'password' => env('CK_PASSWORD'),
     ],
 
-    'gmail' => [
-        'client_id' => env('GMAIL_CLIENT_ID'),
-        'client_secret' => env('GMAIL_CLIENT_SECRET'),
-        'redirect_uri' => env('GMAIL_REDIRECT_URI'),
-        'scopes' => [
-            'https://www.googleapis.com/auth/gmail.readonly',
-        ],
-    ],
-
     'telegram' => [
         'bot_token' => env('TELEGRAM_BOT_TOKEN'),
         'chat_id' => env('TELEGRAM_CHAT_ID'),

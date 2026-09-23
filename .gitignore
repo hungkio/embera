@@ -13,4 +13,3 @@ yarn-error.log
 .php_cs.cache
 .idea/
 /storage/
-composer.lock

@@ -185,15 +185,6 @@
                         <span>{{ __("Lịch sử chia sẻ") }}</span>
                     </a>
                 </li>
-                @can('mail-settings.view')
-                <li class="nav-item">
-                    <a href="{{ route('admin.gmail.index') }}"
-                       class="nav-link @if(request()->routeIs('admin.gmail*'))active @endif">
-                        <i class="fal fa-envelope-open-text"></i>
-                        <span>{{ __('Hộp thư Gmail') }}</span>
-                    </a>
-                </li>
-                @endcan
                 @endcan
             </ul>
         </div>
